@@ -19,15 +19,23 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python-version }}
-      - name: Install scaffolder + pytest
+      - name: Install scaffolder and test tools
         run: python -m pip install -e . pytest
       - name: Test scaffolder
         run: python -m pytest tests -q
-      - name: Generate demo project
-        run: python -m aet_scaffolder new demo-agent --output-dir .
-      - name: Install generated application
+      - name: Generate mock project
+        run: python -m aet_scaffolder new mock-demo --output-dir .
+      - name: Install mock generated app
         run: python -m pip install -e ".[dev]"
-        working-directory: demo-agent
-      - name: Test generated application
+        working-directory: mock-demo
+      - name: Test mock generated app
         run: python -m pytest -q
-        working-directory: demo-agent
+        working-directory: mock-demo
+      - name: Generate Ollama project (does not download models)
+        run: python -m aet_scaffolder new ollama-demo --output-dir . --provider ollama --model llama3.2:1b
+      - name: Install Ollama generated app
+        run: python -m pip install -e ".[dev]"
+        working-directory: ollama-demo
+      - name: Test Ollama generated app with mocked local HTTP
+        run: python -m pytest -q
+        working-directory: ollama-demo

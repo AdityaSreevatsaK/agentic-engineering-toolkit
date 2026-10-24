@@ -1,5 +1,6 @@
 """CLI for generating local-first agent projects."""
 import argparse
+
 from .generator import GenerationError, generate
 
 
@@ -9,12 +10,19 @@ def main(argv: list[str] | None = None) -> int:
     new = subparsers.add_parser("new", help="Generate a project")
     new.add_argument("name", help="Lowercase hyphenated project name")
     new.add_argument("--template", default="tool-agent", choices=["tool-agent"])
-    new.add_argument("--provider", default="mock", choices=["mock"])
-    new.add_argument("--output-dir", default=".", help="Parent folder for generated project")
+    new.add_argument("--provider", default="mock", choices=["mock", "ollama"])
+    new.add_argument("--model", help="Local Ollama model identifier (only with --provider ollama)")
+    new.add_argument("--output-dir", default=".", help="Parent directory for generated project")
     args = parser.parse_args(argv)
     if args.command == "new":
         try:
-            path = generate(args.name, output_dir=args.output_dir, template=args.template, provider=args.provider)
+            path = generate(
+                args.name,
+                output_dir=args.output_dir,
+                template=args.template,
+                provider=args.provider,
+                model=args.model,
+            )
         except GenerationError as exc:
             parser.exit(2, f"error: {exc}\n")
         print(f"Created {path}")

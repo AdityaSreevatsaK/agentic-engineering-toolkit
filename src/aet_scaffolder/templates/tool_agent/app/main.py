@@ -1,10 +1,11 @@
-"""HTTP interface for the generated agent app."""
-from fastapi import FastAPI
+"""HTTP interface for the generated local-first agent app."""
+from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel, Field
 
+from .providers import ProviderError
 from .workflow import graph
 
-app = FastAPI(title="__PROJECT_NAME__", version="0.1.0")
+app = FastAPI(title="__PROJECT_NAME__", version="0.2.0")
 
 
 class InvokeRequest(BaseModel):
@@ -23,5 +24,11 @@ def health() -> dict[str, str]:
 
 @app.post("/invoke", response_model=InvokeResponse)
 def invoke(request: InvokeRequest) -> InvokeResponse:
-    result = graph.invoke({"question": request.question, "answer": ""})
+    try:
+        result = graph.invoke({"question": request.question, "answer": ""})
+    except ProviderError as exc:
+        raise HTTPException(
+            status_code=503,
+            detail="Local inference unavailable; ensure Ollama is running and the model is installed.",
+        ) from exc
     return InvokeResponse(answer=result["answer"], tool_used=result.get("tool_used"))
