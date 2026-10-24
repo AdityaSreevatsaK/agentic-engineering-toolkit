@@ -1,0 +1,23 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "aet-scaffolder"
+version = "0.1.0"
+description = "Local-first agent project scaffolder"
+requires-python = ">=3.11"
+license = { text = "Proprietary" }
+authors = [{ name = "Agentic Engineering Toolkit Contributors" }]
+
+[project.scripts]
+agentkit = "aet_scaffolder.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+aet_scaffolder = ["templates/**/*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
