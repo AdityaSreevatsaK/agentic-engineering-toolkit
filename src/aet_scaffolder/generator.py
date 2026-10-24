@@ -1,20 +1,38 @@
-"""Deterministic, dependency-free template renderer for the M1 prototype."""
+"""Generate a local-first agent project from the bundled template."""
+import re
+import tempfile
 from importlib.resources import files
 from pathlib import Path
-import re
 
 NAME_PATTERN = re.compile(r"^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$")
+MODEL_PATTERN = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._:/-]{0,127}$")
+DEFAULT_OLLAMA_MODEL = "llama3.2:1b"
+SUPPORTED_PROVIDERS = ("mock", "ollama")
 
 
 class GenerationError(ValueError):
     """Raised when project creation cannot safely proceed."""
 
 
-def generate(name: str, *, output_dir: str | Path = ".", template: str = "tool-agent", provider: str = "mock") -> Path:
+def generate(
+    name: str,
+    *,
+    output_dir: str | Path = ".",
+    template: str = "tool-agent",
+    provider: str = "mock",
+    model: str | None = None,
+) -> Path:
     if not NAME_PATTERN.fullmatch(name):
         raise GenerationError("name must be lowercase kebab-case, e.g. 'demo-agent'")
-    if template != "tool-agent" or provider != "mock":
-        raise GenerationError("M1 supports only --template tool-agent --provider mock")
+    if template != "tool-agent":
+        raise GenerationError("M2 supports only the 'tool-agent' template")
+    if provider not in SUPPORTED_PROVIDERS:
+        raise GenerationError(f"provider must be one of: {', '.join(SUPPORTED_PROVIDERS)}")
+    if provider == "mock" and model is not None:
+        raise GenerationError("--model can only be used with --provider ollama")
+    selected_model = model if model is not None else DEFAULT_OLLAMA_MODEL
+    if not MODEL_PATTERN.fullmatch(selected_model):
+        raise GenerationError("invalid Ollama model name (no spaces or control characters allowed)")
     parent = Path(output_dir).resolve()
     if not parent.is_dir():
         raise GenerationError(f"output directory does not exist: {parent}")
@@ -22,9 +40,12 @@ def generate(name: str, *, output_dir: str | Path = ".", template: str = "tool-a
     if target.exists():
         raise GenerationError(f"refusing to overwrite existing path: {target}")
     source = files("aet_scaffolder").joinpath("templates", "tool_agent")
-    replacements = {"__PROJECT_NAME__": name, "__PACKAGE_NAME__": name.replace("-", "_")}
-    # Stage before publishing so rendering errors do not leave half-written projects.
-    import tempfile
+    replacements = {
+        "__PROJECT_NAME__": name,
+        "__PACKAGE_NAME__": name.replace("-", "_"),
+        "__PROVIDER__": provider,
+        "__OLLAMA_MODEL__": selected_model,
+    }
     try:
         with tempfile.TemporaryDirectory(prefix=".aet-", dir=str(parent)) as temporary:
             staging = Path(temporary) / name
@@ -40,8 +61,7 @@ def _copy_template(src, dest: Path, replacements: dict[str, str]) -> None:
     for item in src.iterdir():
         if item.name == "__pycache__":
             continue
-        new_name = item.name.replace("_dot_", ".")
-        path = dest / new_name
+        path = dest / item.name.replace("_dot_", ".")
         if item.is_dir():
             path.mkdir()
             _copy_template(item, path, replacements)

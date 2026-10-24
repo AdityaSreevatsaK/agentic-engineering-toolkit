@@ -1,11 +1,15 @@
-"""Deterministic LangGraph workflow demonstrating an actual tool call.
+"""Deterministic tool routing with configurable text response providers.
 
-This M1 sample deliberately uses rule-based routing, not a language model.
+Order commands intentionally remain rule-based and use only synthetic data.
+Other questions go to either the mock provider or local Ollama.
 """
 import re
 from typing import TypedDict
 
 from langgraph.graph import END, START, StateGraph
+
+from .config import get_settings
+from .providers import get_provider
 from .tools import get_order_status
 
 _ORDER_COMMAND = re.compile(r"\s*order\s+status\s+(ORD-\d{4})\s*", re.IGNORECASE)
@@ -28,17 +32,12 @@ def choose_route(state: AgentState) -> str:
 
 
 def lookup_order(state: AgentState) -> dict[str, str]:
-    return {
-        "answer": get_order_status(state["order_id"]),
-        "tool_used": "get_order_status",
-    }
+    return {"answer": get_order_status(state["order_id"]), "tool_used": "get_order_status"}
 
 
 def respond(state: AgentState) -> dict[str, str | None]:
-    return {
-        "answer": f"Mock response to: {state['question']}",
-        "tool_used": None,
-    }
+    provider = get_provider(get_settings())
+    return {"answer": provider.generate(state["question"]), "tool_used": None}
 
 
 def build_graph():

@@ -1,0 +1,6 @@
+# Local-only settings. Copy this file to .env to change defaults.
+# No API keys or cloud accounts are needed.
+AET_PROVIDER=__PROVIDER__
+AET_OLLAMA_MODEL=__OLLAMA_MODEL__
+AET_OLLAMA_BASE_URL=http://127.0.0.1:11434
+AET_OLLAMA_TIMEOUT_SECONDS=90
