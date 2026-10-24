@@ -2,7 +2,7 @@
 
 **Status:** M1 prototype, not production-ready. **Visibility:** Keep this repository private.
 
-A local-first collection of independently reusable agent engineering assets. M1 builds the **agent project scaffolder**: generate a testable FastAPI + LangGraph project with a deterministic mock implementation, then opt into a local LLM later.
+A local-first collection of independently reusable agent engineering assets. M1 builds the **agent project scaffolder**: generate a testable FastAPI + LangGraph project with a deterministic mock tool-routing workflow, then opt into a local LLM later.
 
 ## Prerequisites
 
@@ -20,7 +20,7 @@ python -m pytest
 python -m uvicorn app.main:app --reload
 ```
 
-Open http://127.0.0.1:8000/docs for API documentation. The mock workflow does not call a model or external network. On Windows, use PowerShell, Command Prompt or PyCharm's terminal; WSL is optional.
+Open http://127.0.0.1:8000/docs for API documentation. Try `POST /invoke` with `{"question":"order status ORD-1001"}` to exercise a tool against synthetic local data. Try `{"question":"hello"}` for a deterministic mock response.
 
 ### Verify the scaffolder itself
 
@@ -32,9 +32,9 @@ python -m pytest
 ## Boundaries
 
 - Initial template: `tool-agent` with `mock` provider. Unknown providers/templates fail explicitly.
-- The generated application uses LangGraph for local orchestration and FastAPI for HTTP transport.
-- M1 is a deterministic workflow skeleton, not yet an LLM-driven tool-calling agent.
-- Generated code is offline at runtime (once dependencies are installed). Never commit secrets or client data.
+- Generated application uses LangGraph for local orchestration and FastAPI for HTTP transport.
+- M1 demonstrates deterministic tool execution using synthetic data, **not** LLM-directed tool calling.
+- Generated code makes no model API calls (once dependencies are installed). Never commit secrets or client data.
 - GitHub Actions on private repositories executes code on GitHub-hosted machines, not on your laptop.
 - Upcoming: Copier-based template lifecycle, local Ollama adapter, evaluation package, broader provider contracts, and portability reference.
 
