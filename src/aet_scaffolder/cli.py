@@ -1,9 +1,10 @@
-"""Command-line interface for local-first agent project development."""
+"""Command-line interface for local-first agent project scaffolding."""
 import argparse
 import json
 
 from . import __version__
 from .generator import GenerationError, SUPPORTED_PROVIDERS, generate
+from .registry import DEFAULT_TEMPLATE, SUPPORTED_TEMPLATES, TEMPLATES
 from .validator import validate_project
 
 
@@ -14,7 +15,7 @@ def main(argv: list[str] | None = None) -> int:
 
     new = subparsers.add_parser("new", help="Generate a ready-to-run project")
     new.add_argument("name", help="Lowercase hyphenated project name")
-    new.add_argument("--template", default="tool-agent", choices=["tool-agent"])
+    new.add_argument("--template", default=DEFAULT_TEMPLATE, choices=SUPPORTED_TEMPLATES)
     new.add_argument("--provider", default="mock", choices=SUPPORTED_PROVIDERS)
     new.add_argument("--model", help="Local Ollama model identifier (only with --provider ollama)")
     new.add_argument("--output-dir", default=".", help="Parent directory for generated project")
@@ -26,9 +27,10 @@ def main(argv: list[str] | None = None) -> int:
 
     args = parser.parse_args(argv)
     if args.command == "list":
-        print("Template: tool-agent")
+        for spec in TEMPLATES.values():
+            print(f"Template: {spec.name}")
         print("Providers: " + ", ".join(SUPPORTED_PROVIDERS))
-        print("Default: tool-agent with mock (offline, deterministic)")
+        print(f"Default: {DEFAULT_TEMPLATE} with mock (offline, deterministic)")
         return 0
     if args.command == "doctor":
         report = validate_project(args.path)
