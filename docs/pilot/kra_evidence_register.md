@@ -38,3 +38,7 @@ GitHub references: [M1](https://github.com/AdityaSreevatsaK/agentic-engineering-
 ## Approval and presentation guardrails
 
 Before presenting this personal repository as an employer-sanctioned company reusable asset, resolve intellectual-property ownership, employer policies, any permitted external links, and confidentiality of participant results. In promotion materials distinguish personal prototype engineering from employer-adopted outcomes. Do not publish the repository or participant-level measurements without explicit permission.
+
+## M10 — External official public-data measurements (verified October 25, 2026)
+
+NYC 311 official Open Data API, GitHub Actions run [40179566646](https://github.com/AdityaSreevatsaK/agentic-engineering-toolkit/actions/runs/40179566646): 120 official status records retrieved, 100/100 deterministic status lookups correct, and median 2.255 ms / p95 2.524 ms for in-process FastAPI/LangGraph lookup. Source and limitations: [verified NYC 311 result](../evaluation/nyc311-verified-results-2026-10-25.md). This is external-data-backed **software integration testing**, not semantic LLM quality, broad deployment performance, employer adoption, or measured developer time saved. The M9 original Olist data remains unevaluated.
