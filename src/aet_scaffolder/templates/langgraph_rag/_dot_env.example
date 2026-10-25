@@ -1,0 +1,7 @@
+# Offline mock by default; real model calls require a local Ollama instance.
+AET_PROVIDER=__PROVIDER__
+AET_OLLAMA_MODEL=__OLLAMA_MODEL__
+AET_OLLAMA_BASE_URL=http://127.0.0.1:11434
+AET_OLLAMA_TIMEOUT_SECONDS=90
+AET_KNOWLEDGE_PATH=data/knowledge.jsonl
+AET_TOP_K=2

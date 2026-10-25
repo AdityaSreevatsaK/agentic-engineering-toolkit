@@ -1,0 +1,1 @@
+"""Self-contained LangGraph RAG demonstration application."""
