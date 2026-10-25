@@ -51,12 +51,8 @@ def test_only_loopback_http_with_port_allowed(base):
 
 @pytest.mark.parametrize("model", ["", "contains spaces", "bad\nheader", "../bad"])
 def test_invalid_model_rejected(model):
-    if model == "../bad":
-        # This is syntactically allowed by Ollama naming rules as modeled here.
-        assert OllamaProvider(model=model).model == model
-    else:
-        with pytest.raises(ProviderContractError):
-            OllamaProvider(model=model)
+    with pytest.raises(ProviderContractError):
+        OllamaProvider(model=model)
 
 
 @pytest.mark.parametrize("timeout", [0, -1, 301, "fast", True])
