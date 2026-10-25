@@ -111,7 +111,9 @@ def validate_project(path: str | Path) -> ValidationReport:
         checks.append(Check("sample_configuration", False, str(exc)))
 
     try:
-        source_files = sorted((root / folder).rglob("*.py") for folder in ())
+        for folder in ("app", "tests"):
+            if (root / folder).is_symlink():
+                raise ValueError(f"Generated {folder} directory may not be a symbolic link")
         # Only inspect these expected source trees. A generated project may contain
         # arbitrary other data; doctor is deliberately read-only.
         paths = list((root / "app").rglob("*.py")) + list((root / "tests").rglob("*.py"))
