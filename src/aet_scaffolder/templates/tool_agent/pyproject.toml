@@ -7,6 +7,7 @@ name = "__PROJECT_NAME__"
 version = "0.2.0"
 description = "Locally generated agent workflow with selectable response provider"
 requires-python = ">=3.11"
+license = { text = "Apache-2.0" }
 dependencies = [
     "fastapi>=0.110,<1",
     "uvicorn>=0.30,<1",
