@@ -13,3 +13,9 @@ dist/
 .coverage
 *.db
 .DS_Store
+
+# Opt-in external datasets stay on the developer's own machine.
+**/olist_orders_dataset.csv
+data/
+datasets/
+reports/public-data/
