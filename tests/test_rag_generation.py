@@ -42,3 +42,11 @@ def test_rag_generation_does_not_overwrite_existing_path(tmp_path):
     with pytest.raises(GenerationError, match="overwrite"):
         generate("rag-project", output_dir=tmp_path, template="langgraph-rag")
     assert sentinel.read_text() == "preserve"
+
+
+def test_private_local_corpora_are_ignored(tmp_path):
+    project = generate("rag-project", output_dir=tmp_path, template="langgraph-rag")
+    ignore = (project / ".gitignore").read_text(encoding="utf-8")
+    assert ".env.*" in ignore
+    assert "data/*" in ignore
+    assert "!data/knowledge.jsonl" in ignore
