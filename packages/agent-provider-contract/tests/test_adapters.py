@@ -61,10 +61,14 @@ def test_invalid_timeout_rejected(timeout):
         OllamaProvider(timeout_seconds=timeout)
 
 
-@pytest.mark.parametrize("payload", [
-    b"", b"not JSON", b"{}", b"[]", b'{"response":null}',
-    b'{"response":""}', b"x" * 1_000_001
-])
+@pytest.mark.parametrize(
+    "payload",
+    [
+        b"", b"not JSON", b"{}", b"[]", b'{"response":null}',
+        b'{"response":""}', b"x" * 1_000_001,
+    ],
+    ids=["empty", "malformed", "object-missing-response", "array", "null-response", "empty-text", "oversized"],
+)
 def test_malformed_response_is_sanitized(payload):
     provider = OllamaProvider(transport=lambda *args: payload)
     with pytest.raises(ProviderUnavailableError):
