@@ -1,7 +1,7 @@
 # AET: Agent Project Scaffolder
 
 **Status:** Working local-first engineering prototype; **not** a production-ready agent platform.
-**Access:** Private repository. Do not make it public or commit client data, employer-owned code, credentials or secrets without approval.
+**Access:** Public source repository. Publication does not imply production readiness or permission to include client data, employer-owned code, credentials or secrets.
 
 AET is a **project scaffolder for Python agent applications**. It generates self-contained starter projects that engineers can run, test and adapt. Its job is to reduce repeated project setup work and establish consistent application foundations, not to evaluate model quality or operate production infrastructure.
 
@@ -70,7 +70,7 @@ See [roadmap](docs/roadmap.md), [M11 decision record](docs/decisions/0011-scaffo
 
 ## Verification
 
-The private GitHub Actions workflow runs a four-job matrix: Windows/Linux, Python 3.11/3.12. It verifies the scaffolder, generated applications, distribution wheels, and historical independent packages and integrations to protect backwards compatibility.
+GitHub Actions runs a four-job matrix: Windows/Linux, Python 3.11/3.12. It verifies the scaffolder, generated applications, distribution wheels, and historical independent packages and integrations to protect backwards compatibility.
 
 ~~~powershell
 python -m pip install -e . pytest

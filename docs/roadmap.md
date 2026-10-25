@@ -22,7 +22,7 @@ The reusable asset is the **Agent Project Scaffolder**, not an evaluation framew
 - Avoid mandatory paid model calls, cloud accounts or external credentials in normal CI.
 - Templates must be **runnable implementations**, not empty folders or architectural sketches.
 - Maintain provenance of M1-M10 without actively extending legacy evaluation packages.
-- Keep the repository private; any use of employer/client material needs separate authorisation.
+- Keep the repository public only with reviewed material; employer/client information still requires separate authorisation.
 
 ## Evidence for reuse
 

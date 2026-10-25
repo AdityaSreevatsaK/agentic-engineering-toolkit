@@ -22,4 +22,4 @@ The separate Agent Engineering Accelerator owns agent-level evaluation, regressi
 
 Earlier NYC 311 testing establishes public-data-backed deterministic status-routing integration, not model intelligence or developer productivity. The M8 pilot/evidence register explicitly distinguishes tested engineering output from uncollected adoption and productivity results.
 
-Retaining evidence also does not authorise publishing this private repository, sharing participant-level results or using employer/client information without permission.
+Historical documentation refers to the repository's earlier private status. The repository is now public; this change does not authorise sharing participant-level results or employer/client information without permission.
