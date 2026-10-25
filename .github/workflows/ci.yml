@@ -23,6 +23,10 @@ jobs:
         run: python -m pip install -e . pytest
       - name: Test scaffolder and doctor
         run: python -m pytest tests -q
+      - name: Verify M8 trial analyzer and synthetic validation fixtures
+        run: python -m pytest tests/test_pilot_analysis.py -q
+      - name: Verify empty pilot template makes no productivity claims
+        run: python scripts/analyze_pilot.py --input docs/pilot/trials-template.csv
       - name: Generate mock project
         run: python -m aet_scaffolder new mock-demo --output-dir .
       - name: Doctor-check mock project
