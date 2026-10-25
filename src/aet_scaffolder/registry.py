@@ -30,6 +30,8 @@ _TOOL_AGENT = TemplateSpec(
     providers=("mock", "ollama"),
     required_files=(
         "README.md", ".gitignore", ".env.example", "pyproject.toml",
+        ".dockerignore", "Dockerfile", ".github/workflows/ci.yml",
+        "app/foundation.py", "tests/test_foundation.py",
         "app/__init__.py", "app/config.py", "app/main.py",
         "app/providers.py", "app/tools.py", "app/workflow.py",
         "tests/test_app.py", "tests/test_providers.py", "tests/test_tools.py",
@@ -39,6 +41,7 @@ _TOOL_AGENT = TemplateSpec(
     ),
     required_env_fields=(
         "AET_PROVIDER=", "AET_OLLAMA_MODEL=", "AET_OLLAMA_BASE_URL=",
+        "AET_LOG_LEVEL=",
     ),
 )
 
@@ -49,6 +52,8 @@ _LANGGRAPH_RAG = TemplateSpec(
     providers=("mock", "ollama"),
     required_files=(
         "README.md", ".gitignore", ".env.example", "pyproject.toml",
+        ".dockerignore", "Dockerfile", ".github/workflows/ci.yml",
+        "app/foundation.py", "tests/test_foundation.py",
         "data/knowledge.jsonl",
         "app/__init__.py", "app/config.py", "app/knowledge.py",
         "app/retrieval.py", "app/providers.py", "app/workflow.py",
@@ -60,7 +65,7 @@ _LANGGRAPH_RAG = TemplateSpec(
     ),
     required_env_fields=(
         "AET_PROVIDER=", "AET_OLLAMA_MODEL=", "AET_OLLAMA_BASE_URL=",
-        "AET_KNOWLEDGE_PATH=",
+        "AET_KNOWLEDGE_PATH=", "AET_LOG_LEVEL=",
     ),
 )
 
@@ -71,6 +76,8 @@ _STRANDS_AGENT = TemplateSpec(
     providers=("mock", "bedrock"),
     required_files=(
         "README.md", ".gitignore", ".env.example", "pyproject.toml",
+        ".dockerignore", "Dockerfile", ".github/workflows/ci.yml",
+        "app/foundation.py", "tests/test_foundation.py",
         "app/__init__.py", "app/config.py", "app/agent.py", "app/tools.py",
         "app/offline_model.py", "app/main.py",
         "tests/test_api.py", "tests/test_agent.py",
@@ -78,7 +85,7 @@ _STRANDS_AGENT = TemplateSpec(
     required_dependencies=frozenset(
         {"fastapi", "uvicorn", "strands-agents", "pydantic-settings"}
     ),
-    required_env_fields=("AET_PROVIDER=", "AET_AWS_REGION=", "AET_BEDROCK_MODEL_ID="),
+    required_env_fields=("AET_PROVIDER=", "AET_AWS_REGION=", "AET_BEDROCK_MODEL_ID=", "AET_LOG_LEVEL="),
 )
 
 TEMPLATES: Mapping[str, TemplateSpec] = MappingProxyType(

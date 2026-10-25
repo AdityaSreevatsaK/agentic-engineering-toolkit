@@ -5,3 +5,5 @@ AET_OLLAMA_BASE_URL=http://127.0.0.1:11434
 AET_OLLAMA_TIMEOUT_SECONDS=90
 AET_KNOWLEDGE_PATH=data/knowledge.jsonl
 AET_TOP_K=2
+# Structured request logs; never includes request bodies or secrets.
+AET_LOG_LEVEL=INFO

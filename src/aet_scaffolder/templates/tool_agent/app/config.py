@@ -9,6 +9,7 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(env_prefix="AET_", env_file=".env", extra="ignore")
 
+    log_level: Literal["DEBUG", "INFO", "WARNING", "ERROR"] = "INFO"
     provider: Literal["mock", "ollama"] = "__PROVIDER__"
     ollama_model: str = "__OLLAMA_MODEL__"
     ollama_base_url: str = "http://127.0.0.1:11434"
