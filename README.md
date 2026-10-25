@@ -1,6 +1,6 @@
 # Agentic Engineering Toolkit (AET)
 
-**Status:** M6 local-first reference prototypes; not production-ready. **Privacy:** This repository must remain private.
+**Status:** M7 three-asset offline demonstration; not production-ready. **Privacy:** This repository must remain private.
 
 Three independently installable developer-facing building blocks:
 1. **Agent Project Scaffolder** — native-Windows-compatible FastAPI/LangGraph generation, deterministic tool-routing example, optional local Ollama text provider, project doctor and microbenchmark.
@@ -49,3 +49,18 @@ python -m pytest packages/agent-provider-contract/tests -q
 ## Verification and restrictions
 
 Private GitHub Actions tests all three independently installable packages, generated project behavior and installed wheels across Windows/Linux Python 3.11/3.12. **No cloud accounts, paid APIs, model downloads or WSL are needed for the standard CI matrix.** All fixtures are synthetic. The generated HTTP API has no authentication and must not be exposed publicly; never commit real credentials, client material or employer-owned code without permission.
+
+## M7: One-command acceptance demonstration
+
+After cloning this private repository, install the three assets and their local demo dependencies:
+
+```powershell
+python -m pip install -e ".[demo]"
+python -m pip install -e "./packages/agent-quality-kit"
+python -m pip install -e "./packages/agent-provider-contract"
+python scripts/run_demo.py
+```
+
+The demo generates a temporary project and verifies its endpoints, synthetic tool execution, Quality Kit assertions, typed mock provider, legacy bridge and **fake** Ollama transport. It makes no live model or cloud requests. CI runs the exact script on Windows/Linux Python 3.11/3.12 and retains a sanitized result artifact.
+
+Review [M7 setup and acceptance criteria](docs/demo/README.md) and the [blank independent engineering review checklist](docs/demo/reviewer-checklist.md). No human productivity savings, actual cloud integration, or team adoption are claimed.
