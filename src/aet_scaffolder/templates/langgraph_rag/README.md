@@ -52,3 +52,18 @@ Automated tests inject fake Ollama transport: CI downloads no model and makes no
 - Test fixtures use fabricated policies. AET does not assert that any shipping, return or support policy applies to a real organisation.
 - The corpus reader is bounded and rejects symlink files; it is a local developer tool, not a hardened multi-tenant ingestion service.
 - The .aet-template.json file identifies the template for the read-only project doctor.
+
+## M14 application foundations
+
+New projects include `app/foundation.py` with a server-issued `X-Request-ID` and one JSON request log per request. Logs include only request method, fixed route category, status code and duration. **Prompts, generated answers, auth headers, query strings, client addresses, exception strings and unknown URL paths are not logged.** Use `AET_LOG_LEVEL` in `.env` to select DEBUG, INFO, WARNING or ERROR (default INFO).
+
+`GET /health` verifies process liveness. `GET /ready` verifies the local mock mode and applicable local dependencies. It **returns 503 for live model providers** because a network call, credentials and account entitlements are not verified by this developer template. A 503 is not evidence that the live provider itself is down.
+
+A generated `.github/workflows/ci.yml` runs offline tests on Python 3.12. A non-root Docker reference is included, with `.dockerignore` excluding environment files and local build artifacts:
+
+~~~powershell
+docker build -t aet-demo-app .
+docker run --rm -p 127.0.0.1:8000:8000 aet-demo-app
+~~~
+
+The example container runs `AET_PROVIDER=mock` and must be **bound to localhost only**. Never deploy it publicly as supplied: these apps have no authentication, tenant isolation, ingress policy, network egress controls, secrets management or deployment-specific authorisation. For production adoption, teams must add and review these separately.

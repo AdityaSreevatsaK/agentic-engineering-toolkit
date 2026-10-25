@@ -48,3 +48,18 @@ If Ollama is offline or the model is missing, ordinary prompts return HTTP 503 w
 - Test and fixture data are entirely synthetic.
 - .env is excluded from Git; .env.example includes no secrets.
 - The .aet-template.json manifest identifies this template for the read-only project doctor. It contains no secrets.
+
+## M14 application foundations
+
+New projects include `app/foundation.py` with a server-issued `X-Request-ID` and one JSON request log per request. Logs include only request method, fixed route category, status code and duration. **Prompts, generated answers, auth headers, query strings, client addresses, exception strings and unknown URL paths are not logged.** Use `AET_LOG_LEVEL` in `.env` to select DEBUG, INFO, WARNING or ERROR (default INFO).
+
+`GET /health` verifies process liveness. `GET /ready` verifies the local mock mode and applicable local dependencies. It **returns 503 for live model providers** because a network call, credentials and account entitlements are not verified by this developer template. A 503 is not evidence that the live provider itself is down.
+
+A generated `.github/workflows/ci.yml` runs offline tests on Python 3.12. A non-root Docker reference is included, with `.dockerignore` excluding environment files and local build artifacts:
+
+~~~powershell
+docker build -t aet-demo-app .
+docker run --rm -p 127.0.0.1:8000:8000 aet-demo-app
+~~~
+
+The example container runs `AET_PROVIDER=mock` and must be **bound to localhost only**. Never deploy it publicly as supplied: these apps have no authentication, tenant isolation, ingress policy, network egress controls, secrets management or deployment-specific authorisation. For production adoption, teams must add and review these separately.

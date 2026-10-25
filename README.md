@@ -72,6 +72,22 @@ python -m uvicorn app.main:app --host 127.0.0.1 --reload
 
 Call POST `/invoke` with `{"question":"order status ORD-1001"}`. The scripted offline model instructs the **real Strands SDK agent loop** to invoke a read-only synthetic `@tool`; the resulting answer reports `tool_used`. The model is deterministic and is **not** an LLM or evidence of autonomous reasoning. For actual Amazon Bedrock inference, use `agentkit new strata-bedrock --template strands-agent --provider bedrock`, then configure approved AWS credentials, region and model access. CI uses injected model doubles, never live AWS calls. See the generated project's README.
 
+
+## Generated application foundations (M14)
+
+All three templates now produce a small, self-contained engineering foundation:
+
+| Foundation | Included behaviour |
+| --- | --- |
+| Validated settings | `AET_LOG_LEVEL` and existing provider-specific environment settings |
+| Structured logs | Server-issued request ID and JSON metadata only, without prompts/answers/secrets |
+| Health and readiness | `GET /health` (process liveness); `GET /ready` (offline/local checks only) |
+| Error handling | Stable sanitised HTTP failures; no raw exception details returned |
+| Generated CI | A per-project GitHub Actions workflow running offline tests |
+| Container reference | Non-root Python 3.12 image, localhost-only host port guidance, Docker healthcheck |
+
+The generated Dockerfile is a **development reference, not a production deployment**. The apps lack authentication, tenancy and cloud-specific hardening. For an offline local example, run `docker build -t aet-demo .` in the generated project, then `docker run --rm -p 127.0.0.1:8000:8000 aet-demo`. See the generated README and [ADR-0014](docs/decisions/0014-generated-app-foundations.md) for details.
+
 ## Commands and compatibility
 
 | Command | Purpose |
@@ -90,7 +106,7 @@ Doctor does not install dependencies, run untrusted generated Python code, valid
 - **M11:** Align the active product around scaffolding; introduce a template registry, backwards-compatible validation and clear asset boundaries.
 - **M12:** Add a working LangGraph RAG starter with local BM25 retrieval, offline verification and optional loopback Ollama inference.
 - **M13:** Generate a Strands SDK Agent with one synthetic tool, actual offline SDK-loop tests and opt-in Bedrock model.
-- **M14:** Improve generated applications' configuration, structured logging, error-handling, CI and deployment foundations.
+- **M14:** Add generated configuration validation, privacy-conscious JSON request logs, readiness, CI and non-root local Docker foundations.
 
 See [roadmap](docs/roadmap.md), [M11 decision record](docs/decisions/0011-scaffolder-focus.md) and [legacy assets](docs/legacy-assets.md).
 

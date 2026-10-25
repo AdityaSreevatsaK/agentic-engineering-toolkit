@@ -61,3 +61,31 @@ def test_unknown_path_is_not_logged_verbatim(monkeypatch):
     assert response.status_code == 404
     assert json.loads(events[0])["route"] == "<unmatched>"
     assert "secret-document-123" not in events[0]
+
+
+def test_live_provider_is_not_claimed_ready(monkeypatch):
+    from app.config import Settings
+    values = Settings.model_fields["provider"].annotation.__args__
+    live = "bedrock" if "bedrock" in values else "ollama"
+    monkeypatch.setenv("AET_PROVIDER", live)
+    response = client.get("/ready")
+    assert response.status_code == 503
+    assert "Live" in response.json()["detail"]
+
+
+def test_unexpected_exception_is_sanitised(monkeypatch):
+    events = []
+    monkeypatch.setattr(foundation._LOGGER, "info", events.append)
+
+    @app.get("/__internal_test_failure")
+    def crash_for_test():
+        raise RuntimeError("a-private-secret")
+
+    response = client.get("/__internal_test_failure")
+    assert response.status_code == 500
+    assert response.json() == {"detail": "Internal server error"}
+    assert "a-private-secret" not in response.text
+    event = json.loads(events[-1])
+    assert event["event"] == "request_failed"
+    assert event["route"] == "<unmatched>"
+    assert "a-private-secret" not in events[-1]
