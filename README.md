@@ -12,7 +12,7 @@ The separate **Agent Engineering Accelerator (AEA)** owns LLM/agent evaluation, 
 | Template | Status | Generated application | Providers |
 | --- | --- | --- | --- |
 | tool-agent | Working prototype | FastAPI + LangGraph with deterministic synthetic order-status routing | Mock (offline), optional local Ollama |
-| langgraph-rag | Planned M12 | Runnable LangGraph retrieval-augmented application | To be defined and tested |
+| langgraph-rag | M12 reference implementation | LangGraph with local BM25 retrieval, evidence-based answers and optional Ollama | Mock (offline), optional local Ollama |
 | strands-agent | Planned M13 | Runnable AWS Strands agent reference | To be defined and tested |
 
 The current tool-agent is **not** an autonomous tool-planning agent. Its order routing is deterministic. No cloud account, paid model, Docker or WSL is needed for the mock path. The generated API has no authentication and must not be exposed publicly.
@@ -46,6 +46,19 @@ agentkit new local-agent --provider ollama --model llama3.2:1b
 
 Real model responses require independently installing and running Ollama with the named model. Automated tests mock its HTTP interactions; no model download is required in CI.
 
+## Generate the LangGraph RAG application (M12)
+
+~~~powershell
+agentkit new knowledge-agent --template langgraph-rag --provider mock
+agentkit doctor knowledge-agent
+cd knowledge-agent
+python -m pip install -e ".[dev]"
+python -m pytest -q
+python -m uvicorn app.main:app --reload
+~~~
+
+Then submit `POST /ask` with `{"question":"What is the return policy?"}`. The bundled corpus uses invented policies and a real BM25 lexical retriever, followed by a **deterministic mock answer** quoting retrieved evidence. Optional `--provider ollama` enables genuine local-model synthesis over that evidence. It is **not** a semantic-vector search template, a claim of model correctness, or a production-secure service. The generated README documents bounded local file ingestion and its limits.
+
 ## Commands and compatibility
 
 | Command | Purpose |
@@ -62,7 +75,7 @@ Doctor does not install dependencies, run untrusted generated Python code, valid
 ## Engineering foundations and planned scope
 
 - **M11:** Align the active product around scaffolding; introduce a template registry, backwards-compatible validation and clear asset boundaries.
-- **M12:** Add a genuine working LangGraph RAG starter with local/mock verification.
+- **M12:** Add a working LangGraph RAG starter with local BM25 retrieval, offline verification and optional loopback Ollama inference.
 - **M13:** Add a genuine working AWS Strands starter, with offline test doubles where cloud access is unavailable.
 - **M14:** Improve generated applications' configuration, structured logging, error-handling, CI and deployment foundations.
 

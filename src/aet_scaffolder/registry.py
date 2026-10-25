@@ -29,32 +29,43 @@ _TOOL_AGENT = TemplateSpec(
     description="Deterministic LangGraph tool routing with mock or local Ollama responses",
     providers=("mock", "ollama"),
     required_files=(
-        "README.md",
-        ".gitignore",
-        ".env.example",
-        "pyproject.toml",
-        "app/__init__.py",
-        "app/config.py",
-        "app/main.py",
-        "app/providers.py",
-        "app/tools.py",
-        "app/workflow.py",
-        "tests/test_app.py",
-        "tests/test_providers.py",
-        "tests/test_tools.py",
+        "README.md", ".gitignore", ".env.example", "pyproject.toml",
+        "app/__init__.py", "app/config.py", "app/main.py",
+        "app/providers.py", "app/tools.py", "app/workflow.py",
+        "tests/test_app.py", "tests/test_providers.py", "tests/test_tools.py",
     ),
     required_dependencies=frozenset(
         {"fastapi", "langgraph", "uvicorn", "pydantic-settings"}
     ),
     required_env_fields=(
-        "AET_PROVIDER=",
-        "AET_OLLAMA_MODEL=",
-        "AET_OLLAMA_BASE_URL=",
+        "AET_PROVIDER=", "AET_OLLAMA_MODEL=", "AET_OLLAMA_BASE_URL=",
+    ),
+)
+
+_LANGGRAPH_RAG = TemplateSpec(
+    name="langgraph-rag",
+    directory="langgraph_rag",
+    description="Local BM25 retrieval-augmented LangGraph answer workflow",
+    providers=("mock", "ollama"),
+    required_files=(
+        "README.md", ".gitignore", ".env.example", "pyproject.toml",
+        "data/knowledge.jsonl",
+        "app/__init__.py", "app/config.py", "app/knowledge.py",
+        "app/retrieval.py", "app/providers.py", "app/workflow.py",
+        "app/main.py", "app/ingest.py",
+        "tests/test_app.py", "tests/test_retrieval.py", "tests/test_ingest.py",
+    ),
+    required_dependencies=frozenset(
+        {"fastapi", "langgraph", "uvicorn", "pydantic-settings"}
+    ),
+    required_env_fields=(
+        "AET_PROVIDER=", "AET_OLLAMA_MODEL=", "AET_OLLAMA_BASE_URL=",
+        "AET_KNOWLEDGE_PATH=",
     ),
 )
 
 TEMPLATES: Mapping[str, TemplateSpec] = MappingProxyType(
-    {_TOOL_AGENT.name: _TOOL_AGENT}
+    {spec.name: spec for spec in (_TOOL_AGENT, _LANGGRAPH_RAG)}
 )
 SUPPORTED_TEMPLATES = tuple(TEMPLATES)
 

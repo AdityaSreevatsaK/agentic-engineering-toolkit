@@ -120,6 +120,26 @@ jobs:
       - name: Test Ollama generated app with mocked local HTTP
         run: python -m pytest -q
         working-directory: ollama-demo
+      - name: Generate offline LangGraph RAG project
+        run: python -m aet_scaffolder new rag-demo --template langgraph-rag --provider mock --output-dir .
+      - name: Doctor-check generated RAG project
+        run: python -m aet_scaffolder doctor rag-demo --json
+      - name: Install RAG project
+        run: python -m pip install -e ".[dev]"
+        working-directory: rag-demo
+      - name: Test RAG retrieval, mocked Ollama, ingestion and API
+        run: python -m pytest -q
+        working-directory: rag-demo
+      - name: Generate Ollama-configured LangGraph RAG project
+        run: python -m aet_scaffolder new rag-ollama-demo --template langgraph-rag --provider ollama --output-dir .
+      - name: Doctor-check Ollama RAG project
+        run: python -m aet_scaffolder doctor rag-ollama-demo --json
+      - name: Install Ollama RAG project (no live model)
+        run: python -m pip install -e ".[dev]"
+        working-directory: rag-ollama-demo
+      - name: Test Ollama RAG with mocked transport
+        run: python -m pytest -q
+        working-directory: rag-ollama-demo
       - name: Build standalone wheel
         run: python -m pip wheel . --no-deps --wheel-dir wheelhouse
       - name: Install the packaged wheel (not editable)
@@ -128,5 +148,9 @@ jobs:
         run: python -m aet_scaffolder new packaged-demo --output-dir . --provider ollama
       - name: Doctor-check wheel-generated project
         run: python -m aet_scaffolder doctor packaged-demo --json
+      - name: Confirm wheel bundles LangGraph RAG template
+        run: python -m aet_scaffolder new packaged-rag --template langgraph-rag --output-dir .
+      - name: Doctor-check wheel-generated RAG project
+        run: python -m aet_scaffolder doctor packaged-rag --json
       - name: Benchmark local project generation (not human time saved)
         run: python -m aet_scaffolder.benchmark_cli --runs 3 --warmups 1 --provider mock
