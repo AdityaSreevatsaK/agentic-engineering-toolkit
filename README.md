@@ -76,3 +76,15 @@ python scripts/analyze_pilot.py --input docs/pilot/trials-template.csv
 ```
 
 It returns `no_data` until approved, real observations are collected. Do not upload participant-level results or employer information to this personal repository. The M8 CI checks use synthetic fixture records only.
+
+## M9: Optional public order-status dataset evaluation
+
+An [offline Olist-compatible order-status evaluator](docs/evaluation/README.md) can test actual generated FastAPI/LangGraph routing, tool calls, exact-match status lookup, unknown IDs and local request latency against a CSV supplied by the developer.
+
+The original [Olist dataset](https://www.kaggle.com/datasets/olistbr/brazilian-ecommerce) uses **CC BY-NC-SA 4.0**, so evaluate it only in a permitted context after checking licensing. **No original Olist rows are downloaded or committed by the toolkit.** For CI, use the entirely fabricated fixture:
+
+```powershell
+python scripts/evaluate_olist.py --input tests/fixtures/olist_orders_synthetic.csv --sample 8 --queries 8 --dataset-kind synthetic
+```
+
+CI results demonstrate integration against synthetic Olist-shaped records, **not results on real Olist orders or real-world developer productivity**.
