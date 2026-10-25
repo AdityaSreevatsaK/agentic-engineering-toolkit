@@ -77,11 +77,12 @@ def test_oversize_response_rejected():
         fetch_official(transport=lambda _: b" " * 200_001)
 
 
-def test_api_query_is_bounded_in_time():
+def test_api_query_is_bounded_and_only_requests_status_fields():
     url = _query(10)
-    assert DEFAULT_START.replace(":", "%3A") in url
-    assert DEFAULT_END.replace(":", "%3A") in url
     assert "limit=10" in url
+    assert "unique_key%2Cstatus" in url
+    assert "order=unique_key+DESC" in url
+    assert "where=" not in url
 
 
 def test_raw_id_or_address_are_not_in_aggregate_report():
