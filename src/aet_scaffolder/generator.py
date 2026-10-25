@@ -11,7 +11,7 @@ NAME_PATTERN = re.compile(r"^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$")
 MODEL_PATTERN = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._:/-]{0,127}$")
 DEFAULT_OLLAMA_MODEL = "llama3.2:1b"
 # Keep this export for callers of the existing generator module.
-SUPPORTED_PROVIDERS = ("mock", "ollama")
+SUPPORTED_PROVIDERS = ("mock", "ollama", "bedrock")
 
 
 class GenerationError(ValueError):
@@ -36,7 +36,7 @@ def generate(
         raise GenerationError(
             f"provider for '{template}' must be one of: {', '.join(spec.providers)}"
         )
-    if provider == "mock" and model is not None:
+    if provider != "ollama" and model is not None:
         raise GenerationError("--model can only be used with --provider ollama")
     selected_model = model if model is not None else DEFAULT_OLLAMA_MODEL
     if not MODEL_PATTERN.fullmatch(selected_model):

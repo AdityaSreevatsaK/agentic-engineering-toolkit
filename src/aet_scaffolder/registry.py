@@ -64,8 +64,25 @@ _LANGGRAPH_RAG = TemplateSpec(
     ),
 )
 
+_STRANDS_AGENT = TemplateSpec(
+    name="strands-agent",
+    directory="strands_agent",
+    description="AWS Strands agent with offline SDK model and opt-in Amazon Bedrock",
+    providers=("mock", "bedrock"),
+    required_files=(
+        "README.md", ".gitignore", ".env.example", "pyproject.toml",
+        "app/__init__.py", "app/config.py", "app/agent.py", "app/tools.py",
+        "app/offline_model.py", "app/main.py",
+        "tests/test_api.py", "tests/test_agent.py",
+    ),
+    required_dependencies=frozenset(
+        {"fastapi", "uvicorn", "strands-agents", "pydantic-settings"}
+    ),
+    required_env_fields=("AET_PROVIDER=", "AET_AWS_REGION=", "AET_BEDROCK_MODEL_ID="),
+)
+
 TEMPLATES: Mapping[str, TemplateSpec] = MappingProxyType(
-    {spec.name: spec for spec in (_TOOL_AGENT, _LANGGRAPH_RAG)}
+    {spec.name: spec for spec in (_TOOL_AGENT, _LANGGRAPH_RAG, _STRANDS_AGENT)}
 )
 SUPPORTED_TEMPLATES = tuple(TEMPLATES)
 
