@@ -13,7 +13,7 @@ The separate **Agent Engineering Accelerator (AEA)** owns LLM/agent evaluation, 
 | --- | --- | --- | --- |
 | tool-agent | Working prototype | FastAPI + LangGraph with deterministic synthetic order-status routing | Mock (offline), optional local Ollama |
 | langgraph-rag | M12 reference implementation | LangGraph with local BM25 retrieval, evidence-based answers and optional Ollama | Mock (offline), optional local Ollama |
-| strands-agent | Planned M13 | Runnable AWS Strands agent reference | To be defined and tested |
+| strands-agent | M13 reference implementation | Real Strands Agent with synthetic tool, deterministic SDK offline model or AWS Bedrock | Mock (offline), optional Bedrock |
 
 The current tool-agent is **not** an autonomous tool-planning agent. Its order routing is deterministic. No cloud account, paid model, Docker or WSL is needed for the mock path. The generated API has no authentication and must not be exposed publicly.
 
@@ -59,6 +59,19 @@ python -m uvicorn app.main:app --reload
 
 Then submit `POST /ask` with `{"question":"What is the return policy?"}`. The bundled corpus uses invented policies and a real BM25 lexical retriever, followed by a **deterministic mock answer** quoting retrieved evidence. Optional `--provider ollama` enables genuine local-model synthesis over that evidence. It is **not** a semantic-vector search template, a claim of model correctness, or a production-secure service. The generated README documents bounded local file ingestion and its limits.
 
+## Generate an AWS Strands agent (M13)
+
+~~~powershell
+agentkit new strata-demo --template strands-agent --provider mock
+agentkit doctor strata-demo
+cd strata-demo
+python -m pip install -e ".[dev]"
+python -m pytest -q
+python -m uvicorn app.main:app --host 127.0.0.1 --reload
+~~~
+
+Call POST `/invoke` with `{"question":"order status ORD-1001"}`. The scripted offline model instructs the **real Strands SDK agent loop** to invoke a read-only synthetic `@tool`; the resulting answer reports `tool_used`. The model is deterministic and is **not** an LLM or evidence of autonomous reasoning. For actual Amazon Bedrock inference, use `agentkit new strata-bedrock --template strands-agent --provider bedrock`, then configure approved AWS credentials, region and model access. CI uses injected model doubles, never live AWS calls. See the generated project's README.
+
 ## Commands and compatibility
 
 | Command | Purpose |
@@ -76,7 +89,7 @@ Doctor does not install dependencies, run untrusted generated Python code, valid
 
 - **M11:** Align the active product around scaffolding; introduce a template registry, backwards-compatible validation and clear asset boundaries.
 - **M12:** Add a working LangGraph RAG starter with local BM25 retrieval, offline verification and optional loopback Ollama inference.
-- **M13:** Add a genuine working AWS Strands starter, with offline test doubles where cloud access is unavailable.
+- **M13:** Generate a Strands SDK Agent with one synthetic tool, actual offline SDK-loop tests and opt-in Bedrock model.
 - **M14:** Improve generated applications' configuration, structured logging, error-handling, CI and deployment foundations.
 
 See [roadmap](docs/roadmap.md), [M11 decision record](docs/decisions/0011-scaffolder-focus.md) and [legacy assets](docs/legacy-assets.md).
