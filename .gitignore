@@ -19,3 +19,7 @@ dist/
 data/
 datasets/
 reports/public-data/
+
+# Temporary official public data evaluation reports (not committed)
+nyc311-aggregates.json
+m10-nyc311-*.json
