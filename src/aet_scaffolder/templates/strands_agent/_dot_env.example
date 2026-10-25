@@ -1,0 +1,4 @@
+# mock is offline and deterministic; bedrock makes real billable AWS model calls.
+AET_PROVIDER=__PROVIDER__
+AET_AWS_REGION=us-east-1
+AET_BEDROCK_MODEL_ID=us.amazon.nova-lite-v1:0
