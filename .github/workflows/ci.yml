@@ -160,6 +160,9 @@ jobs:
       - name: Verify Bedrock wiring with injected offline SDK model
         run: python -m pytest -q
         working-directory: strands-bedrock-demo
+      - name: Build generated tool-agent container (offline app)
+        if: matrix.os == 'ubuntu-latest' && matrix.python-version == '3.11'
+        run: docker build --progress=plain -t aet-m14-tool-agent -f mock-demo/Dockerfile mock-demo
       - name: Build standalone wheel
         run: python -m pip wheel . --no-deps --wheel-dir wheelhouse
       - name: Install the packaged wheel (not editable)

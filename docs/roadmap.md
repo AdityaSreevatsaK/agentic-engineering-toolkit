@@ -7,7 +7,7 @@ The reusable asset is the **Agent Project Scaffolder**, not an evaluation framew
 | M11: Product refocus | Scaffolder-only positioning, registry, template-aware Doctor, historical preservation | Existing commands and generated apps still pass; legacy Doctor fallback; four green CI jobs |
 | M12: LangGraph RAG | Runnable LangGraph application with bounded JSONL ingestion, BM25 lexical retrieval and evidence-based answers | Self-contained sample corpus, local ingestion and query instructions, offline mock tests, fake Ollama tests and generated-app CI |
 | M13: AWS Strands | Runnable SDK Agent and annotated tool, deterministic offline Strands event model and opt-in Bedrock mode | Offline real-SDK tool invocation, fake Bedrock construction, generated API tests and four-platform CI |
-| M14: Application foundations | Strengthen generated projects' config, structured logs, consistent errors, CI and deployment reference | Verified configuration failures, log hygiene tests, health/readiness boundaries, CI and deployment walkthrough |
+| M14: Application foundations | Add configuration validation, sanitised JSON request logs, request IDs, honest readiness, generated CI and non-root container reference to all three templates | Generated tests, Doctor and wheel packaging on four OS/Python jobs, plus Docker build smoke |
 
 ## Work boundaries
 
