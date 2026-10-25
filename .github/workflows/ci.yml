@@ -45,6 +45,18 @@ jobs:
         run: python -c "import glob, subprocess, sys; wheels=glob.glob('quality-wheelhouse/*.whl'); assert len(wheels)==1, wheels; subprocess.check_call([sys.executable, '-m', 'pip', 'install', '--force-reinstall', '--no-deps', wheels[0]])"
       - name: Run Quality Kit tests from packaged wheel
         run: python -m pytest packages/agent-quality-kit/tests -q
+      - name: Install independent portable provider contract
+        run: python -m pip install -e "./packages/agent-provider-contract[dev]"
+      - name: Test provider protocol and fake local Ollama transport
+        run: python -m pytest packages/agent-provider-contract/tests -q
+      - name: Test provider contract bridge against generated mock app
+        run: python -m pytest examples/provider-portability-demo -q
+      - name: Build portable provider contract wheel
+        run: python -m pip wheel ./packages/agent-provider-contract --no-deps --wheel-dir provider-wheelhouse
+      - name: Reinstall portable provider contract from built wheel
+        run: python -c "import glob, subprocess, sys; wheels=glob.glob('provider-wheelhouse/*.whl'); assert len(wheels)==1, wheels; subprocess.check_call([sys.executable, '-m', 'pip', 'install', '--force-reinstall', '--no-deps', wheels[0]])"
+      - name: Verify contract tests with packaged wheel
+        run: python -m pytest packages/agent-provider-contract/tests -q
       - name: Generate Ollama project (no model download)
         run: python -m aet_scaffolder new ollama-demo --output-dir . --provider ollama --model llama3.2:1b
       - name: Doctor-check Ollama project
