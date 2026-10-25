@@ -1,11 +1,13 @@
 # AET: Agent Project Scaffolder
 
 **Status:** Working local-first engineering prototype; **not** a production-ready agent platform.
-**Access:** Public source repository. Publication does not imply production readiness or permission to include client data, employer-owned code, credentials or secrets.
+**Access:** Public repository, licensed under [Apache License 2.0](LICENSE). Publication does not imply production readiness or permission to include client data, employer-owned code, credentials or secrets.
 
 AET is a **project scaffolder for Python agent applications**. It generates self-contained starter projects that engineers can run, test and adapt. Its job is to reduce repeated project setup work and establish consistent application foundations, not to evaluate model quality or operate production infrastructure.
 
 The separate **Agent Engineering Accelerator (AEA)** owns LLM/agent evaluation, regression analysis, statistical testing, LLM judging and quality gates. AET does not recreate those functions, and does not currently depend on AEA.
+
+Under Apache 2.0, others may reuse, modify and distribute this code, including commercially, provided they comply with the licence and attribution requirements. The licence does **not** guarantee production readiness or cover third-party dependencies under different licences. Each newly scaffolded project includes its own LICENSE and NOTICE.
 
 ## What AET generates today
 

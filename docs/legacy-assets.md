@@ -1,5 +1,7 @@
 # Historical AET assets (M1-M10)
 
+Historical standalone packages are distributed under Apache License 2.0 and retain their own LICENSE and NOTICE files. These modules remain legacy compatibility assets, not an active expansion of AET's product scope.
+
 This document retains navigable links to earlier work after M11 refocuses the **active** AET product on Agent Project Scaffolding.
 
 | Asset | Existing location | Status after M11 |

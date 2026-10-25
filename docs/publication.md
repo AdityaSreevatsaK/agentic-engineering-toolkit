@@ -4,7 +4,7 @@ AET was initially developed and documented as a private engineering prototype. I
 
 ## Publication boundaries
 
-- The source is publicly viewable, but publication alone does **not** grant an open-source licence. The existing Python distribution metadata remains `Proprietary` until the code owner explicitly selects and grants a licence. Do not imply that the code is licensed under Apache, MIT or another open-source licence without making that decision.
+- The maintainer has explicitly released the AET source and three installable Python distributions under **Apache License 2.0**. The root and standalone package LICENSE and NOTICE files describe the rights and attribution obligations. Newly generated projects also contain those files. External dependencies retain their own licences. Apache 2.0 allows commercial reuse and modification; it does not require future users to contribute their changes back.
 - All synthetic datasets and the official NYC 311 public-data integration are disclosed with scope limitations. No employer/team adoption or measured developer time savings are claimed.
 - Public Actions logs and uploaded artifacts are visible to others; only synthetic data, sanitised aggregates and mock provider responses belong in automated runs.
 - No credentials or client-owned materials should be committed.
@@ -16,4 +16,4 @@ Only the **Agent Project Scaffolder** is an active AET product. The old Quality 
 
 ## Public development workflow
 
-Changes use a feature branch and PR, the existing Windows/Linux Python 3.11/3.12 matrix must pass on the exact head, and then approved changes can be merged. Configure `master` branch protection or a ruleset in GitHub settings so those checks cannot be bypassed accidentally.
+Changes use a feature branch and PR, the existing Windows/Linux Python 3.11/3.12 matrix must pass on the exact head, and then approved changes can be merged. The repository owner must configure `master` protection in GitHub Settings, as specified in [the branch protection guide](governance/master-branch-protection.md). Repository CI alone cannot prevent merging failing changes.
