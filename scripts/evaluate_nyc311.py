@@ -62,10 +62,6 @@ def _query(limit: int) -> str:
         raise EvaluationError("--limit must be an integer from 1 to 500")
     options = {
         "$select": "unique_key,status",
-        "$where": (
-            f"created_date >= '{DEFAULT_START}' "
-            f"AND created_date < '{DEFAULT_END}' AND status IS NOT NULL"
-        ),
         "$order": "unique_key DESC",
         "$limit": str(limit),
     }
@@ -81,12 +77,12 @@ def fetch_official(limit: int = 120, *, transport=None) -> dict[str, str]:
     if transport is None:
         def transport(uri):
             request = Request(uri, headers={"Accept": "application/json", "User-Agent": "AET-public-data-eval/0.1"})
-            with urlopen(request, timeout=25) as response:
+            with urlopen(request, timeout=45) as response:
                 return response.read(MAX_RESPONSE + 1)
     try:
         raw = transport(url)
     except (OSError, TimeoutError) as exc:
-        raise EvaluationError("Official NYC 311 API unavailable") from exc
+        raise EvaluationError(f"Official NYC 311 API unavailable ({type(exc).__name__})") from exc
     if not isinstance(raw, bytes) or len(raw) > MAX_RESPONSE:
         raise EvaluationError("Official API returned an oversized or invalid payload")
     try:
@@ -158,7 +154,7 @@ def evaluate(
             "source_kind": source_kind,
             "source_page": SOURCE_PAGE,
             "source_api": SOURCE,
-            "source_query_period_utc": [DEFAULT_START, DEFAULT_END] if source_kind == "nyc311_official_live" else None,
+            "source_query": "most recent-by-key ordered slice (not a random sample)" if source_kind == "nyc311_official_live" else None,
             "retrieved_utc": retrieved_utc,
             "record_count": len(clean),
             "sample_fingerprint_sha256": fingerprint,
