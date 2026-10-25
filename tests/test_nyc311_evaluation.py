@@ -34,7 +34,7 @@ def test_official_fetch_requests_only_key_and_status():
     assert len(captured) == 1
     assert captured[0].startswith(SOURCE + "?")
     assert "unique_key%2Cstatus" in captured[0]
-    assert "created_date" in captured[0]
+    assert "order=unique_key+DESC" in captured[0]
     assert "12345678" not in captured[0]
 
 
