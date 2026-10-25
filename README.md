@@ -99,3 +99,5 @@ python scripts/evaluate_nyc311.py --live --limit 120 --queries 100
 ```
 
 See [M10 evidence and limitations](docs/evaluation/nyc311.md). CI verifies synthetic fixtures on all four OS/Python combinations and executes a *separate, explicitly labeled real-data test* on Ubuntu Python 3.11. These tests measure deterministic software behavior **not** human productivity or language model quality.
+
+**Verified public-data result (October 25, 2026):** The official NYC 311 evaluation retrieved 120 records and reproduced 100/100 selected statuses, with median 2.255 ms and p95 2.524 ms in-process lookup latency. These are deterministic test-workflow metrics—not LLM reasoning, general-population accuracy or developer time saved. See [recorded GitHub CI evidence](docs/evaluation/nyc311-verified-results-2026-10-25.md).
