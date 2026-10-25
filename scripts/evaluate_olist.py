@@ -81,7 +81,10 @@ def sample_orders(path: str | Path, *, limit: int = 200, seed: int = 19) -> tupl
     return dict(selected), count
 
 
-def evaluate(path: str | Path, *, sample: int = 200, queries: int = 100, seed: int = 19) -> dict:
+def evaluate(path: str | Path, *, sample: int = 200, queries: int = 100, seed: int = 19,
+             dataset_kind: str = "user_supplied_unverified") -> dict:
+    if dataset_kind not in ("synthetic", "user_supplied_unverified"):
+        raise EvaluationError("dataset_kind must be synthetic or user_supplied_unverified")
     if type(queries) is not int or not 1 <= queries <= 1000:
         raise EvaluationError("--queries must be between 1 and 1000")
     for module in REQUIRED_MODULES:
@@ -129,7 +132,8 @@ def evaluate(path: str | Path, *, sample: int = 200, queries: int = 100, seed: i
             "schema_version": 1,
             "status": "passed",
             "evaluation_type": "deterministic_generated_workflow_order_lookup",
-            "source": "Olist-shaped local CSV supplied by evaluator",
+            "source": "Olist-shaped local CSV supplied by evaluator (not authenticated)",
+            "dataset_kind": dataset_kind,
             "license_notice": "Olist original: CC BY-NC-SA 4.0; check permissions for intended use",
             "records_scanned": scanned,
             "records_sampled": len(orders),
@@ -151,12 +155,15 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--sample", type=int, default=200, help="Reservoir sample size (1-2000)")
     parser.add_argument("--queries", type=int, default=100, help="Positive lookup tests (1-1000)")
     parser.add_argument("--seed", type=int, default=19)
+    parser.add_argument("--dataset-kind", choices=["synthetic", "user_supplied_unverified"],
+                        default="user_supplied_unverified")
     parser.add_argument("--json-out", help="Write aggregate result to new JSON file; never overwrite")
     args = parser.parse_args(argv)
     try:
         if args.json_out and Path(args.json_out).exists():
             raise EvaluationError("Refusing to overwrite an existing report")
-        result = evaluate(args.input, sample=args.sample, queries=args.queries, seed=args.seed)
+        result = evaluate(args.input, sample=args.sample, queries=args.queries,
+                          seed=args.seed, dataset_kind=args.dataset_kind)
         output = json.dumps(result, indent=2, allow_nan=False) + "\n"
         if args.json_out:
             with Path(args.json_out).open("x", encoding="utf-8") as stream:
