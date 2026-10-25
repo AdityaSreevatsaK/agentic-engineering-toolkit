@@ -48,7 +48,8 @@ jobs:
       - name: Install independent portable provider contract
         run: python -m pip install -e "./packages/agent-provider-contract[dev]"
       - name: Test provider protocol and fake local Ollama transport
-        run: python -m pytest packages/agent-provider-contract/tests -q
+        timeout-minutes: 5
+        run: python -m pytest packages/agent-provider-contract/tests -vv --tb=short -s
       - name: Test provider contract bridge against generated mock app
         run: python -m pytest examples/provider-portability-demo -q
       - name: Build portable provider contract wheel
