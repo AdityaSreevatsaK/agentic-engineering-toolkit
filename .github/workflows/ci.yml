@@ -71,6 +71,15 @@ jobs:
           path: m7-demo-results.json
           if-no-files-found: error
           retention-days: 14
+      - name: Evaluate generated agent against synthetic Olist-shaped records
+        run: python scripts/evaluate_olist.py --input tests/fixtures/olist_orders_synthetic.csv --sample 8 --queries 8 --seed 19 --dataset-kind synthetic --json-out m9-olist-synthetic.json
+      - name: Retain clearly labeled synthetic order evaluation
+        uses: actions/upload-artifact@v4
+        with:
+          name: m9-synthetic-olist-${{ matrix.os }}-py${{ matrix.python-version }}
+          path: m9-olist-synthetic.json
+          if-no-files-found: error
+          retention-days: 14
       - name: Generate Ollama project (no model download)
         run: python -m aet_scaffolder new ollama-demo --output-dir . --provider ollama --model llama3.2:1b
       - name: Doctor-check Ollama project
