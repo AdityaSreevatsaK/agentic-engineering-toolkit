@@ -4,3 +4,5 @@ AET_PROVIDER=__PROVIDER__
 AET_OLLAMA_MODEL=__OLLAMA_MODEL__
 AET_OLLAMA_BASE_URL=http://127.0.0.1:11434
 AET_OLLAMA_TIMEOUT_SECONDS=90
+# Structured request logs; never includes request bodies or secrets.
+AET_LOG_LEVEL=INFO
