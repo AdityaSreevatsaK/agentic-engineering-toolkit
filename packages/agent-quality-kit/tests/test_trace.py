@@ -61,4 +61,4 @@ def test_reject_inconsistent_outcome():
 
 def test_fail_fast_for_invalid_function():
     with pytest.raises(TypeError):
-        ToolTrace().invoke("missing", object)
+        ToolTrace().invoke("missing", object())
