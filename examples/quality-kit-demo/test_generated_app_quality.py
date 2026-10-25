@@ -20,7 +20,7 @@ from app.main import app
 def test_real_generated_workflow_calls_synthetic_tool(monkeypatch, agent_trace):
     original = workflow.get_order_status
 
-    def spy(*, order_id):
+    def spy(order_id):
         return agent_trace.invoke("get_order_status", original, order_id=order_id)
 
     monkeypatch.setattr(workflow, "get_order_status", spy)
@@ -38,7 +38,7 @@ def test_real_generated_workflow_calls_synthetic_tool(monkeypatch, agent_trace):
 def test_fallback_skips_order_tool(monkeypatch, agent_trace):
     original = workflow.get_order_status
 
-    def spy(*, order_id):
+    def spy(order_id):
         return agent_trace.invoke("get_order_status", original, order_id=order_id)
 
     monkeypatch.setattr(workflow, "get_order_status", spy)
