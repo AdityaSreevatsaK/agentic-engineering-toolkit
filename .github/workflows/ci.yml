@@ -58,6 +58,15 @@ jobs:
         run: python -c "import glob, subprocess, sys; wheels=glob.glob('provider-wheelhouse/*.whl'); assert len(wheels)==1, wheels; subprocess.check_call([sys.executable, '-m', 'pip', 'install', '--force-reinstall', '--no-deps', wheels[0]])"
       - name: Verify contract tests with packaged wheel
         run: python -m pytest packages/agent-provider-contract/tests -q
+      - name: Run offline M7 three-asset acceptance demo
+        run: python scripts/run_demo.py --json-out m7-demo-results.json
+      - name: Retain sanitized M7 demo evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: m7-demo-${{ matrix.os }}-py${{ matrix.python-version }}
+          path: m7-demo-results.json
+          if-no-files-found: error
+          retention-days: 14
       - name: Generate Ollama project (no model download)
         run: python -m aet_scaffolder new ollama-demo --output-dir . --provider ollama --model llama3.2:1b
       - name: Doctor-check Ollama project
