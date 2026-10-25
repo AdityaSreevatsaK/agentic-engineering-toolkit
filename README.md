@@ -64,3 +64,15 @@ python scripts/run_demo.py
 The demo generates a temporary project and verifies its endpoints, synthetic tool execution, Quality Kit assertions, typed mock provider, legacy bridge and **fake** Ollama transport. It makes no live model or cloud requests. CI runs the exact script on Windows/Linux Python 3.11/3.12 and retains a sanitized result artifact.
 
 Review [M7 setup and acceptance criteria](docs/demo/README.md) and the [blank independent engineering review checklist](docs/demo/reviewer-checklist.md). No human productivity savings, actual cloud integration, or team adoption are claimed.
+
+## M8: Approved engineering pilot preparation
+
+The [M8 pilot packet](docs/pilot/README.md) describes organizational approval gates, independent reproducibility reviews, counterbalanced manual/toolkit trials, and local-only impact analysis. The [KRA evidence register](docs/pilot/kra_evidence_register.md) separates CI-verified engineering from **uncollected** external adoption or developer productivity results.
+
+Try the analyzer safely on the empty template:
+
+```powershell
+python scripts/analyze_pilot.py --input docs/pilot/trials-template.csv
+```
+
+It returns `no_data` until approved, real observations are collected. Do not upload participant-level results or employer information to this personal repository. The M8 CI checks use synthetic fixture records only.
