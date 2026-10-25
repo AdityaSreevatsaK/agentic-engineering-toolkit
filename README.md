@@ -88,3 +88,14 @@ python scripts/evaluate_olist.py --input tests/fixtures/olist_orders_synthetic.c
 ```
 
 CI results demonstrate integration against synthetic Olist-shaped records, **not results on real Olist orders or real-world developer productivity**.
+
+## M10: Real official public dataset evaluation
+
+NYC Open Data permits public dataset reuse under its portal policies. M10 evaluates the [official NYC 311 public service-request dataset](https://data.cityofnewyork.us/d/erm2-nwe9) without storing request-level records in Git. The evaluator fetches only public request IDs and status labels and uses an ephemeral generated FastAPI/LangGraph workflow to measure exact status lookup and in-process request latency.
+
+```powershell
+python scripts/evaluate_nyc311.py --synthetic-input tests/fixtures/nyc311_synthetic.json --queries 6
+python scripts/evaluate_nyc311.py --live --limit 120 --queries 100
+```
+
+See [M10 evidence and limitations](docs/evaluation/nyc311.md). CI verifies synthetic fixtures on all four OS/Python combinations and executes a *separate, explicitly labeled real-data test* on Ubuntu Python 3.11. These tests measure deterministic software behavior **not** human productivity or language model quality.
