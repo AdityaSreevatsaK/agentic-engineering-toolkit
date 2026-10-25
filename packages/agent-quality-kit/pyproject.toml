@@ -1,0 +1,23 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "aet-agent-quality"
+version = "0.1.0"
+description = "Standalone deterministic agent tool trace and output contract assertions"
+requires-python = ">=3.11"
+license = { text = "Proprietary" }
+authors = [{ name = "Agentic Engineering Toolkit Contributors" }]
+
+[project.optional-dependencies]
+dev = ["pytest>=8,<10"]
+
+[project.entry-points.pytest11]
+aet_quality = "aet_quality.pytest_plugin"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
