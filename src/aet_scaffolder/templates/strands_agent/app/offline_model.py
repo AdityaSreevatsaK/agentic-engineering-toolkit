@@ -50,9 +50,9 @@ class OfflineModel(Model):
             )
             match = _ORDER.fullmatch(question)
             if match:
-                yield {"contentBlockStart": {"start": {
+                yield {"contentBlockStart": {"start": {"toolUse": {
                     "toolUseId": "offline-tool-1", "name": "get_order_status"
-                }}}
+                }}}}
                 yield {"contentBlockDelta": {"delta": {
                     "toolUse": {"input": json.dumps({"order_id": match.group(1).upper()})}
                 }}}
