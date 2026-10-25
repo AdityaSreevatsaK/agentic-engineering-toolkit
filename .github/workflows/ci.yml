@@ -80,6 +80,27 @@ jobs:
           path: m9-olist-synthetic.json
           if-no-files-found: error
           retention-days: 14
+      - name: Run synthetic NYC 311 status evaluator
+        run: python scripts/evaluate_nyc311.py --synthetic-input tests/fixtures/nyc311_synthetic.json --queries 6 --json-out m10-nyc311-synthetic.json
+      - name: Save clearly labeled synthetic NYC 311 results
+        uses: actions/upload-artifact@v4
+        with:
+          name: m10-nyc311-synthetic-${{ matrix.os }}-py${{ matrix.python-version }}
+          path: m10-nyc311-synthetic.json
+          if-no-files-found: error
+          retention-days: 14
+      - name: Evaluate live official NYC 311 public status data
+        if: matrix.os == 'ubuntu-latest' && matrix.python-version == '3.11'
+        timeout-minutes: 6
+        run: python scripts/evaluate_nyc311.py --live --limit 120 --queries 100 --json-out m10-nyc311-official.json
+      - name: Retain aggregate official NYC 311 evaluation evidence
+        if: matrix.os == 'ubuntu-latest' && matrix.python-version == '3.11'
+        uses: actions/upload-artifact@v4
+        with:
+          name: m10-nyc311-official-py3.11
+          path: m10-nyc311-official.json
+          if-no-files-found: error
+          retention-days: 14
       - name: Generate Ollama project (no model download)
         run: python -m aet_scaffolder new ollama-demo --output-dir . --provider ollama --model llama3.2:1b
       - name: Doctor-check Ollama project
