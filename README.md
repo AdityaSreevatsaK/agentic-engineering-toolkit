@@ -1,6 +1,6 @@
 # Agentic Engineering Toolkit (AET)
 
-**Status:** M3 release-hardening prototype; not production-ready. **Privacy:** Keep this repository private.
+**Status:** M4 evidence-collection prototype; not production-ready. **Privacy:** Keep this repository private.
 
 A local-first scaffolder for creating testable FastAPI + LangGraph agent projects. Configure deterministic mock responses or optional local Ollama text generation. **Core functionality does not require WSL, Docker, or cloud accounts.**
 
@@ -46,3 +46,7 @@ To run inference, install Ollama separately, download your chosen model (for exa
 Private GitHub Actions checks generate, inspect, install, and test both provider variants on Windows and Linux, Python 3.11 and 3.12. M3 also builds a wheel, installs it (not editable), generates another project from the packaged templates, and validates it with `agentkit doctor`. This specifically guards against missing template files in built distributions.
 
 The repository is private; avoid committing real secrets or proprietary/client data without approval. The development API is unauthenticated and should not be exposed publicly. Ollama provides text responses only; model-driven tool selection, enterprise security and cloud portability remain out of scope.
+
+## M4: Measured generator performance
+
+Run `agentkit-benchmark --runs 10 --warmups 2 --provider mock --json-out timings.json --csv-out timings.csv` to measure project generation and static validation locally. See `docs/benchmarks/study_protocol.md` for the separate human developer comparison. **No developer time savings have been established yet.**

@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "aet-scaffolder"
-version = "0.3.0"
+version = "0.4.0"
 description = "Local-first agent project scaffolder"
 requires-python = ">=3.11"
 license = { text = "Proprietary" }
@@ -12,6 +12,7 @@ authors = [{ name = "Agentic Engineering Toolkit Contributors" }]
 
 [project.scripts]
 agentkit = "aet_scaffolder.cli:main"
+agentkit-benchmark = "aet_scaffolder.benchmark_cli:main"
 
 [tool.setuptools.packages.find]
 where = ["src"]
