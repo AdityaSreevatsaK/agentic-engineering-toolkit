@@ -1,17 +1,27 @@
-# Agentic Engineering Toolkit (AET)
+# AET: Agent Project Scaffolder
 
-**Status:** M7 three-asset offline demonstration; not production-ready. **Privacy:** This repository must remain private.
+**Status:** Working local-first engineering prototype; **not** a production-ready agent platform.
+**Access:** Public source repository. Publication does not imply production readiness or permission to include client data, employer-owned code, credentials or secrets.
 
-Three independently installable developer-facing building blocks:
-1. **Agent Project Scaffolder** — native-Windows-compatible FastAPI/LangGraph generation, deterministic tool-routing example, optional local Ollama text provider, project doctor and microbenchmark.
-2. **Agent Quality Kit** — deterministic tool traces, assertion helpers, output contracts and pytest integration, independent of agent frameworks.
-3. **Portable Provider Contract** — typed text-only inference protocol, deterministic mock, loopback-only Ollama adapter and a bridge to existing generated projects. It has no mandatory SDK dependencies.
+AET is a **project scaffolder for Python agent applications**. It generates self-contained starter projects that engineers can run, test and adapt. Its job is to reduce repeated project setup work and establish consistent application foundations, not to evaluate model quality or operate production infrastructure.
 
-## Agent Project Scaffolder
+The separate **Agent Engineering Accelerator (AEA)** owns LLM/agent evaluation, regression analysis, statistical testing, LLM judging and quality gates. AET does not recreate those functions, and does not currently depend on AEA.
 
-From this repository, with Python 3.11+:
+## What AET generates today
 
-```powershell
+| Template | Status | Generated application | Providers |
+| --- | --- | --- | --- |
+| tool-agent | Working prototype | FastAPI + LangGraph with deterministic synthetic order-status routing | Mock (offline), optional local Ollama |
+| langgraph-rag | Planned M12 | Runnable LangGraph retrieval-augmented application | To be defined and tested |
+| strands-agent | Planned M13 | Runnable AWS Strands agent reference | To be defined and tested |
+
+The current tool-agent is **not** an autonomous tool-planning agent. Its order routing is deterministic. No cloud account, paid model, Docker or WSL is needed for the mock path. The generated API has no authentication and must not be exposed publicly.
+
+## Start here
+
+Python 3.11+ on Windows or Linux:
+
+~~~powershell
 python -m pip install -e .
 agentkit list
 agentkit new demo-agent --provider mock
@@ -20,84 +30,59 @@ cd demo-agent
 python -m pip install -e ".[dev]"
 python -m pytest -q
 python -m uvicorn app.main:app --reload
-```
+~~~
 
-Try `http://127.0.0.1:8000/docs` and `POST /invoke` with `{"question":"order status ORD-1001"}`. This uses entirely synthetic data. For optional local inference, see `agentkit new local-agent --provider ollama --model llama3.2:1b`. Real inference requires a separate local Ollama install/model download.
+Open http://127.0.0.1:8000/docs and send POST /invoke with the body:
 
-## Standalone Agent Quality Kit
+~~~json
+{"question": "order status ORD-1001"}
+~~~
 
-```powershell
-python -m pip install -e "./packages/agent-quality-kit[dev]"
-python -m pytest packages/agent-quality-kit/tests -q
-```
+The tool path looks up only fabricated local order statuses. Other prompts use a deterministic mock response by default. To generate an optional local Ollama project:
 
-[Quality Kit documentation](packages/agent-quality-kit/README.md); independent generated-app integration in `examples/quality-kit-demo`.
+~~~powershell
+agentkit new local-agent --provider ollama --model llama3.2:1b
+~~~
 
-## Portable Provider Contract (M6)
+Real model responses require independently installing and running Ollama with the named model. Automated tests mock its HTTP interactions; no model download is required in CI.
 
-```powershell
-python -m pip install -e "./packages/agent-provider-contract[dev]"
-python -m pytest packages/agent-provider-contract/tests -q
-```
+## Commands and compatibility
 
-[Provider package reference](packages/agent-provider-contract/README.md) and [architecture mapping](docs/architecture/provider-portability.md). The AWS, Azure and Google Cloud sections are **proposals**, not integrated or tested cloud backends. CI tests the mock and fake local Ollama provider, and a compatibility bridge to generated projects.
+| Command | Purpose |
+| --- | --- |
+| agentkit list | Show registered templates and supported providers |
+| agentkit new NAME [--template tool-agent] [--provider mock or ollama] | Create a project without overwriting an existing path |
+| agentkit doctor PATH [--json] | Read-only structure, configuration and Python syntax checks |
+| agentkit-benchmark --runs 10 --warmups 2 | Measure local generation and validation timings |
 
-## Developer productivity evidence
+Generated projects include a small .aet-template.json manifest so Doctor selects the correct registered template profile. **Older projects without the manifest continue to use the original tool-agent validation profile.** The existing CLI entry points, defaults and package name (aet-scaffolder) are retained.
 
-`agentkit-benchmark --runs 10 --warmups 2 --provider mock` reports file generation and static validation timings. This does **not** measure saved developer effort; see `docs/benchmarks/study_protocol.md` for the controlled study design.
+Doctor does not install dependencies, run untrusted generated Python code, validate real model behaviour or certify security. The benchmark measures file generation and static validation, **not developer hours saved**.
 
-## Verification and restrictions
+## Engineering foundations and planned scope
 
-Private GitHub Actions tests all three independently installable packages, generated project behavior and installed wheels across Windows/Linux Python 3.11/3.12. **No cloud accounts, paid APIs, model downloads or WSL are needed for the standard CI matrix.** All fixtures are synthetic. The generated HTTP API has no authentication and must not be exposed publicly; never commit real credentials, client material or employer-owned code without permission.
+- **M11:** Align the active product around scaffolding; introduce a template registry, backwards-compatible validation and clear asset boundaries.
+- **M12:** Add a genuine working LangGraph RAG starter with local/mock verification.
+- **M13:** Add a genuine working AWS Strands starter, with offline test doubles where cloud access is unavailable.
+- **M14:** Improve generated applications' configuration, structured logging, error-handling, CI and deployment foundations.
 
-## M7: One-command acceptance demonstration
+See [roadmap](docs/roadmap.md), [M11 decision record](docs/decisions/0011-scaffolder-focus.md) and [legacy assets](docs/legacy-assets.md).
 
-After cloning this private repository, install the three assets and their local demo dependencies:
+## Verification
 
-```powershell
-python -m pip install -e ".[demo]"
-python -m pip install -e "./packages/agent-quality-kit"
-python -m pip install -e "./packages/agent-provider-contract"
-python scripts/run_demo.py
-```
+GitHub Actions runs a four-job matrix: Windows/Linux, Python 3.11/3.12. It verifies the scaffolder, generated applications, distribution wheels, and historical independent packages and integrations to protect backwards compatibility.
 
-The demo generates a temporary project and verifies its endpoints, synthetic tool execution, Quality Kit assertions, typed mock provider, legacy bridge and **fake** Ollama transport. It makes no live model or cloud requests. CI runs the exact script on Windows/Linux Python 3.11/3.12 and retains a sanitized result artifact.
+~~~powershell
+python -m pip install -e . pytest
+python -m pytest tests -q
+~~~
 
-Review [M7 setup and acceptance criteria](docs/demo/README.md) and the [blank independent engineering review checklist](docs/demo/reviewer-checklist.md). No human productivity savings, actual cloud integration, or team adoption are claimed.
+Tests for a freshly generated application live inside that application. CI verifies the mock and Ollama-generated projects without external credentials.
 
-## M8: Approved engineering pilot preparation
+## Historical work (M1-M10)
 
-The [M8 pilot packet](docs/pilot/README.md) describes organizational approval gates, independent reproducibility reviews, counterbalanced manual/toolkit trials, and local-only impact analysis. The [KRA evidence register](docs/pilot/kra_evidence_register.md) separates CI-verified engineering from **uncollected** external adoption or developer productivity results.
+Earlier AET milestones also delivered an independently packaged Agent Quality Kit, Portable Provider Contract, integration demonstrations, pilot protocols and public-data evaluation. Those are **preserved for provenance and regression compatibility**, but are not active AET product lines. AEA, maintained separately, is the intended evaluation product.
 
-Try the analyzer safely on the empty template:
+The official NYC 311 test verified deterministic generated-app routing against 100 selected public statuses on 25 October 2026, but did not assess semantic agent intelligence or developer productivity. The source and qualifications remain in [historical evaluation evidence](docs/evaluation/nyc311-verified-results-2026-10-25.md).
 
-```powershell
-python scripts/analyze_pilot.py --input docs/pilot/trials-template.csv
-```
-
-It returns `no_data` until approved, real observations are collected. Do not upload participant-level results or employer information to this personal repository. The M8 CI checks use synthetic fixture records only.
-
-## M9: Optional public order-status dataset evaluation
-
-An [offline Olist-compatible order-status evaluator](docs/evaluation/README.md) can test actual generated FastAPI/LangGraph routing, tool calls, exact-match status lookup, unknown IDs and local request latency against a CSV supplied by the developer.
-
-The original [Olist dataset](https://www.kaggle.com/datasets/olistbr/brazilian-ecommerce) uses **CC BY-NC-SA 4.0**, so evaluate it only in a permitted context after checking licensing. **No original Olist rows are downloaded or committed by the toolkit.** For CI, use the entirely fabricated fixture:
-
-```powershell
-python scripts/evaluate_olist.py --input tests/fixtures/olist_orders_synthetic.csv --sample 8 --queries 8 --dataset-kind synthetic
-```
-
-CI results demonstrate integration against synthetic Olist-shaped records, **not results on real Olist orders or real-world developer productivity**.
-
-## M10: Real official public dataset evaluation
-
-NYC Open Data permits public dataset reuse under its portal policies. M10 evaluates the [official NYC 311 public service-request dataset](https://data.cityofnewyork.us/d/erm2-nwe9) without storing request-level records in Git. The evaluator fetches only public request IDs and status labels and uses an ephemeral generated FastAPI/LangGraph workflow to measure exact status lookup and in-process request latency.
-
-```powershell
-python scripts/evaluate_nyc311.py --synthetic-input tests/fixtures/nyc311_synthetic.json --queries 6
-python scripts/evaluate_nyc311.py --live --limit 120 --queries 100
-```
-
-See [M10 evidence and limitations](docs/evaluation/nyc311.md). CI verifies synthetic fixtures on all four OS/Python combinations and executes a *separate, explicitly labeled real-data test* on Ubuntu Python 3.11. These tests measure deterministic software behavior **not** human productivity or language model quality.
-
-**Verified public-data result (October 25, 2026):** The official NYC 311 evaluation retrieved 120 records and reproduced 100/100 selected statuses, with median 2.255 ms and p95 2.524 ms in-process lookup latency. These are deterministic test-workflow metrics—not LLM reasoning, general-population accuracy or developer time saved. See [recorded GitHub CI evidence](docs/evaluation/nyc311-verified-results-2026-10-25.md).
+**Business impact is not yet proven:** multi-team adoption, independently reproduced onboarding gains, measured time savings, employer approval and production usage require separate evidence. Do not claim these from passing CI or synthetic demos.

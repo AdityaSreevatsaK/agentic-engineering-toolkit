@@ -1,7 +1,16 @@
 name: ci
+# Run one matrix per PR update; test the final integrated commit on master.
 on:
   push:
+    branches: [master]
   pull_request:
+    branches: [master]
+
+# Cancel stale PR runs when a newer commit arrives, without removing any CI jobs.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 permissions:
   contents: read
 jobs:

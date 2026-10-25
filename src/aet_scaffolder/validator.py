@@ -1,30 +1,28 @@
 """Read-only, dependency-free verification of generated project structure.
 
-The doctor command parses source without importing or executing generated modules.
-It can validate generated projects even if their dependencies are not installed.
+Project manifests select the registered validation profile. Projects generated
+before M11 have no manifest and retain the original tool-agent validation.
+Doctor parses source without importing or executing generated modules.
 """
 from __future__ import annotations
 
+import json
 import tomllib
 from dataclasses import asdict, dataclass
 from pathlib import Path
 
-REQUIRED_FILES = (
-    "README.md",
-    ".gitignore",
-    ".env.example",
-    "pyproject.toml",
-    "app/__init__.py",
-    "app/config.py",
-    "app/main.py",
-    "app/providers.py",
-    "app/tools.py",
-    "app/workflow.py",
-    "tests/test_app.py",
-    "tests/test_providers.py",
-    "tests/test_tools.py",
+from .registry import (
+    DEFAULT_TEMPLATE,
+    MANIFEST_FILE,
+    MANIFEST_VERSION,
+    TemplateSpec,
+    get_template,
 )
-REQUIRED_DEPENDENCIES = {"fastapi", "langgraph", "uvicorn", "pydantic-settings"}
+
+# Public legacy constants remain available for existing integrations.
+_LEGACY_SPEC = get_template(DEFAULT_TEMPLATE)
+REQUIRED_FILES = _LEGACY_SPEC.required_files
+REQUIRED_DEPENDENCIES = set(_LEGACY_SPEC.required_dependencies)
 
 
 @dataclass(frozen=True)
@@ -64,6 +62,26 @@ def _text_file(root: Path, relative: str) -> str:
     return file.read_text(encoding="utf-8")
 
 
+def _resolve_template(root: Path) -> tuple[TemplateSpec, Check]:
+    marker = root / MANIFEST_FILE
+    if not marker.exists() and not marker.is_symlink():
+        return _LEGACY_SPEC, Check(
+            "template_identity",
+            True,
+            f"Legacy project without manifest; using {DEFAULT_TEMPLATE} validation",
+        )
+    data = json.loads(_text_file(root, MANIFEST_FILE))
+    if not isinstance(data, dict) or type(data.get("schema_version")) is not int:
+        raise ValueError("Invalid template manifest structure or schema version")
+    if data["schema_version"] != MANIFEST_VERSION:
+        raise ValueError(f"Unsupported template manifest version: {data['schema_version']}")
+    name = data.get("template")
+    if not isinstance(name, str):
+        raise ValueError("Template manifest needs a string template name")
+    spec = get_template(name)
+    return spec, Check("template_identity", True, f"Registered template: {spec.name}")
+
+
 def validate_project(path: str | Path) -> ValidationReport:
     """Inspect expected files, metadata, and Python syntax without running code."""
     root = Path(path).expanduser().absolute()
@@ -72,7 +90,14 @@ def validate_project(path: str | Path) -> ValidationReport:
         checks.append(Check("project_directory", False, "Project directory is missing or is a symbolic link"))
         return ValidationReport(str(root), tuple(checks))
 
-    for relative in REQUIRED_FILES:
+    try:
+        spec, identity_check = _resolve_template(root)
+        checks.append(identity_check)
+    except (OSError, UnicodeError, ValueError, TypeError) as exc:
+        checks.append(Check("template_identity", False, str(exc)))
+        return ValidationReport(str(root), tuple(checks))
+
+    for relative in spec.required_files:
         try:
             _text_file(root, relative)
         except (ValueError, OSError, UnicodeError) as exc:
@@ -93,7 +118,7 @@ def validate_project(path: str | Path) -> ValidationReport:
             dep.split(">")[0].split("<")[0].split("=")[0].split("!")[0].split("[")[0].strip().lower()
             for dep in dependencies if isinstance(dep, str)
         }
-        missing = sorted(REQUIRED_DEPENDENCIES - installed)
+        missing = sorted(spec.required_dependencies - installed)
         if missing:
             raise ValueError("Missing generated app dependencies: " + ", ".join(missing))
         checks.append(Check("project_metadata", True, f"Valid metadata for {name}"))
@@ -102,11 +127,14 @@ def validate_project(path: str | Path) -> ValidationReport:
 
     try:
         config = _text_file(root, ".env.example")
-        fields = ("AET_PROVIDER=", "AET_OLLAMA_MODEL=", "AET_OLLAMA_BASE_URL=")
-        missing = [field for field in fields if not any(line.startswith(field) for line in config.splitlines())]
+        missing = [
+            field
+            for field in spec.required_env_fields
+            if not any(line.startswith(field) for line in config.splitlines())
+        ]
         if missing:
             raise ValueError("Missing sample configuration: " + ", ".join(missing))
-        checks.append(Check("sample_configuration", True, "Provider settings documented"))
+        checks.append(Check("sample_configuration", True, "Template settings documented"))
     except (OSError, UnicodeError, ValueError) as exc:
         checks.append(Check("sample_configuration", False, str(exc)))
 
