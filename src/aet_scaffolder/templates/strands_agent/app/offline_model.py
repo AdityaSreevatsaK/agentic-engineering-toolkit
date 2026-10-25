@@ -39,7 +39,7 @@ class OfflineModel(Model):
         if results:
             response_parts = results[0].get("content", [])
             response = next((part["text"] for part in response_parts if "text" in part), "No result")
-            yield {"contentBlockStart": {}}
+            yield {"contentBlockStart": {"start": {}}}
             yield {"contentBlockDelta": {"delta": {"text": response}}}
             yield {"contentBlockStop": {}}
             yield {"messageStop": {"stopReason": "end_turn"}}
@@ -59,7 +59,7 @@ class OfflineModel(Model):
                 yield {"contentBlockStop": {}}
                 yield {"messageStop": {"stopReason": "tool_use"}}
             else:
-                yield {"contentBlockStart": {}}
+                yield {"contentBlockStart": {"start": {}}}
                 yield {"contentBlockDelta": {"delta": {
                     "text": "Offline Strands demo: ask 'order status ORD-1001' to execute the synthetic tool."
                 }}}
