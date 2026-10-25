@@ -1,7 +1,6 @@
 """HTTP interface for the local-first Strands example. Not public-facing."""
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel, Field
-from pydantic_settings import SettingsError
 
 from .agent import run_agent
 from .config import get_settings

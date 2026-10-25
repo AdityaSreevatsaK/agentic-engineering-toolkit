@@ -140,6 +140,26 @@ jobs:
       - name: Test Ollama RAG with mocked transport
         run: python -m pytest -q
         working-directory: rag-ollama-demo
+      - name: Generate offline AWS Strands SDK agent
+        run: python -m aet_scaffolder new strands-demo --template strands-agent --provider mock --output-dir .
+      - name: Doctor-check Strands mock project
+        run: python -m aet_scaffolder doctor strands-demo --json
+      - name: Install Strands mock app
+        run: python -m pip install -e ".[dev]"
+        working-directory: strands-demo
+      - name: Exercise real Strands SDK offline tool calls and fake Bedrock config
+        run: python -m pytest -q
+        working-directory: strands-demo
+      - name: Generate Bedrock-configured Strands project (no cloud calls)
+        run: python -m aet_scaffolder new strands-bedrock-demo --template strands-agent --provider bedrock --output-dir .
+      - name: Doctor-check Strands Bedrock project
+        run: python -m aet_scaffolder doctor strands-bedrock-demo --json
+      - name: Install Strands Bedrock-mode project
+        run: python -m pip install -e ".[dev]"
+        working-directory: strands-bedrock-demo
+      - name: Verify Bedrock wiring with injected offline SDK model
+        run: python -m pytest -q
+        working-directory: strands-bedrock-demo
       - name: Build standalone wheel
         run: python -m pip wheel . --no-deps --wheel-dir wheelhouse
       - name: Install the packaged wheel (not editable)
@@ -152,5 +172,9 @@ jobs:
         run: python -m aet_scaffolder new packaged-rag --template langgraph-rag --output-dir .
       - name: Doctor-check wheel-generated RAG project
         run: python -m aet_scaffolder doctor packaged-rag --json
+      - name: Confirm packaged wheel bundles AWS Strands template
+        run: python -m aet_scaffolder new packaged-strands --template strands-agent --output-dir .
+      - name: Doctor-check wheel-generated Strands project
+        run: python -m aet_scaffolder doctor packaged-strands --json
       - name: Benchmark local project generation (not human time saved)
         run: python -m aet_scaffolder.benchmark_cli --runs 3 --warmups 1 --provider mock
