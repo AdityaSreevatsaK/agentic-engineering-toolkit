@@ -9,6 +9,17 @@ The separate **Agent Engineering Accelerator (AEA)** owns LLM/agent evaluation, 
 
 Under Apache 2.0, others may reuse, modify and distribute this code, including commercially, provided they comply with the licence and attribution requirements. The licence does **not** guarantee production readiness or cover third-party dependencies under different licences. Each newly scaffolded project includes its own LICENSE and NOTICE.
 
+## M15: Independent developer adoption validation
+
+AET v0.8.0 is a **pilot candidate**, not a proven productivity intervention. Follow the [M15 hand-off kit](docs/adoption/README.md) for an offline machine preflight and a preregistered, independent RAG developer trial. No independent human trial, cross-team adoption or human time-saving claim has yet been demonstrated.
+
+```powershell
+python -m pip install -e .
+python scripts/adoption_preflight.py
+```
+
+The preflight checks generated project structure, local configuration, Project Doctor, licences and per-project CI. It **does not** measure developer hours. For any actual independent reviewer, use the [trial instructions](docs/adoption/independent-trial.md) and private [blank observation form](docs/adoption/reviewer-notes-template.md). For promotion evidence, see the [evidence register](docs/adoption/evidence-register.md).
+
 ## What AET generates today
 
 | Template | Status | Generated application | Providers |
