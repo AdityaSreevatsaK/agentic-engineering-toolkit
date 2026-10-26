@@ -1,5 +1,7 @@
 # Agentic Engineering Toolkit — KRA evidence register
 
+> Historical record frozen at its original date. AET later became a public Apache-2.0-licensed project and gained three runnable templates. See the [current M15 evidence register](../adoption/evidence-register.md). Previous statements that the repository is private refer to its earlier state, not the present.
+
 **Snapshot:** 25 October 2026. Engineering implementation evidence is from the private GitHub repository; no external reviewers, company adoption, production use, human productivity time savings or cloud integrations have been substantiated yet.
 
 ## Verified engineering deliveries

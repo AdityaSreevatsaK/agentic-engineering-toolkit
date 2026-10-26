@@ -1,5 +1,7 @@
 # M8 — Engineering pilot and impact validation
 
+> Historical M8 protocol. The repository is now **public** and Apache-2.0 licensed; statements below about private-only access describe its earlier state. For the current three-template scaffolder, begin with the [M15 hand-off kit](../adoption/README.md). No independent human validation has been performed.
+
 **State: pilot-ready materials, NOT a conducted pilot.** All participant and productivity evidence fields remain blank unless an independent, approved reviewer actually supplies observations. The repository is private; do not upload employer/client content or identifiable reviewer records.
 
 ## Phase 0 — Authorization before invitations

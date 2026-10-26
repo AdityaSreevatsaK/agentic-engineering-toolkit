@@ -52,7 +52,7 @@ Use `http://127.0.0.1:8000/docs` to submit **POST /ask** with this JSON:
 
 Expected: HTTP 200, `source_ids` includes `returns`, and the answer mentions the 30-day sample policy. No live model is contacted in mock mode.
 
-Stop the server if necessary, then append exactly this **synthetic** line to `pilot-rag/data/knowledge.jsonl`:
+Stop the server if necessary, then append exactly this **synthetic** line to `data/knowledge.jsonl`:
 
 ```json
 {"id":"violet-manual","text":"Violet reference manuals are indexed on Thursday."}
