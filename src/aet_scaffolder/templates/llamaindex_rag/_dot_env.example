@@ -1,0 +1,20 @@
+# M18: default mock is offline and never calls an API.
+AET_PROVIDER=__PROVIDER__
+AET_KNOWLEDGE_PATH=data/knowledge.jsonl
+AET_TOP_K=2
+AET_LOG_LEVEL=INFO
+# Optional local inference (uses only loopback HTTP).
+AET_OLLAMA_MODEL=__OLLAMA_MODEL__
+AET_OLLAMA_BASE_URL=http://127.0.0.1:11434
+# Optional billable providers: install the matching optional dependency.
+AET_OPENAI_MODEL=
+AET_AZURE_OPENAI_MODEL=
+AET_AZURE_OPENAI_DEPLOYMENT=
+AET_AZURE_OPENAI_ENDPOINT=
+AET_AZURE_OPENAI_API_VERSION=
+AET_ANTHROPIC_MODEL=
+AET_BEDROCK_MODEL_ID=
+AET_AWS_REGION=
+AET_MODEL_TIMEOUT_SECONDS=90
+# SDK credentials are read from secure process environment / IAM role / profile,
+# never from this example. Do not commit any real secret values.

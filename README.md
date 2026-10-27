@@ -27,6 +27,7 @@ The preflight checks generated project structure, local configuration, Project D
 | tool-agent | Working prototype | FastAPI + LangGraph with deterministic synthetic order-status routing | Mock, Ollama, OpenAI, Azure OpenAI, Anthropic, AWS Bedrock |
 | langgraph-rag | M16 provider-ready starter | LangGraph BM25 retrieval with evidence-constrained chat synthesis | Mock, Ollama, OpenAI, Azure OpenAI, Anthropic, AWS Bedrock |
 | strands-agent | M17 provider-ready starter | Real Strands Agent with synthetic tool, deterministic SDK offline model and native cloud integrations | Mock, AWS Bedrock, OpenAI, Azure OpenAI, Anthropic |
+| llamaindex-rag | M18 reference implementation | Native LlamaIndex keyword index, offline source retrieval, optional provider synthesis | Mock, Ollama, OpenAI, Azure OpenAI, Anthropic, Bedrock |
 
 The current tool-agent is **not** an autonomous tool-planning agent. Its order routing is deterministic. No cloud account, paid model, Docker or WSL is needed for the mock path. The generated API has no authentication and must not be exposed publicly.
 
@@ -72,6 +73,19 @@ python -m uvicorn app.main:app --reload
 
 Then submit `POST /ask` with `{"question":"What is the return policy?"}`. The bundled corpus uses invented policies and a real BM25 lexical retriever, followed by a **deterministic mock answer** quoting retrieved evidence. Optional `--provider ollama` or a supported cloud mode enables model synthesis over that evidence. It is **not** a semantic-vector search template, a claim of model correctness, or a production-secure service. The generated README documents bounded local file ingestion and its limits.
 
+## Generate a native LlamaIndex RAG starter (M18)
+
+~~~powershell
+agentkit new my-llamaindex --template llamaindex-rag --provider mock
+agentkit doctor my-llamaindex
+cd my-llamaindex
+python -m pip install -e ".[dev]"
+python -m pytest -q
+python -m uvicorn app.main:app --host 127.0.0.1
+~~~
+
+The generated application uses LlamaIndex `SimpleKeywordTableIndex` and native simple keyword retrieval against a bounded synthetic JSONL corpus. Offline mock mode quotes retrieved evidence; it is **not model reasoning, semantic retrieval, vector search, or a production-ready knowledge assistant**. OpenAI, Azure OpenAI, Anthropic, Bedrock and loopback Ollama are opt-in with separately installed native LlamaIndex integration packages. Generated source and provider SDKs remain isolated from AEA.
+
 ## M16: Opt-in production-provider integrations
 
 Both LangGraph templates now support `--provider openai`, `azure-openai`, `anthropic` or `bedrock`, in addition to unchanged mock and Ollama modes. For example:
@@ -112,7 +126,7 @@ Configure `AET_OPENAI_MODEL` and supply `OPENAI_API_KEY` securely through the ex
 
 ## Generated application foundations (M14)
 
-All three templates now produce a small, self-contained engineering foundation:
+All four templates now produce a small, self-contained engineering foundation:
 
 | Foundation | Included behaviour |
 | --- | --- |
@@ -146,6 +160,7 @@ Doctor does not install dependencies, run untrusted generated Python code, valid
 - **M14:** Add generated configuration validation, privacy-conscious JSON request logs, readiness, CI and non-root local Docker foundations.
 - **M16:** Add opt-in OpenAI, Azure OpenAI, Anthropic and AWS Bedrock integrations to both LangGraph templates with offline provider tests.
 - **M17:** Add Strands-native OpenAI and Anthropic model integrations and Azure OpenAI via the official client, retaining offline mock and Bedrock.
+- **M18:** Add a fourth native LlamaIndex keyword-RAG scaffold with deterministic offline retrieval, optional native model providers, Doctor validation and four-platform CI.
 
 See [roadmap](docs/roadmap.md), [M11 decision record](docs/decisions/0011-scaffolder-focus.md) and [legacy assets](docs/legacy-assets.md).
 
@@ -158,7 +173,7 @@ python -m pip install -e . pytest
 python -m pytest tests -q
 ~~~
 
-Tests for a freshly generated application live inside that application. CI verifies mock/Ollama-generated projects and tests cloud-provider wiring through local SDK fakes, without cloud credentials or paid API calls.
+Tests for a freshly generated application live inside that application. CI verifies mock/Ollama-generated projects, the native LlamaIndex keyword-retrieval scaffold and cloud-provider wiring through local SDK fakes, without cloud credentials or paid API calls.
 
 ## Historical work (M1-M10)
 

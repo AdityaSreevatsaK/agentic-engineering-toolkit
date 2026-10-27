@@ -2,18 +2,17 @@
 import json
 
 from scripts import adoption_preflight
+from aet_scaffolder.registry import SUPPORTED_TEMPLATES
 
 
-def test_offline_preflight_checks_three_templates():
+def test_offline_preflight_checks_every_registered_template():
     result = adoption_preflight.run_preflight()
     assert result["status"] == "pass"
     assert result["evidence_type"] == "automated_structural_preflight"
     assert result["independent_human_trial"] is False
     assert result["human_time_saved"] is None
     assert result["live_provider_verified"] is False
-    assert {x["template"] for x in result["results"]} == {
-        "tool-agent", "langgraph-rag", "strands-agent"
-    }
+    assert {x["template"] for x in result["results"]} == set(SUPPORTED_TEMPLATES)
     assert all(x["passed"] for x in result["results"])
 
 

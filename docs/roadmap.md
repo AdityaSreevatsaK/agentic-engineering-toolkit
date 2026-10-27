@@ -12,9 +12,11 @@ The reusable asset is the **Agent Project Scaffolder**, not an evaluation framew
 | M16: Cloud LLM providers for LangGraph | Optional OpenAI, Azure OpenAI, Anthropic and AWS Bedrock SDK adapters for both LangGraph templates; mock/Ollama unchanged | Faked SDK/config/API tests, Doctor checks, source packaging and four OS/Python CI jobs; no paid API calls |
 | M17: Strands native cloud models | Strands-native OpenAI and Anthropic and official Azure OpenAI client injection; offline mock and Bedrock retained | Faked SDK construction, real offline Strands tool-loop tests, legacy Doctor checks, generated-app CI and four OS/Python smoke jobs; no paid API calls |
 
+| M18: Native LlamaIndex RAG | Add a separate framework-native keyword retrieval scaffold with offline mode and optional cloud/loopback model synthesis | Generated app exercises real LlamaIndex retrieval, bounded source loading, API contract, fake provider SDKs and all four OS/Python CI jobs |
+
 ## M15 pilot result boundary
 
-The M15 pilot kit is [documented](adoption/README.md) and can be exercised entirely offline, but **independent engineer validation cannot be checked in by the AET author**. The owner must invite real reviewers (with appropriate authorisation) to gather actual outcomes. Existing M4/M8 matched-trial protocols remain the only basis for future developer-time claims. There is no fourth template planned until observed adoption problems justify it.
+The M15 pilot kit is [documented](adoption/README.md) and can be exercised entirely offline, but **independent engineer validation cannot be checked in by the AET author**. The owner must invite real reviewers (with appropriate authorisation) to gather actual outcomes. Existing M4/M8 matched-trial protocols remain the only basis for future developer-time claims. Any further templates should be driven by observed adoption problems and independently validated needs.
 
 ## Work boundaries
 

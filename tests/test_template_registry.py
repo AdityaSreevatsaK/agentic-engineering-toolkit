@@ -11,7 +11,7 @@ from aet_scaffolder.validator import validate_project
 
 def test_registered_tool_agent_metadata():
     spec = get_template("tool-agent")
-    assert SUPPORTED_TEMPLATES == ("tool-agent", "langgraph-rag", "strands-agent")
+    assert SUPPORTED_TEMPLATES == ("tool-agent", "langgraph-rag", "strands-agent", "llamaindex-rag")
     assert spec.directory == "tool_agent"
     assert {"mock", "ollama", "openai", "azure-openai", "anthropic", "bedrock"} == set(spec.providers)
     assert "app/workflow.py" in spec.required_files
@@ -66,6 +66,7 @@ def test_cli_explicit_template_and_list_backward_compatible(tmp_path, capsys):
     assert "Template: tool-agent" in output
     assert "Template: langgraph-rag" in output
     assert "Template: strands-agent" in output
+    assert "Template: llamaindex-rag" in output
     assert "Providers: mock, ollama" in output
     assert main(["new", "example", "--template", "tool-agent", "--output-dir", str(tmp_path)]) == 0
     assert (tmp_path / "example" / MANIFEST_FILE).is_file()

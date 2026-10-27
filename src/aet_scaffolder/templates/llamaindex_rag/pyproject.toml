@@ -1,0 +1,33 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "__PROJECT_NAME__"
+version = "0.1.0"
+description = "Offline-first LlamaIndex keyword RAG reference application"
+requires-python = ">=3.11"
+license = { text = "Apache-2.0" }
+dependencies = [
+    "fastapi>=0.110,<1",
+    "uvicorn>=0.30,<1",
+    "pydantic-settings>=2,<3",
+    "llama-index-core>=0.12,<1",
+]
+
+[project.optional-dependencies]
+dev = ["pytest>=8,<10", "httpx>=0.27,<1"]
+ollama = ["llama-index-llms-ollama>=0.5,<1"]
+openai = ["llama-index-llms-openai>=0.4,<1"]
+azure-openai = ["llama-index-llms-azure-openai>=0.3,<1"]
+anthropic = ["llama-index-llms-anthropic>=0.6,<1"]
+bedrock = ["llama-index-llms-bedrock-converse>=0.5,<1"]
+cloud = [
+    "llama-index-llms-openai>=0.4,<1",
+    "llama-index-llms-azure-openai>=0.3,<1",
+    "llama-index-llms-anthropic>=0.6,<1",
+    "llama-index-llms-bedrock-converse>=0.5,<1",
+]
+
+[tool.setuptools.packages.find]
+include = ["app*"]
