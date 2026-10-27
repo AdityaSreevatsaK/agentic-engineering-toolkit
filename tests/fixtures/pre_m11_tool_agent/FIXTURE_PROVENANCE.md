@@ -1,0 +1,3 @@
+# M10 generated project fixture
+
+Files were copied from the `src/aet_scaffolder/templates/tool_agent` tree at repository commit `33ae6a92b60aaa19d59e0a624a8679e7faaa69f1` (pre-M11), with the exact generator substitutions `__PROJECT_NAME__ -> legacy-m10-agent`, `__PACKAGE_NAME__ -> legacy_m10_agent`, `__PROVIDER__ -> mock`, and `__OLLAMA_MODEL__ -> llama3.2:1b`. `_dot_` names are generated with leading dots. There is deliberately no `.aet-template.json`, Dockerfile or M14 foundation file. The data is entirely synthetic. This fixture tests static Project Doctor backwards compatibility, not runtime dependency support for old projects.
