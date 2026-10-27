@@ -1,6 +1,6 @@
 # M15 adoption-validation kit
 
-**Status:** Materials and automatic structural preflight are ready. **Real independent trials: not yet conducted.** No developer-time savings, team adoption, or positive user feedback is claimed.
+**Status:** Materials and structural preflight are ready. The author reported a successful local RAG smoke test on 27 October 2026. **No independent reviewer trials, team adoption or developer-time savings have been measured.** See the [evidence register](evidence-register.md).
 
 ## For a reviewer
 
@@ -28,14 +28,14 @@ Existing output files are never overwritten. This checks **structure only**. CI 
 ## For the owner
 
 1. Obtain required authorisation before any organisational user trial.
-2. Invite at least two unfamiliar, consenting engineers to follow the [trial](independent-trial.md) without coaching. *No invitations have been made as part of M15.*
+2. If independent reviewers become available, invite consenting engineers to follow the [trial](independent-trial.md). **Finding two reviewers is an optional evidence goal, not a blocker for AET engineering progress.** No independent results have been recorded.
 3. Record all attempted trials, failures, interventions and critical blockers in an approved location using the blank form.
 4. Fix genuine usability defects in separate small PRs, without changing the protocol after seeing outcomes.
 5. If business productivity evidence is sought, separately execute the [controlled paired study](../benchmarks/study_protocol.md) and the [existing local-only analyser](../pilot/README.md). Do not treat machine timings as human savings.
-6. Update the [evidence register](evidence-register.md) **only after** actual independent evidence exists.
+6. Keep the [evidence register](evidence-register.md) accurate: an author-operated test can show functionality and documentation friction, but does not substitute for an independent trial.
 
 Before inviting anyone, the repository owner should also activate `master` protection using the [governance guide](../governance/master-branch-protection.md). Branch protection is a separate repository-admin setting; this M15 material does not enable it.
 
 ## What's deliberately not included
 
-No claimed pilot completion, participant data, recruitment, ROI percentage, fictitious feedback, hosted dashboards, provider evaluations or new agent templates. AEA remains a separate evaluation asset.
+No claimed independent pilot completion, participant data, recruitment, ROI percentage, fictitious feedback, hosted dashboards, provider evaluations or new agent templates.

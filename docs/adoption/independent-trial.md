@@ -10,9 +10,9 @@ Hypothesis: an engineer who has not worked on AET can independently generate, un
 
 **Secondary outcomes:** active time spent on steps after prerequisites, number of manual fixes, clarity of documentation, and critical blockers. Dependency download/wall-clock wait is recorded separately and not mistaken for developer effort.
 
-Pilot targets, not achieved results:
-- Obtain at least **two** independent, consenting reviewers; with this sample, findings remain exploratory.
-- Aim for **both reviewers** completing the primary outcome without live help, and **zero critical security or functionality blockers**.
+Optional external-review targets, not blockers:
+- If independent reviewers become available, seek two consenting engineers; even two tests are exploratory rather than representative.
+- Aim for independent completion without coaching and record any critical blockers. The author's own test cannot satisfy independent-review criteria.
 - Record every failure, incomplete attempt, prior framework experience and deviations from instructions.
 - **Do not claim a percentage reduction in developer hours** from this exercise. That requires the separate matched manual-vs-scaffolder protocol in [M4 study protocol](../benchmarks/study_protocol.md) and [M8 analyser](../pilot/README.md).
 
@@ -52,19 +52,46 @@ Use `http://127.0.0.1:8000/docs` to submit **POST /ask** with this JSON:
 
 Expected: HTTP 200, `source_ids` includes `returns`, and the answer mentions the 30-day sample policy. No live model is contacted in mock mode.
 
-Stop the server if necessary, then append exactly this **synthetic** line to `data/knowledge.jsonl`:
+### Find the exact knowledge file
+
+**Stay inside the generated `pilot-rag` directory.** From the parent AET checkout, the file is at `pilot-rag/data/knowledge.jsonl`; from inside `pilot-rag`, it is `data/knowledge.jsonl`. Do **not** edit the copy under the scaffolder source templates.
+
+To print the **full absolute file path on your machine** (works in PowerShell, Git Bash and Linux shells), enter the following in a *separate* terminal from the running Uvicorn server, while your working directory is `pilot-rag`:
+
+```powershell
+python -c "from pathlib import Path; print(Path('data/knowledge.jsonl').resolve())"
+```
+
+For example, on Windows the output might be `C:\work\agentic-engineering-toolkit\pilot-rag\data\knowledge.jsonl`; on Linux it might be `/home/user/agentic-engineering-toolkit/pilot-rag/data/knowledge.jsonl`. These are illustrations; use the path your own command prints.
+
+Open **that exact file**, retain its existing records and append this **synthetic** JSON record on its own new line:
 
 ```json
 {"id":"violet-manual","text":"Violet reference manuals are indexed on Thursday."}
 ```
 
-Restart the server, submit:
+### Verify the edited corpus
+
+The RAG template loads its knowledge file on **every request**, so changing only `data/knowledge.jsonl` **does not require a server restart**. After saving the file, return to `http://127.0.0.1:8000/docs` and submit:
 
 ```json
 {"question": "Which day are violet reference manuals indexed?"}
 ```
 
 Expected: HTTP 200, `source_ids` contains `violet-manual`, and the mock answer includes `Thursday`. This demonstrates that the developer can alter the local corpus and observe a behaviour change, not just run the starter as-is. Run `python -m pytest -q` again after editing.
+
+**If the server needs stopping and starting** (for example, after changing Python code or configuration):
+
+1. Switch to the terminal **running Uvicorn**. Press **Ctrl+C** once and wait for `Application shutdown complete` or for the shell prompt to reappear.
+2. Ensure your working directory is `pilot-rag`. Enter the following **as one command on its own line**, then press Enter. Do not paste it beside a previous Uvicorn command:
+
+   ```powershell
+   python -m uvicorn app.main:app --host 127.0.0.1 --port 8000
+   ```
+
+3. Wait until `Uvicorn running on http://127.0.0.1:8000`, then use `http://127.0.0.1:8000/docs` to submit the next request. If port 8000 is in use, stop the original server instead of starting another instance.
+
+**Protocol amendment, 27 October 2026:** After an **author-operated** dry run, the document was amended to explain the absolute path and server lifecycle. Do not represent the revised text as an independently validated original protocol.
 
 **Completion rule:** tests pass, both requests are verified, and the new record changes retrieved evidence. Merely generating files, passing Project Doctor or running CI is not a completed independent trial.
 
