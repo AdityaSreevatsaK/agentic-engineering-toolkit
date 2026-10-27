@@ -20,7 +20,22 @@ from .registry import (
 )
 
 # Public legacy constants remain available for existing integrations.
-_LEGACY_SPEC = get_template(DEFAULT_TEMPLATE)
+# Freeze the M10 file contract: manifest-less projects predate later M14 foundations.
+# Using the latest registered profile here would reject valid older projects.
+_LEGACY_SPEC = TemplateSpec(
+    name=DEFAULT_TEMPLATE,
+    directory="tool_agent",
+    description="Pre-M11 manifest-less tool agent project",
+    providers=("mock", "ollama"),
+    required_files=(
+        "README.md", ".gitignore", ".env.example", "pyproject.toml",
+        "app/__init__.py", "app/config.py", "app/main.py",
+        "app/providers.py", "app/tools.py", "app/workflow.py",
+        "tests/test_app.py", "tests/test_providers.py", "tests/test_tools.py",
+    ),
+    required_dependencies=frozenset({"fastapi", "langgraph", "uvicorn", "pydantic-settings"}),
+    required_env_fields=("AET_PROVIDER=", "AET_OLLAMA_MODEL=", "AET_OLLAMA_BASE_URL="),
+)
 REQUIRED_FILES = _LEGACY_SPEC.required_files
 REQUIRED_DEPENDENCIES = set(_LEGACY_SPEC.required_dependencies)
 
