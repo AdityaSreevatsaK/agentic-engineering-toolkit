@@ -78,19 +78,14 @@ _STRANDS_AGENT = TemplateSpec(
         "README.md", ".gitignore", ".env.example", "pyproject.toml",
         ".dockerignore", "Dockerfile", ".github/workflows/ci.yml",
         "app/foundation.py", "tests/test_foundation.py",
-        "app/__init__.py", "app/config.py", "app/agent.py", "app/cloud_models.py", "app/tools.py",
+        "app/__init__.py", "app/config.py", "app/agent.py", "app/tools.py",
         "app/offline_model.py", "app/main.py",
         "tests/test_api.py", "tests/test_agent.py",
     ),
     required_dependencies=frozenset(
         {"fastapi", "uvicorn", "strands-agents", "pydantic-settings"}
     ),
-    required_env_fields=(
-        "AET_PROVIDER=", "AET_AWS_REGION=", "AET_BEDROCK_MODEL_ID=",
-        "AET_OPENAI_MODEL=", "AET_ANTHROPIC_MODEL=", "AET_AZURE_OPENAI_DEPLOYMENT=",
-        "AET_AZURE_OPENAI_ENDPOINT=", "AET_AZURE_OPENAI_API_VERSION=",
-        "AET_LOG_LEVEL=",
-    ),
+    required_env_fields=("AET_PROVIDER=", "AET_AWS_REGION=", "AET_BEDROCK_MODEL_ID=", "AET_LOG_LEVEL="),
 )
 
 TEMPLATES: Mapping[str, TemplateSpec] = MappingProxyType(
