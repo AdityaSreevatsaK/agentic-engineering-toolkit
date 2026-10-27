@@ -7,3 +7,18 @@ AET_KNOWLEDGE_PATH=data/knowledge.jsonl
 AET_TOP_K=2
 # Structured request logs; never includes request bodies or secrets.
 AET_LOG_LEVEL=INFO
+
+# Optional paid/cloud inference, selected explicitly via AET_PROVIDER.
+# Select an available model/deployment; missing values fail closed at invocation.
+AET_OPENAI_MODEL=
+AET_AZURE_OPENAI_DEPLOYMENT=
+AET_AZURE_OPENAI_ENDPOINT=
+AET_AZURE_OPENAI_API_VERSION=
+AET_ANTHROPIC_MODEL=
+AET_BEDROCK_MODEL_ID=
+AET_AWS_REGION=
+AET_MODEL_TIMEOUT_SECONDS=90
+AET_MODEL_MAX_RETRIES=2
+# Set OPENAI_API_KEY, AZURE_OPENAI_API_KEY, ANTHROPIC_API_KEY
+# or AWS credentials via secure process environment / AWS SDK identity chain.
+# NEVER commit secrets to this file or use cloud inference in CI.

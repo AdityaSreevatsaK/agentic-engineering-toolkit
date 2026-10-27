@@ -44,7 +44,7 @@ def invoke(request: InvokeRequest) -> InvokeResponse:
     except ProviderError as exc:
         raise HTTPException(
             status_code=503,
-            detail="Local inference unavailable; ensure Ollama is running and the model is installed.",
+            detail="Configured inference provider is unavailable.",
         ) from exc
     except ValueError as exc:
         raise HTTPException(status_code=503, detail="Invalid local configuration") from exc

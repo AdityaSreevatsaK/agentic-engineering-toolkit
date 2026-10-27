@@ -24,8 +24,8 @@ The preflight checks generated project structure, local configuration, Project D
 
 | Template | Status | Generated application | Providers |
 | --- | --- | --- | --- |
-| tool-agent | Working prototype | FastAPI + LangGraph with deterministic synthetic order-status routing | Mock (offline), optional local Ollama |
-| langgraph-rag | M12 reference implementation | LangGraph with local BM25 retrieval, evidence-based answers and optional Ollama | Mock (offline), optional local Ollama |
+| tool-agent | Working prototype | FastAPI + LangGraph with deterministic synthetic order-status routing | Mock, Ollama, OpenAI, Azure OpenAI, Anthropic, AWS Bedrock |
+| langgraph-rag | M16 provider-ready starter | LangGraph BM25 retrieval with evidence-constrained chat synthesis | Mock, Ollama, OpenAI, Azure OpenAI, Anthropic, AWS Bedrock |
 | strands-agent | M13 reference implementation | Real Strands Agent with synthetic tool, deterministic SDK offline model or AWS Bedrock | Mock (offline), optional Bedrock |
 
 The current tool-agent is **not** an autonomous tool-planning agent. Its order routing is deterministic. No cloud account, paid model, Docker or WSL is needed for the mock path. The generated API has no authentication and must not be exposed publicly.
@@ -70,7 +70,19 @@ python -m pytest -q
 python -m uvicorn app.main:app --reload
 ~~~
 
-Then submit `POST /ask` with `{"question":"What is the return policy?"}`. The bundled corpus uses invented policies and a real BM25 lexical retriever, followed by a **deterministic mock answer** quoting retrieved evidence. Optional `--provider ollama` enables genuine local-model synthesis over that evidence. It is **not** a semantic-vector search template, a claim of model correctness, or a production-secure service. The generated README documents bounded local file ingestion and its limits.
+Then submit `POST /ask` with `{"question":"What is the return policy?"}`. The bundled corpus uses invented policies and a real BM25 lexical retriever, followed by a **deterministic mock answer** quoting retrieved evidence. Optional `--provider ollama` or a supported cloud mode enables model synthesis over that evidence. It is **not** a semantic-vector search template, a claim of model correctness, or a production-secure service. The generated README documents bounded local file ingestion and its limits.
+
+## M16: Opt-in production-provider integrations
+
+Both LangGraph templates now support `--provider openai`, `azure-openai`, `anthropic` or `bedrock`, in addition to unchanged mock and Ollama modes. For example:
+
+~~~powershell
+agentkit new cloud-agent --template langgraph-rag --provider openai
+cd cloud-agent
+python -m pip install -e ".[dev,openai]"
+~~~
+
+Set `AET_OPENAI_MODEL` in the generated `.env` and securely inject `OPENAI_API_KEY` through the process environment. The generated `.env.example` documents analogous Azure, Anthropic and Bedrock configuration fields. Each cloud SDK is an **optional** package; the default project and all CI tests remain local and credential-free. Cloud inference is opt-in, billable and sends prompts to the selected provider. Selecting a cloud mode does **not** make this unauthenticated starter production-ready. See each generated README for required SDK extras, model and deployment fields, AWS SDK identity and operational limits.
 
 ## Generate an AWS Strands agent (M13)
 
@@ -106,7 +118,7 @@ The generated Dockerfile is a **development reference, not a production deployme
 | Command | Purpose |
 | --- | --- |
 | agentkit list | Show registered templates and supported providers |
-| agentkit new NAME [--template tool-agent] [--provider mock or ollama] | Create a project without overwriting an existing path |
+| agentkit new NAME [--template tool-agent] [--provider PROVIDER] | Create a project without overwriting an existing path |
 | agentkit doctor PATH [--json] | Read-only structure, configuration and Python syntax checks |
 | agentkit-benchmark --runs 10 --warmups 2 | Measure local generation and validation timings |
 
@@ -120,6 +132,7 @@ Doctor does not install dependencies, run untrusted generated Python code, valid
 - **M12:** Add a working LangGraph RAG starter with local BM25 retrieval, offline verification and optional loopback Ollama inference.
 - **M13:** Generate a Strands SDK Agent with one synthetic tool, actual offline SDK-loop tests and opt-in Bedrock model.
 - **M14:** Add generated configuration validation, privacy-conscious JSON request logs, readiness, CI and non-root local Docker foundations.
+- **M16:** Add opt-in OpenAI, Azure OpenAI, Anthropic and AWS Bedrock integrations to both LangGraph templates with offline provider tests.
 
 See [roadmap](docs/roadmap.md), [M11 decision record](docs/decisions/0011-scaffolder-focus.md) and [legacy assets](docs/legacy-assets.md).
 
@@ -132,7 +145,7 @@ python -m pip install -e . pytest
 python -m pytest tests -q
 ~~~
 
-Tests for a freshly generated application live inside that application. CI verifies the mock and Ollama-generated projects without external credentials.
+Tests for a freshly generated application live inside that application. CI verifies mock/Ollama-generated projects and tests cloud-provider wiring through local SDK fakes, without cloud credentials or paid API calls.
 
 ## Historical work (M1-M10)
 
