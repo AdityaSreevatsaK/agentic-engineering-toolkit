@@ -48,7 +48,7 @@ def ask(request: QueryRequest) -> QueryResponse:
     except KnowledgeError as exc:
         raise HTTPException(status_code=503, detail="Local knowledge base unavailable") from exc
     except ProviderError as exc:
-        raise HTTPException(status_code=503, detail="Local Ollama inference unavailable") from exc
+        raise HTTPException(status_code=503, detail="Configured inference provider is unavailable") from exc
     except ValueError as exc:
         raise HTTPException(status_code=503, detail="Invalid local configuration") from exc
     return QueryResponse(

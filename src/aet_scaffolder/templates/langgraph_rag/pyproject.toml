@@ -17,6 +17,11 @@ dependencies = [
 
 [project.optional-dependencies]
 dev = ["pytest>=8,<10", "httpx>=0.27,<1"]
+openai = ["langchain-openai>=1,<2"]
+azure-openai = ["langchain-openai>=1,<2"]
+anthropic = ["langchain-anthropic>=1,<2"]
+bedrock = ["langchain-aws>=1,<2"]
+cloud = ["langchain-openai>=1,<2", "langchain-anthropic>=1,<2", "langchain-aws>=1,<2"]
 
 [tool.setuptools.packages.find]
 include = ["app*"]

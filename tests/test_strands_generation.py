@@ -23,8 +23,6 @@ def test_strands_project_generation_and_doctor(tmp_path, provider):
 
 
 @pytest.mark.parametrize("template,provider", [
-    ("tool-agent", "bedrock"),
-    ("langgraph-rag", "bedrock"),
     ("strands-agent", "ollama"),
 ])
 def test_provider_restrictions_by_template(tmp_path, template, provider):

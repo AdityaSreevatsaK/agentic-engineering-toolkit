@@ -11,7 +11,7 @@ NAME_PATTERN = re.compile(r"^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$")
 MODEL_PATTERN = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._:/-]{0,127}$")
 DEFAULT_OLLAMA_MODEL = "llama3.2:1b"
 # Keep this export for callers of the existing generator module.
-SUPPORTED_PROVIDERS = ("mock", "ollama", "bedrock", "openai", "azure-openai", "anthropic")
+SUPPORTED_PROVIDERS = ("mock", "ollama", "openai", "azure-openai", "anthropic", "bedrock")
 
 
 class GenerationError(ValueError):

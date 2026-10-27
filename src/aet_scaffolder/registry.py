@@ -26,14 +26,14 @@ class TemplateSpec:
 _TOOL_AGENT = TemplateSpec(
     name="tool-agent",
     directory="tool_agent",
-    description="Deterministic LangGraph tool routing with mock or local Ollama responses",
-    providers=("mock", "ollama"),
+    description="Deterministic LangGraph tool routing with optional cloud chat providers",
+    providers=("mock", "ollama", "openai", "azure-openai", "anthropic", "bedrock"),
     required_files=(
         "README.md", ".gitignore", ".env.example", "pyproject.toml",
         ".dockerignore", "Dockerfile", ".github/workflows/ci.yml",
         "app/foundation.py", "tests/test_foundation.py",
         "app/__init__.py", "app/config.py", "app/main.py",
-        "app/providers.py", "app/tools.py", "app/workflow.py",
+        "app/providers.py", "app/cloud_providers.py", "app/tools.py", "app/workflow.py",
         "tests/test_app.py", "tests/test_providers.py", "tests/test_tools.py",
     ),
     required_dependencies=frozenset(
@@ -41,6 +41,8 @@ _TOOL_AGENT = TemplateSpec(
     ),
     required_env_fields=(
         "AET_PROVIDER=", "AET_OLLAMA_MODEL=", "AET_OLLAMA_BASE_URL=",
+        "AET_OPENAI_MODEL=", "AET_AZURE_OPENAI_DEPLOYMENT=",
+        "AET_ANTHROPIC_MODEL=", "AET_BEDROCK_MODEL_ID=",
         "AET_LOG_LEVEL=",
     ),
 )
@@ -48,15 +50,15 @@ _TOOL_AGENT = TemplateSpec(
 _LANGGRAPH_RAG = TemplateSpec(
     name="langgraph-rag",
     directory="langgraph_rag",
-    description="Local BM25 retrieval-augmented LangGraph answer workflow",
-    providers=("mock", "ollama"),
+    description="Local BM25 RAG with optional cloud chat generation",
+    providers=("mock", "ollama", "openai", "azure-openai", "anthropic", "bedrock"),
     required_files=(
         "README.md", ".gitignore", ".env.example", "pyproject.toml",
         ".dockerignore", "Dockerfile", ".github/workflows/ci.yml",
         "app/foundation.py", "tests/test_foundation.py",
         "data/knowledge.jsonl",
         "app/__init__.py", "app/config.py", "app/knowledge.py",
-        "app/retrieval.py", "app/providers.py", "app/workflow.py",
+        "app/retrieval.py", "app/providers.py", "app/cloud_providers.py", "app/workflow.py",
         "app/main.py", "app/ingest.py",
         "tests/test_app.py", "tests/test_retrieval.py", "tests/test_ingest.py",
     ),
@@ -72,8 +74,8 @@ _LANGGRAPH_RAG = TemplateSpec(
 _STRANDS_AGENT = TemplateSpec(
     name="strands-agent",
     directory="strands_agent",
-    description="AWS Strands agent with offline SDK model and opt-in Amazon Bedrock",
-    providers=("mock", "bedrock"),
+    description="Strands agent with offline SDK model and opt-in cloud providers",
+    providers=("mock", "bedrock", "openai", "azure-openai", "anthropic"),
     required_files=(
         "README.md", ".gitignore", ".env.example", "pyproject.toml",
         ".dockerignore", "Dockerfile", ".github/workflows/ci.yml",
@@ -112,7 +114,6 @@ _LLAMAINDEX_RAG = TemplateSpec(
         "AET_ANTHROPIC_MODEL=", "AET_BEDROCK_MODEL_ID=", "AET_LOG_LEVEL=",
     ),
 )
-
 
 TEMPLATES: Mapping[str, TemplateSpec] = MappingProxyType(
     {spec.name: spec for spec in (_TOOL_AGENT, _LANGGRAPH_RAG, _STRANDS_AGENT, _LLAMAINDEX_RAG)}

@@ -1,6 +1,16 @@
-# mock is offline and deterministic; bedrock makes real billable AWS model calls.
+# mock is offline and deterministic; cloud providers are opt-in and billable.
 AET_PROVIDER=__PROVIDER__
 AET_AWS_REGION=us-east-1
 AET_BEDROCK_MODEL_ID=us.amazon.nova-lite-v1:0
 # Structured request logs; never includes request bodies or secrets.
 AET_LOG_LEVEL=INFO
+
+# Optional Strands native cloud providers. Select using AET_PROVIDER.
+AET_OPENAI_MODEL=
+AET_ANTHROPIC_MODEL=
+AET_ANTHROPIC_MAX_TOKENS=1024
+AET_AZURE_OPENAI_DEPLOYMENT=
+AET_AZURE_OPENAI_ENDPOINT=
+AET_AZURE_OPENAI_API_VERSION=
+# Cloud credentials are NOT kept in this example. Use secure process environment:
+# OPENAI_API_KEY, ANTHROPIC_API_KEY, AZURE_OPENAI_API_KEY, or managed SDK identity.

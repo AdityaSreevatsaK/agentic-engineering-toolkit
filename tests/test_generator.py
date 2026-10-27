@@ -49,7 +49,7 @@ def test_do_not_overwrite_existing_project(tmp_path):
 @pytest.mark.parametrize(
     "kwargs",
     [
-        {"provider": "openai"},
+        {"provider": "not-a-provider"},
         {"provider": "mock", "model": "llama3.2"},
         {"provider": "ollama", "model": "bad model"},
         {"provider": "ollama", "model": "bad\nMODEL"},
