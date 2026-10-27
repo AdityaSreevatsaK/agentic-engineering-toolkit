@@ -142,6 +142,24 @@ jobs:
       - name: Test Ollama RAG with mocked transport
         run: python -m pytest -q
         working-directory: rag-ollama-demo
+      - name: Generate offline native LlamaIndex RAG project
+        run: python -m aet_scaffolder new llamaindex-demo --template llamaindex-rag --provider mock --output-dir .
+      - name: Doctor-check native LlamaIndex project
+        run: python -m aet_scaffolder doctor llamaindex-demo --json
+      - name: Install LlamaIndex generated app
+        timeout-minutes: 8
+        run: python -m pip install -e ".[dev]"
+        working-directory: llamaindex-demo
+      - name: Run native LlamaIndex offline retrieval, SDK fake and API tests
+        timeout-minutes: 5
+        env:
+          AET_PROVIDER: mock
+        run: python -m pytest -vv --tb=short
+        working-directory: llamaindex-demo
+      - name: Generate LlamaIndex cloud-configured project without paid calls
+        run: python -m aet_scaffolder new llamaindex-cloud-demo --template llamaindex-rag --provider openai --output-dir .
+      - name: Doctor-check LlamaIndex cloud project without credentials
+        run: python -m aet_scaffolder doctor llamaindex-cloud-demo --json
       - name: Generate offline AWS Strands SDK agent
         run: python -m aet_scaffolder new strands-demo --template strands-agent --provider mock --output-dir .
       - name: Doctor-check Strands mock project
@@ -181,5 +199,9 @@ jobs:
         run: python -m aet_scaffolder new packaged-strands --template strands-agent --output-dir .
       - name: Doctor-check wheel-generated Strands project
         run: python -m aet_scaffolder doctor packaged-strands --json
+      - name: Confirm packaged wheel bundles LlamaIndex RAG template
+        run: python -m aet_scaffolder new packaged-llamaindex --template llamaindex-rag --output-dir .
+      - name: Doctor-check wheel-generated LlamaIndex RAG project
+        run: python -m aet_scaffolder doctor packaged-llamaindex --json
       - name: Benchmark local project generation (not human time saved)
         run: python -m aet_scaffolder.benchmark_cli --runs 3 --warmups 1 --provider mock

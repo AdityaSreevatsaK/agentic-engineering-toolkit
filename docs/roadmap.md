@@ -9,6 +9,7 @@ The reusable asset is the **Agent Project Scaffolder**, not an evaluation framew
 | M13: AWS Strands | Runnable SDK Agent and annotated tool, deterministic offline Strands event model and opt-in Bedrock mode | Offline real-SDK tool invocation, fake Bedrock construction, generated API tests and four-platform CI |
 | M14: Application foundations | Add configuration validation, sanitised JSON request logs, request IDs, honest readiness, generated CI and non-root container reference to all three templates | Generated tests, Doctor and wheel packaging on four OS/Python jobs, plus Docker build smoke |
 | M15: Adoption validation | Prepare an independent hand-off, actual HTTP/corpus-change exercise, privacy-safe reviewer notes and reusable machine preflight | Four-platform preflight CI, accepted protocol and documentation; **external participant results remain pending** |
+| M18: Native LlamaIndex RAG | Add a separate framework-native keyword retrieval scaffold with offline mode and optional cloud/loopback model synthesis | Generated app exercises real LlamaIndex retrieval, bounded source loading, API contract, fake provider SDKs and all four OS/Python CI jobs |
 
 ## M15 pilot result boundary
 

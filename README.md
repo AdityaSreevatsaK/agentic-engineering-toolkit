@@ -27,6 +27,7 @@ The preflight checks generated project structure, local configuration, Project D
 | tool-agent | Working prototype | FastAPI + LangGraph with deterministic synthetic order-status routing | Mock (offline), optional local Ollama |
 | langgraph-rag | M12 reference implementation | LangGraph with local BM25 retrieval, evidence-based answers and optional Ollama | Mock (offline), optional local Ollama |
 | strands-agent | M13 reference implementation | Real Strands Agent with synthetic tool, deterministic SDK offline model or AWS Bedrock | Mock (offline), optional Bedrock |
+| llamaindex-rag | M18 reference implementation | Native LlamaIndex keyword index, offline source retrieval, optional provider synthesis | Mock, Ollama, OpenAI, Azure OpenAI, Anthropic, Bedrock |
 
 The current tool-agent is **not** an autonomous tool-planning agent. Its order routing is deterministic. No cloud account, paid model, Docker or WSL is needed for the mock path. The generated API has no authentication and must not be exposed publicly.
 
@@ -72,6 +73,19 @@ python -m uvicorn app.main:app --reload
 
 Then submit `POST /ask` with `{"question":"What is the return policy?"}`. The bundled corpus uses invented policies and a real BM25 lexical retriever, followed by a **deterministic mock answer** quoting retrieved evidence. Optional `--provider ollama` enables genuine local-model synthesis over that evidence. It is **not** a semantic-vector search template, a claim of model correctness, or a production-secure service. The generated README documents bounded local file ingestion and its limits.
 
+## Generate a native LlamaIndex RAG starter (M18)
+
+~~~powershell
+agentkit new my-llamaindex --template llamaindex-rag --provider mock
+agentkit doctor my-llamaindex
+cd my-llamaindex
+python -m pip install -e ".[dev]"
+python -m pytest -q
+python -m uvicorn app.main:app --host 127.0.0.1
+~~~
+
+The generated application uses LlamaIndex `SimpleKeywordTableIndex` and native simple keyword retrieval against a bounded synthetic JSONL corpus. Offline mock mode quotes retrieved evidence; it is **not model reasoning, semantic retrieval, vector search, or a production-ready knowledge assistant**. OpenAI, Azure OpenAI, Anthropic, Bedrock and loopback Ollama are opt-in with separately installed native LlamaIndex integration packages. Generated source and provider SDKs remain isolated from AEA.
+
 ## Generate an AWS Strands agent (M13)
 
 ~~~powershell
@@ -88,7 +102,7 @@ Call POST `/invoke` with `{"question":"order status ORD-1001"}`. The scripted of
 
 ## Generated application foundations (M14)
 
-All three templates now produce a small, self-contained engineering foundation:
+All generated templates provide a small, self-contained engineering foundation:
 
 | Foundation | Included behaviour |
 | --- | --- |
@@ -106,7 +120,7 @@ The generated Dockerfile is a **development reference, not a production deployme
 | Command | Purpose |
 | --- | --- |
 | agentkit list | Show registered templates and supported providers |
-| agentkit new NAME [--template tool-agent] [--provider mock or ollama] | Create a project without overwriting an existing path |
+| agentkit new NAME [--template TEMPLATE] [--provider PROVIDER] | Create a project without overwriting an existing path |
 | agentkit doctor PATH [--json] | Read-only structure, configuration and Python syntax checks |
 | agentkit-benchmark --runs 10 --warmups 2 | Measure local generation and validation timings |
 
@@ -120,6 +134,7 @@ Doctor does not install dependencies, run untrusted generated Python code, valid
 - **M12:** Add a working LangGraph RAG starter with local BM25 retrieval, offline verification and optional loopback Ollama inference.
 - **M13:** Generate a Strands SDK Agent with one synthetic tool, actual offline SDK-loop tests and opt-in Bedrock model.
 - **M14:** Add generated configuration validation, privacy-conscious JSON request logs, readiness, CI and non-root local Docker foundations.
+- **M18:** Add an independent native LlamaIndex RAG template with deterministic keyword retrieval, opt-in provider adapters and four-platform offline verification.
 
 See [roadmap](docs/roadmap.md), [M11 decision record](docs/decisions/0011-scaffolder-focus.md) and [legacy assets](docs/legacy-assets.md).
 

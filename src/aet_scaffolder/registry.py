@@ -88,8 +88,34 @@ _STRANDS_AGENT = TemplateSpec(
     required_env_fields=("AET_PROVIDER=", "AET_AWS_REGION=", "AET_BEDROCK_MODEL_ID=", "AET_LOG_LEVEL="),
 )
 
+_LLAMAINDEX_RAG = TemplateSpec(
+    name="llamaindex-rag",
+    directory="llamaindex_rag",
+    description="Native offline LlamaIndex keyword retrieval with optional model synthesis",
+    providers=("mock", "ollama", "openai", "azure-openai", "anthropic", "bedrock"),
+    required_files=(
+        "README.md", ".gitignore", ".env.example", "pyproject.toml",
+        ".dockerignore", "Dockerfile", ".github/workflows/ci.yml",
+        "app/__init__.py", "app/config.py", "app/foundation.py",
+        "app/knowledge.py", "app/retrieval.py", "app/providers.py", "app/main.py",
+        "data/knowledge.jsonl", "tests/test_foundation.py",
+        "tests/test_app.py", "tests/test_retrieval.py",
+        "tests/test_providers.py", "tests/test_config.py",
+    ),
+    required_dependencies=frozenset(
+        {"fastapi", "uvicorn", "pydantic-settings", "llama-index-core"}
+    ),
+    required_env_fields=(
+        "AET_PROVIDER=", "AET_KNOWLEDGE_PATH=", "AET_TOP_K=",
+        "AET_OLLAMA_MODEL=", "AET_OLLAMA_BASE_URL=",
+        "AET_OPENAI_MODEL=", "AET_AZURE_OPENAI_DEPLOYMENT=",
+        "AET_ANTHROPIC_MODEL=", "AET_BEDROCK_MODEL_ID=", "AET_LOG_LEVEL=",
+    ),
+)
+
+
 TEMPLATES: Mapping[str, TemplateSpec] = MappingProxyType(
-    {spec.name: spec for spec in (_TOOL_AGENT, _LANGGRAPH_RAG, _STRANDS_AGENT)}
+    {spec.name: spec for spec in (_TOOL_AGENT, _LANGGRAPH_RAG, _STRANDS_AGENT, _LLAMAINDEX_RAG)}
 )
 SUPPORTED_TEMPLATES = tuple(TEMPLATES)
 
