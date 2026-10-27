@@ -122,7 +122,10 @@ def test_anthropic_multiblock_text_response(monkeypatch):
     assert service.generate("hello") == "Grounded answer"
 
 
-@pytest.mark.parametrize("bad", ["", [], [1], "a" * 1_000_001])
+@pytest.mark.parametrize(
+    "bad", ["", [], [1], "a" * 1_000_001],
+    ids=["empty-string", "empty-blocks", "invalid-block", "oversized-text"],
+)
 def test_invalid_cloud_text_is_rejected(monkeypatch, bad):
     _fake_sdk(monkeypatch, "langchain_openai", "ChatOpenAI", result=bad)
     service = providers.get_provider(Settings(provider="openai", openai_model="test"))
