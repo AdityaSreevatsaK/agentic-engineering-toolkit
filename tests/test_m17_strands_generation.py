@@ -35,3 +35,16 @@ def test_strands_cloud_settings_do_not_accept_legacy_ollama_model_option(
     with pytest.raises(GenerationError, match="--model"):
         generate("bad-example", template="strands-agent", provider=provider,
                  model="some-model", output_dir=tmp_path)
+
+
+def test_doctor_accepts_pre_m17_strands_layout(tmp_path):
+    """Adding M17 must not invalidate legitimate M13/M14-generated projects."""
+    project = generate("old-strands-project", output_dir=tmp_path,
+                       template="strands-agent", provider="mock")
+    (project / "app" / "cloud_models.py").unlink()
+    env_file = project / ".env.example"
+    env = env_file.read_text(encoding="utf-8")
+    env_file.write_text(env.split("# Optional Strands native cloud providers.")[0],
+                        encoding="utf-8")
+    report = validate_project(project)
+    assert report.ok, report.as_dict()
