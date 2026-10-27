@@ -26,7 +26,7 @@ The preflight checks generated project structure, local configuration, Project D
 | --- | --- | --- | --- |
 | tool-agent | Working prototype | FastAPI + LangGraph with deterministic synthetic order-status routing | Mock, Ollama, OpenAI, Azure OpenAI, Anthropic, AWS Bedrock |
 | langgraph-rag | M16 provider-ready starter | LangGraph BM25 retrieval with evidence-constrained chat synthesis | Mock, Ollama, OpenAI, Azure OpenAI, Anthropic, AWS Bedrock |
-| strands-agent | M13 reference implementation | Real Strands Agent with synthetic tool, deterministic SDK offline model or AWS Bedrock | Mock (offline), optional Bedrock |
+| strands-agent | M17 provider-ready starter | Real Strands Agent with synthetic tool, deterministic SDK offline model and native cloud integrations | Mock, AWS Bedrock, OpenAI, Azure OpenAI, Anthropic |
 
 The current tool-agent is **not** an autonomous tool-planning agent. Its order routing is deterministic. No cloud account, paid model, Docker or WSL is needed for the mock path. The generated API has no authentication and must not be exposed publicly.
 
@@ -84,7 +84,7 @@ python -m pip install -e ".[dev,openai]"
 
 Set `AET_OPENAI_MODEL` in the generated `.env` and securely inject `OPENAI_API_KEY` through the process environment. The generated `.env.example` documents analogous Azure, Anthropic and Bedrock configuration fields. Each cloud SDK is an **optional** package; the default project and all CI tests remain local and credential-free. Cloud inference is opt-in, billable and sends prompts to the selected provider. Selecting a cloud mode does **not** make this unauthenticated starter production-ready. See each generated README for required SDK extras, model and deployment fields, AWS SDK identity and operational limits.
 
-## Generate an AWS Strands agent (M13)
+## Generate a Strands agent (M13/M17)
 
 ~~~powershell
 agentkit new strata-demo --template strands-agent --provider mock
@@ -97,6 +97,18 @@ python -m uvicorn app.main:app --host 127.0.0.1 --reload
 
 Call POST `/invoke` with `{"question":"order status ORD-1001"}`. The scripted offline model instructs the **real Strands SDK agent loop** to invoke a read-only synthetic `@tool`; the resulting answer reports `tool_used`. The model is deterministic and is **not** an LLM or evidence of autonomous reasoning. For actual Amazon Bedrock inference, use `agentkit new strata-bedrock --template strands-agent --provider bedrock`, then configure approved AWS credentials, region and model access. CI uses injected model doubles, never live AWS calls. See the generated project's README.
 
+
+## M17: Strands-native OpenAI, Azure OpenAI and Anthropic
+
+The Strands template now supports native `strands.models.openai.OpenAIModel` and `strands.models.anthropic.AnthropicModel`, plus the official Azure `AsyncAzureOpenAI` client passed to the Strands OpenAI model. The original offline mock and AWS Bedrock paths remain available. To generate an OpenAI-configured Strands project:
+
+~~~powershell
+agentkit new strata-openai --template strands-agent --provider openai
+cd strata-openai
+python -m pip install -e ".[dev,openai]"
+~~~
+
+Configure `AET_OPENAI_MODEL` and supply `OPENAI_API_KEY` securely through the execution environment before live inference. For `azure-openai`, install `.[azure-openai]` and set `AET_AZURE_OPENAI_DEPLOYMENT`, `AET_AZURE_OPENAI_ENDPOINT` (HTTPS origin) and `AET_AZURE_OPENAI_API_VERSION`; use Azure SDK-supported authentication. For `anthropic`, install `.[anthropic]`, set `AET_ANTHROPIC_MODEL` and provide `ANTHROPIC_API_KEY` securely. No API keys or cloud requests are needed for generation, Project Doctor or offline CI. All cloud modes are optional, potentially billable and **not** production-security guarantees. See the generated Strands README for details.
 
 ## Generated application foundations (M14)
 
@@ -133,6 +145,7 @@ Doctor does not install dependencies, run untrusted generated Python code, valid
 - **M13:** Generate a Strands SDK Agent with one synthetic tool, actual offline SDK-loop tests and opt-in Bedrock model.
 - **M14:** Add generated configuration validation, privacy-conscious JSON request logs, readiness, CI and non-root local Docker foundations.
 - **M16:** Add opt-in OpenAI, Azure OpenAI, Anthropic and AWS Bedrock integrations to both LangGraph templates with offline provider tests.
+- **M17:** Add Strands-native OpenAI and Anthropic model integrations and Azure OpenAI via the official client, retaining offline mock and Bedrock.
 
 See [roadmap](docs/roadmap.md), [M11 decision record](docs/decisions/0011-scaffolder-focus.md) and [legacy assets](docs/legacy-assets.md).
 

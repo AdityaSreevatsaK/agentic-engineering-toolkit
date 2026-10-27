@@ -24,9 +24,6 @@ def test_strands_project_generation_and_doctor(tmp_path, provider):
 
 @pytest.mark.parametrize("template,provider", [
     ("strands-agent", "ollama"),
-    ("strands-agent", "openai"),
-    ("strands-agent", "azure-openai"),
-    ("strands-agent", "anthropic"),
 ])
 def test_provider_restrictions_by_template(tmp_path, template, provider):
     with pytest.raises(GenerationError, match="provider"):

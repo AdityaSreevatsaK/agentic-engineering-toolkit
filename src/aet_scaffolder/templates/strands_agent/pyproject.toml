@@ -17,6 +17,10 @@ dependencies = [
 
 [project.optional-dependencies]
 dev = ["pytest>=8,<10", "httpx>=0.27,<1"]
+openai = ["strands-agents[openai]>=1.60,<2"]
+azure-openai = ["strands-agents[openai]>=1.60,<2"]
+anthropic = ["strands-agents[anthropic]>=1.60,<2"]
+cloud = ["strands-agents[openai,anthropic]>=1.60,<2"]
 
 [tool.setuptools.packages.find]
 include = ["app*"]
