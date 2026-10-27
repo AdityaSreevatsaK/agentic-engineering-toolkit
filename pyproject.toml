@@ -30,3 +30,6 @@ aet_scaffolder = ["templates/**/*"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+# Fixture contains original old generated tests: validate as source, do not collect
+# them as root tests without installing that old generated app/dependencies.
+norecursedirs = ["tests/fixtures/pre_m11_tool_agent", "build", "dist", ".venv"]
