@@ -1,6 +1,6 @@
 # M15 independent reviewer record (blank template)
 
-**Store completed records privately in an approved location. Do not commit them to this public repository.**
+**Store completed records privately in an approved location. Do not commit them to this public repository.** For an author self-test, mark the review as not independent and report it separately.
 
 - Trial code (anonymous, no real name or email): __________
 - Date (optional, month/year only): __________
