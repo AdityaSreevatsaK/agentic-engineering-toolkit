@@ -1,8 +1,9 @@
-"""Construct a REAL Strands Agent with offline scripted or Amazon Bedrock provider."""
+"""Construct a real Strands Agent with selectable SDK-native model providers."""
 from strands import Agent
 from strands.models import BedrockModel
 
 from .config import Settings
+from .cloud_models import create_cloud_model
 from .offline_model import OfflineModel
 from .tools import get_order_status
 
@@ -16,11 +17,13 @@ _SYSTEM = (
 def create_model(settings: Settings):
     if settings.provider == "mock":
         return OfflineModel()
-    return BedrockModel(
-        model_id=settings.bedrock_model_id,
-        region_name=settings.aws_region,
-        streaming=False,
-    )
+    if settings.provider == "bedrock":
+        return BedrockModel(
+            model_id=settings.bedrock_model_id,
+            region_name=settings.aws_region,
+            streaming=False,
+        )
+    return create_cloud_model(settings)
 
 
 def build_agent(settings: Settings) -> Agent:

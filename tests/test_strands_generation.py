@@ -26,6 +26,8 @@ def test_strands_project_generation_and_doctor(tmp_path, provider):
     ("tool-agent", "bedrock"),
     ("langgraph-rag", "bedrock"),
     ("strands-agent", "ollama"),
+    ("tool-agent", "openai"),
+    ("langgraph-rag", "anthropic"),
 ])
 def test_provider_restrictions_by_template(tmp_path, template, provider):
     with pytest.raises(GenerationError, match="provider"):
