@@ -1,0 +1,14 @@
+.env
+.env.*
+!.env.example
+.venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+*.egg-info/
+build/
+dist/
+
+# The bundled synthetic corpus is tracked; locally ingested corpora are not.
+data/*
+!data/knowledge.jsonl
