@@ -46,7 +46,9 @@ def test_cli_ollama_model_argument_is_not_repurposed_for_cloud(tmp_path, templat
                  model="some-model", output_dir=tmp_path)
 
 
-def test_strands_does_not_claim_unsupported_chat_providers(tmp_path):
-    with pytest.raises(GenerationError, match="provider"):
-        generate("bad-example", template="strands-agent", provider="openai",
-                 output_dir=tmp_path)
+@pytest.mark.parametrize("provider", ["openai", "azure-openai", "anthropic"])
+def test_strands_m17_cloud_providers_preserve_m16_langgraph_support(tmp_path, provider):
+    project = generate("strands-cloud-demo", template="strands-agent",
+                       provider=provider, output_dir=tmp_path)
+    assert validate_project(project).ok
+    assert (project / "app" / "cloud_models.py").is_file()

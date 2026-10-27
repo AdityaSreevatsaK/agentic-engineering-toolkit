@@ -2,12 +2,15 @@
 
 Generated with AET's **AWS Strands Agent** template (provider: `__PROVIDER__`).
 
-This is a **real Strands Agents SDK** project: `strands.Agent` hosts a decorated `@tool` for synthetic order-status lookup, and the HTTP interface invokes the SDK agent loop on every request. Two modes are supported:
+This is a **real Strands Agents SDK** project: `strands.Agent` hosts a decorated `@tool` for synthetic order-status lookup, and the HTTP interface invokes the SDK agent loop on every request. Five modes are supported:
 
 | Mode | Behaviour | Prerequisites |
 | --- | --- | --- |
 | `mock` (default) | A tiny scripted Strands `Model` emits a tool request for `order status ORD-1001`, triggering a real Strands tool invocation. Other questions get a deterministic text reply. **This is not LLM reasoning.** | None beyond Python dependencies |
-| `bedrock` | Strands uses an actual `BedrockModel` to call a model hosted on Amazon Bedrock, which may select the tool. | AWS credentials, suitable IAM policy, authorised Bedrock model access and charges |
+| `bedrock` | Original Strands `BedrockModel` configuration, unchanged. | AWS SDK identity and Bedrock access |
+| `openai` | Native Strands `OpenAIModel` | `OPENAI_API_KEY`, selected `AET_OPENAI_MODEL` |
+| `anthropic` | Native Strands `AnthropicModel` | `ANTHROPIC_API_KEY`, `AET_ANTHROPIC_MODEL` |
+| `azure-openai` | Strands `OpenAIModel` with official `AsyncAzureOpenAI` client | `AZURE_OPENAI_API_KEY` (or supported identity), deployment, HTTPS endpoint and API version |
 
 This example is **not production-ready**. HTTP endpoints have no authentication and must stay bound to localhost. It does not provide multi-tenant security, tool access controls, tracing, cost caps or observability.
 
@@ -40,6 +43,20 @@ To use an approved AWS environment:
 
 `agentkit new my-agent --template strands-agent --provider bedrock` generates a Bedrock-mode configuration, but **does not contact AWS during generation**. Standard CI does not send AWS requests or run live integration tests. Success in offline CI does not verify model access, pricing or real-world autonomous tool choice.
 
+## M17: Native cloud model selection
+
+Each cloud mode is selected explicitly at scaffolding time or in the generated `.env`:
+
+~~~powershell
+agentkit new openai-agent --template strands-agent --provider openai
+cd openai-agent
+python -m pip install -e ".[dev,openai]"
+~~~
+
+Set `AET_OPENAI_MODEL` and securely supply `OPENAI_API_KEY` via your normal execution environment before live inference. For Azure, install `.[azure-openai]`, then set `AET_AZURE_OPENAI_DEPLOYMENT`, `AET_AZURE_OPENAI_ENDPOINT` (bare HTTPS origin) and `AET_AZURE_OPENAI_API_VERSION`. Its SDK accepts native Azure authentication configuration. For Anthropic, install `.[anthropic]`, configure `AET_ANTHROPIC_MODEL` and securely supply `ANTHROPIC_API_KEY`. The Strands SDK owns tool-use and model integration; this project does not implement any custom API transport.
+
+Provider dependencies are optional so fresh mock installations and CI require no API keys, external inference or paid service. Model availability and tool-calling support vary by selected deployment. Cloud inference sends user prompts and tool content to third parties; treat it as opt-in and review applicable data handling, token budgets and authorisation. The example remains unauthenticated and **must not** be directly deployed to production.
+
 The scaffolder's `--model` switch is reserved for the legacy Ollama templates; configure Strands Bedrock model ID using `AET_BEDROCK_MODEL_ID`.
 
 ## Project layout
@@ -49,11 +66,12 @@ The scaffolder's `--model` switch is reserved for the legacy Ollama templates; c
 | `app/main.py` | Local FastAPI `/invoke` and `/health` |
 | `app/config.py` | Validated, environment-driven provider/region/model |
 | `app/agent.py` | Strands Agent construction and isolated invocation |
+| `app/cloud_models.py` | Lazy OpenAI, Anthropic and Azure SDK-native integrations |
 | `app/tools.py` | Annotated synthetic `@tool`, read-only and bounded |
 | `app/offline_model.py` | Deterministic Strands event source, no LLM or AWS |
 | `tests/` | Actual SDK runtime checks and fake Bedrock wiring tests |
 
-Limitations: this is a single agent with one fabricated tool; its mock provider deliberately knows how to request a single example command and makes no claim of intelligent tool planning. More complete configuration, logs, error classification, CI and deployment controls belong to M14. AEA is a separate project; this generated app does not ship any agent evaluation engine.
+Limitations: this is a single agent with one fabricated tool; its mock provider deliberately knows how to request a single example command and makes no claim of intelligent tool planning. Production-specific authentication, traffic policies and capacity controls must be provided by each adopting team. AEA is a separate project; this generated app does not ship any agent evaluation engine.
 
 ## M14 application foundations
 

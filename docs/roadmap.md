@@ -9,8 +9,8 @@ The reusable asset is the **Agent Project Scaffolder**, not an evaluation framew
 | M13: AWS Strands | Runnable SDK Agent and annotated tool, deterministic offline Strands event model and opt-in Bedrock mode | Offline real-SDK tool invocation, fake Bedrock construction, generated API tests and four-platform CI |
 | M14: Application foundations | Add configuration validation, sanitised JSON request logs, request IDs, honest readiness, generated CI and non-root container reference to all three templates | Generated tests, Doctor and wheel packaging on four OS/Python jobs, plus Docker build smoke |
 | M15: Adoption validation | Prepare an independent hand-off, actual HTTP/corpus-change exercise, privacy-safe reviewer notes and reusable machine preflight | Four-platform preflight CI, accepted protocol and documentation; **external participant results remain pending** |
-
 | M16: Cloud LLM providers for LangGraph | Optional OpenAI, Azure OpenAI, Anthropic and AWS Bedrock SDK adapters for both LangGraph templates; mock/Ollama unchanged | Faked SDK/config/API tests, Doctor checks, source packaging and four OS/Python CI jobs; no paid API calls |
+| M17: Strands native cloud models | Strands-native OpenAI and Anthropic and official Azure OpenAI client injection; offline mock and Bedrock retained | Faked SDK construction, real offline Strands tool-loop tests, legacy Doctor checks, generated-app CI and four OS/Python smoke jobs; no paid API calls |
 
 ## M15 pilot result boundary
 

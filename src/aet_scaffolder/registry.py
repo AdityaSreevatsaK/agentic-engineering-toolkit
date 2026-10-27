@@ -74,8 +74,8 @@ _LANGGRAPH_RAG = TemplateSpec(
 _STRANDS_AGENT = TemplateSpec(
     name="strands-agent",
     directory="strands_agent",
-    description="AWS Strands agent with offline SDK model and opt-in Amazon Bedrock",
-    providers=("mock", "bedrock"),
+    description="Strands agent with offline SDK model and opt-in cloud providers",
+    providers=("mock", "bedrock", "openai", "azure-openai", "anthropic"),
     required_files=(
         "README.md", ".gitignore", ".env.example", "pyproject.toml",
         ".dockerignore", "Dockerfile", ".github/workflows/ci.yml",
