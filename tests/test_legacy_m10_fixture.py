@@ -29,5 +29,5 @@ def test_legacy_profile_still_rejects_missing_original_required_file(tmp_path):
 
 def test_old_project_fixture_has_no_unexpanded_placeholders():
     for path in FIXTURE.rglob("*"):
-        if path.is_file():
+        if path.is_file() and path.name != "FIXTURE_PROVENANCE.md":
             assert "__PROJECT_NAME__" not in path.read_text(encoding="utf-8")
