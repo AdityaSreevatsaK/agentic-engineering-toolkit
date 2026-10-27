@@ -13,7 +13,7 @@ def test_registered_tool_agent_metadata():
     spec = get_template("tool-agent")
     assert SUPPORTED_TEMPLATES == ("tool-agent", "langgraph-rag", "strands-agent")
     assert spec.directory == "tool_agent"
-    assert {"mock", "ollama"} == set(spec.providers)
+    assert {"mock", "ollama", "openai", "azure-openai", "anthropic", "bedrock"} == set(spec.providers)
     assert "app/workflow.py" in spec.required_files
 
 

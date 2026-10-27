@@ -59,4 +59,7 @@ def get_provider(settings: Settings) -> TextProvider:
             base_url=settings.ollama_base_url,
             timeout_seconds=settings.ollama_timeout_seconds,
         )
+    if settings.provider in {"openai", "azure-openai", "anthropic", "bedrock"}:
+        from .cloud_providers import get_cloud_provider
+        return get_cloud_provider(settings)
     raise ProviderError("Unsupported provider configuration")

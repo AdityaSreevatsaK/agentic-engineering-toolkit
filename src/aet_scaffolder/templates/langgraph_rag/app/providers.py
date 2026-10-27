@@ -38,9 +38,12 @@ class OllamaProvider:
         return result["response"]
 
 
-def get_provider(settings: Settings) -> OllamaProvider:
+def get_provider(settings: Settings):
+    if settings.provider in {"openai", "azure-openai", "anthropic", "bedrock"}:
+        from .cloud_providers import get_cloud_provider
+        return get_cloud_provider(settings)
     if settings.provider != "ollama":
-        raise ProviderError("Live generation requires the local Ollama provider")
+        raise ProviderError("Live generation requires a configured model provider")
     return OllamaProvider(
         model=settings.ollama_model,
         base_url=settings.ollama_base_url,
