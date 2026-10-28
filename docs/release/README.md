@@ -41,7 +41,10 @@ agentkit new local-tool --template tool-agent --provider mock
 agentkit new local-graph-rag --template langgraph-rag --provider mock
 agentkit new local-strands --template strands-agent --provider mock
 agentkit new local-index-rag --template llamaindex-rag --provider mock
-python -m pip install -e "./local-tool[dev]" -e "./local-graph-rag[dev]" -e "./local-strands[dev]" -e "./local-index-rag[dev]"
+python -m pip install -e "./local-tool[dev]"
+python -m pip install -e "./local-graph-rag[dev]"
+python -m pip install -e "./local-strands[dev]"
+python -m pip install -e "./local-index-rag[dev]"
 python scripts/release_smoke.py
 ~~~
 

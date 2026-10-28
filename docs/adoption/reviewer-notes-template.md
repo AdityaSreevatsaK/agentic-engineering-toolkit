@@ -5,7 +5,7 @@
 - Trial code (anonymous, no real name or email): __________
 - Date (optional, month/year only): __________
 - Consent and any required organisational approval confirmed: Yes / No
-- Template: langgraph-rag / tool-agent / strands-agent
+- Template: langgraph-rag / tool-agent / strands-agent / llamaindex-rag
 - OS: Windows / Linux
 - Python version: 3.11 / 3.12
 - Previous framework experience: None / Some / Experienced

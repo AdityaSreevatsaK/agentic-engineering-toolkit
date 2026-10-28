@@ -11,8 +11,8 @@ The reusable asset is the **Agent Project Scaffolder**, not an evaluation framew
 | M15: Adoption validation | Prepare an independent hand-off, actual HTTP/corpus-change exercise, privacy-safe reviewer notes and reusable machine preflight | Four-platform preflight CI, accepted protocol and documentation; **external participant results remain pending** |
 | M16: Cloud LLM providers for LangGraph | Optional OpenAI, Azure OpenAI, Anthropic and AWS Bedrock SDK adapters for both LangGraph templates; mock/Ollama unchanged | Faked SDK/config/API tests, Doctor checks, source packaging and four OS/Python CI jobs; no paid API calls |
 | M17: Strands native cloud models | Strands-native OpenAI and Anthropic and official Azure OpenAI client injection; offline mock and Bedrock retained | Faked SDK construction, real offline Strands tool-loop tests, legacy Doctor checks, generated-app CI and four OS/Python smoke jobs; no paid API calls |
-
 | M18: Native LlamaIndex RAG | Add a separate framework-native keyword retrieval scaffold with offline mode and optional cloud/loopback model synthesis | Generated app exercises real LlamaIndex retrieval, bounded source loading, API contract, fake provider SDKs and all four OS/Python CI jobs |
+| M19: Pilot adoption readiness | Reproducible four-template mock HTTP/corpus-change smoke, independently executable fresh-user walkthrough and architecture/evidence pack | Four-platform CI checks for real generated-app ASGI probes; independent engineer results, real team adoption and human productivity savings remain future evidence gates |
 
 ## M15 pilot result boundary
 

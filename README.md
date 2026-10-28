@@ -9,6 +9,17 @@ The separate **Agent Engineering Accelerator (AEA)** owns LLM/agent evaluation, 
 
 Under Apache 2.0, others may reuse, modify and distribute this code, including commercially, provided they comply with the licence and attribution requirements. The licence does **not** guarantee production readiness or cover third-party dependencies under different licences. Each newly scaffolded project includes its own LICENSE and NOTICE.
 
+## M19: Pilot adoption readiness (machine tests versus human evidence)
+
+The [M19 release kit](docs/release/README.md) includes an isolated-workspace
+four-template offline API acceptance script, a fresh-user walkthrough,
+private reviewer form, evidence gates and a concise architecture/leadership
+review. The script verifies generated-project HTTP behaviour and synthetic
+RAG corpus updates without paid inference, but is **not an independent engineer
+trial** or measured time-saving evidence. All generated APIs remain local-only
+reference implementations. No cross-team reuse, production readiness or
+human productivity gain has been demonstrated.
+
 ## M15: Independent developer adoption validation
 
 AET v0.8.0 is a **pilot candidate**, not a proven productivity intervention. Follow the [M15 hand-off kit](docs/adoption/README.md) for an offline machine preflight and a preregistered, independent RAG developer trial. No independent human trial, cross-team adoption or human time-saving claim has yet been demonstrated.
@@ -161,6 +172,7 @@ Doctor does not install dependencies, run untrusted generated Python code, valid
 - **M16:** Add opt-in OpenAI, Azure OpenAI, Anthropic and AWS Bedrock integrations to both LangGraph templates with offline provider tests.
 - **M17:** Add Strands-native OpenAI and Anthropic model integrations and Azure OpenAI via the official client, retaining offline mock and Bedrock.
 - **M18:** Add a fourth native LlamaIndex keyword-RAG scaffold with deterministic offline retrieval, optional native model providers, Doctor validation and four-platform CI.
+- **M19:** Add reproducible offline API/corpus-change acceptance, a clean-environment reviewer walkthrough and architect-ready evidence gates without fabricated adoption claims.
 
 See [roadmap](docs/roadmap.md), [M11 decision record](docs/decisions/0011-scaffolder-focus.md) and [legacy assets](docs/legacy-assets.md).
 
