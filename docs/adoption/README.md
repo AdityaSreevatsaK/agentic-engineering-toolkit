@@ -2,6 +2,14 @@
 
 **Status:** Materials and structural preflight are ready. The author reported a successful local RAG smoke test on 27 October 2026. **No independent reviewer trials, team adoption or developer-time savings have been measured.** See the [evidence register](evidence-register.md).
 
+## Updated M19 acceptance and leadership kit
+
+The [M19 release-readiness kit](../release/README.md) provides an automated
+four-template mock HTTP smoke and synthetic corpus-change test, a separate
+unfamiliar-engineer walkthrough, evidence gate checklist and leadership
+architecture review. Running the automated smoke is **not** an independent
+human trial or proof of developer productivity.
+
 ## For a reviewer
 
 Follow the [independent RAG exercise](independent-trial.md), using a clean Windows/Linux environment and synthetic data. The full exercise tests generation, validation, installation, actual HTTP behaviour, and one meaningful corpus change. Start with the offline mock provider; live Ollama/Bedrock is out of scope.
@@ -17,7 +25,7 @@ python -m pip install -e .
 python scripts/adoption_preflight.py
 ```
 
-This creates all three templates in a temporary folder and checks registry metadata, template manifest, local mock mode, static Project Doctor, licence files and generated CI. It cleans up temporary projects automatically, makes **no paid model calls**, and produces machine-labelled JSON. To save a new report outside the repository:
+This creates all four registered templates in a temporary folder and checks registry metadata, template manifest, local mock mode, static Project Doctor, licence files and generated CI. It cleans up temporary projects automatically, makes **no paid model calls**, and produces machine-labelled JSON. To save a new report outside the repository:
 
 ```powershell
 python scripts/adoption_preflight.py --json-out C:\approved\m15-preflight.json

@@ -203,5 +203,16 @@ jobs:
         run: python -m aet_scaffolder new packaged-llamaindex --template llamaindex-rag --output-dir .
       - name: Doctor-check wheel-generated LlamaIndex RAG project
         run: python -m aet_scaffolder doctor packaged-llamaindex --json
+      - name: M19 verify actual offline generated-app API and RAG corpus updates
+        timeout-minutes: 6
+        run: python scripts/release_smoke.py --json-out m19-machine-smoke.json
+      - name: Retain sanitised M19 machine-only evidence (not a human trial)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: m19-machine-smoke-${{ matrix.os }}-py${{ matrix.python-version }}
+          path: m19-machine-smoke.json
+          if-no-files-found: warn
+          retention-days: 14
       - name: Benchmark local project generation (not human time saved)
         run: python -m aet_scaffolder.benchmark_cli --runs 3 --warmups 1 --provider mock
