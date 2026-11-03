@@ -40,6 +40,7 @@ def main(argv: list[str] | None = None) -> int:
             print(f"Checking generated project: {report.path}")
             for check in report.checks:
                 print(f"  {'PASS' if check.passed else 'FAIL'} {check.name}: {check.message}")
+            print("Scope: structural files, metadata and Python syntax only; runtime imports, tests and provider connectivity are not checked.")
             print("Result: PASS" if report.ok else "Result: FAIL")
         return 0 if report.ok else 1
     if args.command == "new":

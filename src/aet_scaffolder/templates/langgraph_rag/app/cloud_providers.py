@@ -46,6 +46,9 @@ def _make_model(settings: Settings) -> Any:
             from langchain_aws import ChatBedrock
             kwargs: dict[str, Any] = {
                 "model_id": _required(settings.bedrock_model_id, "Bedrock model ID"),
+                # ChatBedrock forwards these to the botocore client configuration.
+                "timeout": timeout,
+                "max_retries": retries,
             }
             region = (settings.aws_region or os.environ.get("AWS_REGION")
                       or os.environ.get("AWS_DEFAULT_REGION"))
