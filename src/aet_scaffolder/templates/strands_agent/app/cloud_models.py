@@ -21,7 +21,13 @@ def create_cloud_model(settings: Settings):
             from strands.models.openai import OpenAIModel
         except ImportError as exc:
             raise RuntimeError("Optional Strands OpenAI integration is not installed") from exc
-        return OpenAIModel(model_id=_required(settings.openai_model, "OpenAI model"))
+        return OpenAIModel(
+            model_id=_required(settings.openai_model, "OpenAI model"),
+            client_args={
+                "timeout": settings.model_timeout_seconds,
+                "max_retries": settings.model_max_retries,
+            },
+        )
 
     if settings.provider == "anthropic":
         try:
@@ -31,6 +37,10 @@ def create_cloud_model(settings: Settings):
         return AnthropicModel(
             model_id=_required(settings.anthropic_model, "Anthropic model"),
             max_tokens=settings.anthropic_max_tokens,
+            client_args={
+                "timeout": settings.model_timeout_seconds,
+                "max_retries": settings.model_max_retries,
+            },
         )
 
     if settings.provider == "azure-openai":
@@ -48,6 +58,8 @@ def create_cloud_model(settings: Settings):
             azure_endpoint=endpoint,
             api_version=api_version,
             azure_deployment=deployment,
+            timeout=settings.model_timeout_seconds,
+            max_retries=settings.model_max_retries,
         )
         return OpenAIModel(model_id=deployment, client=client)
 

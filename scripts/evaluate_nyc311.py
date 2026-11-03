@@ -6,7 +6,6 @@ No location, complaint text, contact information or full records are retained.
 from __future__ import annotations
 
 import argparse
-import csv
 import hashlib
 import importlib.util
 import json
@@ -146,7 +145,6 @@ def evaluate(
         fingerprint = hashlib.sha256(
             json.dumps(sorted(clean.items()), separators=(",", ":")).encode("utf-8")
         ).hexdigest()
-        from collections import Counter
         return {
             "schema_version": 1,
             "status": "passed",

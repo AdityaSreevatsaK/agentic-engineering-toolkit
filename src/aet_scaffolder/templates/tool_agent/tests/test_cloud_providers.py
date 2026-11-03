@@ -61,9 +61,8 @@ def test_framework_native_sdk_configuration_is_offline(
     # SDKs read native credentials securely; the scaffold never embeds them.
     assert not any("key" in key.lower() or "password" in key.lower()
                    for key in seen["kwargs"])
-    if name != "bedrock":
-        assert seen["kwargs"]["timeout"] == 27
-        assert seen["kwargs"]["max_retries"] == 0
+    assert seen["kwargs"]["timeout"] == 27
+    assert seen["kwargs"]["max_retries"] == 0
 
 
 @pytest.mark.parametrize("name,module,cls_name,fields,_", MODES)
@@ -174,3 +173,13 @@ def test_cloud_api_error_is_sanitised(monkeypatch):
     response = TestClient(app).post("/invoke", json={"question": "hello"})
     assert response.status_code == 503
     assert "highly-sensitive-sdk-error" not in response.text
+
+
+def test_bedrock_nondefault_timeout_and_retry_policy(monkeypatch):
+    seen = _fake_sdk(monkeypatch, "langchain_aws", "ChatBedrock")
+    providers.get_provider(Settings(
+        provider="bedrock", bedrock_model_id="amazon.unit-test",
+        model_timeout_seconds=37, model_max_retries=4,
+    ))
+    assert seen["kwargs"]["timeout"] == 37
+    assert seen["kwargs"]["max_retries"] == 4

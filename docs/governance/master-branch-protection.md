@@ -8,7 +8,7 @@ branch protection.
 ## Configure a branch ruleset
 
 1. Open **Settings > Rules > Rulesets > New ruleset > New branch ruleset**.
-2. Name it `Protect master: PR and four-platform CI`, set **Enforcement
+2. Name it `Protect master: PR and four-platform CI plus quality`, set **Enforcement
    status: Active**, and target **Default branch** (`master`).
 3. Enable **Require a pull request before merging**. Set **required approving
    reviews to 0** for the current solo-maintainer workflow. GitHub does not
@@ -16,20 +16,21 @@ branch protection.
 4. Enable **Require status checks to pass before merging**, and select these
    four existing GitHub Actions checks from the `ci` workflow:
 
-   - `smoke (ubuntu-latest, 3.11)`
-   - `smoke (ubuntu-latest, 3.12)`
-   - `smoke (windows-latest, 3.11)`
-   - `smoke (windows-latest, 3.12)`
+   - `smoke (ubuntu-24.04, 3.11)`
+   - `smoke (ubuntu-24.04, 3.12)`
+   - `smoke (windows-2025, 3.11)`
+   - `smoke (windows-2025, 3.12)`
 
+   Also require the dedicated `quality (ruff, mypy, bandit)` check.
    Turn on **Require branches to be up to date before merging** so status checks
-   run against the current target branch. Select all four, not only an umbrella
+   run against the current target branch. Select all five, not only an umbrella
    workflow status. GitHub must have reported each check recently to select it.
 5. Enable **Block force pushes**, **Restrict deletions**, and **Require
    conversation resolution before merging**, if available.
 6. Leave bypass permissions empty and avoid administrator exceptions when
    possible, so the protections also apply to the repository owner.
 7. Save/create the ruleset, then revisit its detail page and confirm its
-   **Active** status and all four required checks.
+   **Active** status and all five required checks (four matrix jobs and the quality job).
 
 GitHub docs: https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/managing-rulesets/creating-rulesets-for-a-repository
 

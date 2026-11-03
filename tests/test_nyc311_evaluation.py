@@ -5,7 +5,7 @@ from pathlib import Path
 import pytest
 
 from scripts.evaluate_nyc311 import (
-    DEFAULT_END, DEFAULT_START, EvaluationError, SOURCE, _parse_records,
+    EvaluationError, SOURCE, _parse_records,
     _query, fetch_official,
 )
 

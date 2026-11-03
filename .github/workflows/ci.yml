@@ -14,20 +14,43 @@ concurrency:
 permissions:
   contents: read
 jobs:
+  quality:
+    name: quality (ruff, mypy, bandit)
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.12'
+          cache: pip
+          cache-dependency-path: '**/pyproject.toml'
+      - name: Install pinned local quality tools
+        run: python -m pip install ruff==0.14.3 mypy==1.18.2 bandit==1.8.6
+      - name: Ruff correctness and lint check
+        run: python -m ruff check --select E4,E7,E9,F src tests scripts packages
+      - name: Focused static type check of scaffolder registry
+        run: python -m mypy --follow-imports=skip --ignore-missing-imports src/aet_scaffolder/registry.py
+      - name: Bandit high-severity Python security check
+        run: python -m bandit -q -r src/aet_scaffolder --severity-level high --confidence-level high -x '*/tests/*'
+
   smoke:
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, windows-latest]
+        os: [ubuntu-24.04, windows-2025]
         python-version: ['3.11', '3.12']
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           persist-credentials: false
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v6
         with:
           python-version: ${{ matrix.python-version }}
+          cache: pip
+          cache-dependency-path: '**/pyproject.toml'
       - name: Install scaffolder and test tools
         run: python -m pip install -e . pytest
       - name: Test scaffolder and doctor
@@ -76,7 +99,7 @@ jobs:
       - name: Run offline M7 three-asset acceptance demo
         run: python scripts/run_demo.py --json-out m7-demo-results.json
       - name: Retain sanitized M7 demo evidence
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: m7-demo-${{ matrix.os }}-py${{ matrix.python-version }}
           path: m7-demo-results.json
@@ -85,7 +108,7 @@ jobs:
       - name: Evaluate generated agent against synthetic Olist-shaped records
         run: python scripts/evaluate_olist.py --input tests/fixtures/olist_orders_synthetic.csv --sample 8 --queries 8 --seed 19 --dataset-kind synthetic --json-out m9-olist-synthetic.json
       - name: Retain clearly labeled synthetic order evaluation
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: m9-synthetic-olist-${{ matrix.os }}-py${{ matrix.python-version }}
           path: m9-olist-synthetic.json
@@ -94,7 +117,7 @@ jobs:
       - name: Run synthetic NYC 311 status evaluator
         run: python scripts/evaluate_nyc311.py --synthetic-input tests/fixtures/nyc311_synthetic.json --queries 6 --json-out m10-nyc311-synthetic.json
       - name: Save clearly labeled synthetic NYC 311 results
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: m10-nyc311-synthetic-${{ matrix.os }}-py${{ matrix.python-version }}
           path: m10-nyc311-synthetic.json
@@ -171,7 +194,7 @@ jobs:
         run: python -m pytest -q
         working-directory: strands-bedrock-demo
       - name: Build generated tool-agent container (offline app)
-        if: matrix.os == 'ubuntu-latest' && matrix.python-version == '3.11'
+        if: matrix.os == 'ubuntu-24.04' && matrix.python-version == '3.11'
         run: docker build --progress=plain -t aet-m14-tool-agent -f mock-demo/Dockerfile mock-demo
       - name: Build standalone wheel
         run: python -m pip wheel . --no-deps --wheel-dir wheelhouse
@@ -198,7 +221,7 @@ jobs:
         run: python scripts/release_smoke.py --json-out m19-machine-smoke.json
       - name: Retain sanitised M19 machine-only evidence (not a human trial)
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: m19-machine-smoke-${{ matrix.os }}-py${{ matrix.python-version }}
           path: m19-machine-smoke.json
@@ -206,3 +229,14 @@ jobs:
           retention-days: 14
       - name: Benchmark local project generation (not human time saved)
         run: python -m aet_scaffolder.benchmark_cli --runs 3 --warmups 1 --provider mock
+      - name: Capture resolved dependency versions (evidence, not a lockfile)
+        if: always()
+        run: python -m pip freeze --all > ci-resolved-dependencies.txt
+      - name: Retain resolved CI dependency evidence
+        if: always()
+        uses: actions/upload-artifact@v6
+        with:
+          name: ci-resolved-${{ matrix.os }}-py${{ matrix.python-version }}
+          path: ci-resolved-dependencies.txt
+          if-no-files-found: warn
+          retention-days: 14
