@@ -38,6 +38,8 @@ After lexical retrieval, supported provider modes call the corresponding native 
 | `anthropic` | `.[anthropic]` | `AET_ANTHROPIC_MODEL` | `ANTHROPIC_API_KEY` |
 | `bedrock` | `.[bedrock]` | `AET_BEDROCK_MODEL_ID`, optionally `AET_AWS_REGION` | AWS SDK credential chain |
 
+`AET_MODEL_TIMEOUT_SECONDS` (1–300 seconds; default 90) is forwarded to every native LlamaIndex provider: as `request_timeout` for Ollama and `timeout` for OpenAI, Azure OpenAI, Anthropic and Bedrock Converse. This is an SDK request timeout, **not** an end-to-end FastAPI deadline; provider retries may extend total response time. Live connectivity and timeout behaviour still require separate authorised integration testing.
+
 For example, generate with `agentkit new my-index --template llamaindex-rag --provider openai`, install `pip install -e ".[dev,openai]"`, and configure an authorised model and credentials before inference. `agentkit new ... --provider ollama --model llama3.2:1b` uses the existing compatible scaffolder CLI option.
 
 Cloud inference is **opt-in, potentially billable** and sends prompts and retrieved data to an external model provider. CI runs only local mock and mocked provider tests; no paid model calls are made. Native model SDKs handle credentials rather than the scaffold.

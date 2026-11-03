@@ -1,0 +1,33 @@
+name: nyc311-live-optional
+
+# The official public-data API is an external dependency: run only when an
+# authorised maintainer explicitly requests evidence, not on required CI.
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  official-public-data-evaluation:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install evaluation dependencies (no cloud provider SDKs)
+        run: python -m pip install -e ".[demo]" -e "./packages/agent-quality-kit"
+      - name: Evaluate official NYC 311 public status data
+        timeout-minutes: 6
+        run: python scripts/evaluate_nyc311.py --live --limit 120 --queries 100 --json-out m10-nyc311-official.json
+      - name: Retain aggregate official NYC 311 evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: m10-nyc311-official-py3.11
+          path: m10-nyc311-official.json
+          if-no-files-found: error
+          retention-days: 14

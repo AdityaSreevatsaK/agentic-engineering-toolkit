@@ -27,3 +27,9 @@ def test_azure_requires_bare_https_origin(invalid):
 
 def test_default_is_mock_without_live_api():
     assert Settings(provider="mock").provider == "mock"
+
+
+@pytest.mark.parametrize("timeout", [0, 301])
+def test_model_timeout_rejects_out_of_bounds_values(timeout):
+    with pytest.raises(ValidationError):
+        Settings(model_timeout_seconds=timeout)
