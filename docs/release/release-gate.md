@@ -7,7 +7,10 @@ from its actual execution; this file contains no fabricated outcomes.
 | Gate | Acceptance requirement | Evidence | State in repository |
 | --- | --- | --- | --- |
 | Code and packaging | Four templates in one installable AET wheel; old generated projects remain valid | Unit tests, Doctor, package tests | Automated test coverage available |
-| Functional smoke | Four generated mock apps pass health/readiness, request handling and invalid-input checks; both RAG variants reflect corpus change | `scripts/release_smoke.py` per-platform JSON | Baseline `755fbcc` CI passed; recheck after remediation PR |
+| Static quality | Ruff, focused mypy and Bandit checks succeed on the reviewed commit | Dedicated `quality` CI job | Implemented on remediation branch; verify PR CI before merge |
+| Provider policy | Bedrock and Strands transport timeout/retry parameters forwarded in offline constructor contracts | Generated unit tests and provider parity test | Implemented; paid inference remains unverified |
+| Reproducibility | Pin CI runner images, keep installed dependency version snapshots per matrix leg | GitHub Actions `ci-resolved` artifacts | Resolved version evidence, not a full dependency lock |
+| Functional smoke | Four generated mock apps pass health/readiness, request handling and invalid-input checks; both RAG variants reflect corpus change | `scripts/release_smoke.py` per-platform JSON | Baseline `b348592` CI passed; confirm the new integrated review commit before claiming current success |
 | Compatibility | All four Windows/Linux Python 3.11/3.12 jobs successful on final integrated commit | GitHub Actions matrix | Baseline `755fbcc` CI passed; recheck after remediation PR |
 | Optional public-data evaluation | External NYC 311 API must not block required CI | [Manual-only workflow](../../.github/workflows/nyc311-live.yml); synthetic fixture in required CI | Manual run available after merge; not a release gate | 
 | LlamaIndex provider timeouts | Validated timeout forwarded to all native provider constructors | Generated provider tests with injected SDK doubles | Regression coverage added; live provider operation unverified | 
