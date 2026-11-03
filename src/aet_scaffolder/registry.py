@@ -11,6 +11,15 @@ DEFAULT_TEMPLATE = "tool-agent"
 MANIFEST_FILE = ".aet-template.json"
 MANIFEST_VERSION = 1
 
+# Shared authoring-time contracts preserve self-contained generated projects.
+_COMMON_FOUNDATION_FILES = (
+    "README.md", ".gitignore", ".env.example", "pyproject.toml",
+    ".dockerignore", "Dockerfile", ".github/workflows/ci.yml",
+    "app/foundation.py", "tests/test_foundation.py",
+)
+_LANGCHAIN_PROVIDERS = ("mock", "ollama", "openai", "azure-openai", "anthropic", "bedrock")
+_LANGCHAIN_DEPS = frozenset({"fastapi", "langgraph", "uvicorn", "pydantic-settings"})
+
 
 @dataclass(frozen=True)
 class TemplateSpec:
@@ -27,18 +36,14 @@ _TOOL_AGENT = TemplateSpec(
     name="tool-agent",
     directory="tool_agent",
     description="Deterministic LangGraph tool routing with optional cloud chat providers",
-    providers=("mock", "ollama", "openai", "azure-openai", "anthropic", "bedrock"),
+    providers=_LANGCHAIN_PROVIDERS,
     required_files=(
-        "README.md", ".gitignore", ".env.example", "pyproject.toml",
-        ".dockerignore", "Dockerfile", ".github/workflows/ci.yml",
-        "app/foundation.py", "tests/test_foundation.py",
+        *_COMMON_FOUNDATION_FILES,
         "app/__init__.py", "app/config.py", "app/main.py",
         "app/providers.py", "app/cloud_providers.py", "app/tools.py", "app/workflow.py",
         "tests/test_app.py", "tests/test_providers.py", "tests/test_tools.py",
     ),
-    required_dependencies=frozenset(
-        {"fastapi", "langgraph", "uvicorn", "pydantic-settings"}
-    ),
+    required_dependencies=_LANGCHAIN_DEPS,
     required_env_fields=(
         "AET_PROVIDER=", "AET_OLLAMA_MODEL=", "AET_OLLAMA_BASE_URL=",
         "AET_OPENAI_MODEL=", "AET_AZURE_OPENAI_DEPLOYMENT=",
@@ -51,20 +56,16 @@ _LANGGRAPH_RAG = TemplateSpec(
     name="langgraph-rag",
     directory="langgraph_rag",
     description="Local BM25 RAG with optional cloud chat generation",
-    providers=("mock", "ollama", "openai", "azure-openai", "anthropic", "bedrock"),
+    providers=_LANGCHAIN_PROVIDERS,
     required_files=(
-        "README.md", ".gitignore", ".env.example", "pyproject.toml",
-        ".dockerignore", "Dockerfile", ".github/workflows/ci.yml",
-        "app/foundation.py", "tests/test_foundation.py",
+        *_COMMON_FOUNDATION_FILES,
         "data/knowledge.jsonl",
         "app/__init__.py", "app/config.py", "app/knowledge.py",
         "app/retrieval.py", "app/providers.py", "app/cloud_providers.py", "app/workflow.py",
         "app/main.py", "app/ingest.py",
         "tests/test_app.py", "tests/test_retrieval.py", "tests/test_ingest.py",
     ),
-    required_dependencies=frozenset(
-        {"fastapi", "langgraph", "uvicorn", "pydantic-settings"}
-    ),
+    required_dependencies=_LANGCHAIN_DEPS,
     required_env_fields=(
         "AET_PROVIDER=", "AET_OLLAMA_MODEL=", "AET_OLLAMA_BASE_URL=",
         "AET_KNOWLEDGE_PATH=", "AET_LOG_LEVEL=",
@@ -77,9 +78,7 @@ _STRANDS_AGENT = TemplateSpec(
     description="Strands agent with offline SDK model and opt-in cloud providers",
     providers=("mock", "bedrock", "openai", "azure-openai", "anthropic"),
     required_files=(
-        "README.md", ".gitignore", ".env.example", "pyproject.toml",
-        ".dockerignore", "Dockerfile", ".github/workflows/ci.yml",
-        "app/foundation.py", "tests/test_foundation.py",
+        *_COMMON_FOUNDATION_FILES,
         "app/__init__.py", "app/config.py", "app/agent.py", "app/tools.py",
         "app/offline_model.py", "app/main.py",
         "tests/test_api.py", "tests/test_agent.py",
@@ -87,14 +86,17 @@ _STRANDS_AGENT = TemplateSpec(
     required_dependencies=frozenset(
         {"fastapi", "uvicorn", "strands-agents", "pydantic-settings"}
     ),
-    required_env_fields=("AET_PROVIDER=", "AET_AWS_REGION=", "AET_BEDROCK_MODEL_ID=", "AET_LOG_LEVEL="),
+    required_env_fields=(
+        "AET_PROVIDER=", "AET_AWS_REGION=", "AET_BEDROCK_MODEL_ID=",
+        "AET_MODEL_TIMEOUT_SECONDS=", "AET_MODEL_MAX_RETRIES=", "AET_LOG_LEVEL=",
+    ),
 )
 
 _LLAMAINDEX_RAG = TemplateSpec(
     name="llamaindex-rag",
     directory="llamaindex_rag",
     description="Native offline LlamaIndex keyword retrieval with optional model synthesis",
-    providers=("mock", "ollama", "openai", "azure-openai", "anthropic", "bedrock"),
+    providers=_LANGCHAIN_PROVIDERS,
     required_files=(
         "README.md", ".gitignore", ".env.example", "pyproject.toml",
         ".dockerignore", "Dockerfile", ".github/workflows/ci.yml",
