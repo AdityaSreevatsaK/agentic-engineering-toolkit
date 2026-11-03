@@ -53,13 +53,17 @@ def test_bedrock_provider_constructs_correct_sdk_model_with_injected_stub(monkey
         provider="bedrock",
         aws_region="eu-west-1",
         bedrock_model_id="eu.amazon.nova-lite-v1:0",
+        model_timeout_seconds=37,
+        model_max_retries=4,
     )
     result, used = agent_module.run_agent("order status ORD-1001", settings)
-    assert seen == {
-        "model_id": "eu.amazon.nova-lite-v1:0",
-        "region_name": "eu-west-1",
-        "streaming": False,
-    }
+    assert seen["model_id"] == "eu.amazon.nova-lite-v1:0"
+    assert seen["region_name"] == "eu-west-1"
+    assert seen["streaming"] is False
+    boto_config = seen["boto_client_config"]
+    assert boto_config.connect_timeout == 37
+    assert boto_config.read_timeout == 37
+    assert boto_config.retries == {"mode": "standard", "total_max_attempts": 5}
     assert used is True
     assert "shipped" in result.lower()
 

@@ -1,4 +1,5 @@
 """Construct a real Strands Agent with selectable SDK-native model providers."""
+from botocore.config import Config
 from strands import Agent
 from strands.models import BedrockModel
 
@@ -22,6 +23,14 @@ def create_model(settings: Settings):
             model_id=settings.bedrock_model_id,
             region_name=settings.aws_region,
             streaming=False,
+            boto_client_config=Config(
+                connect_timeout=settings.model_timeout_seconds,
+                read_timeout=settings.model_timeout_seconds,
+                retries={
+                    "mode": "standard",
+                    "total_max_attempts": settings.model_max_retries + 1,
+                },
+            ),
         )
     return create_cloud_model(settings)
 

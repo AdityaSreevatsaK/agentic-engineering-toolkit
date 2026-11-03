@@ -12,6 +12,9 @@ class Settings(BaseSettings):
     log_level: Literal["DEBUG", "INFO", "WARNING", "ERROR"] = "INFO"
     provider: Literal["mock", "bedrock", "openai", "azure-openai", "anthropic"] = "__PROVIDER__"
     aws_region: str = Field(default="us-east-1", pattern=r"^[a-z]{2}(-gov)?-[a-z]+-\d+$")
+    # Per-attempt transport bounds. A complete multi-turn Agent run can take longer.
+    model_timeout_seconds: int = Field(default=90, ge=1, le=300)
+    model_max_retries: int = Field(default=2, ge=0, le=5)
     # Cloud models are always opt-in; native SDKs source credentials from environment.
     openai_model: str = Field(default="", max_length=160)
     anthropic_model: str = Field(default="", max_length=160)

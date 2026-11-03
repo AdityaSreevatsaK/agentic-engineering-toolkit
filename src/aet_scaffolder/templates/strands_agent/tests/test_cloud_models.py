@@ -45,7 +45,8 @@ def _stub_provider(monkeypatch, kind):
 ])
 def test_sdk_native_model_and_real_strands_tool_loop(monkeypatch, kind, params, expected):
     seen = _stub_provider(monkeypatch, kind)
-    cfg = Settings(provider=kind, **params)
+    cfg = Settings(provider=kind, model_timeout_seconds=37,
+                   model_max_retries=4, **params)
     answer, used = agent_module.run_agent("order status ORD-1001", cfg)
     assert used is True
     assert "shipped" in answer.lower()
@@ -53,12 +54,16 @@ def test_sdk_native_model_and_real_strands_tool_loop(monkeypatch, kind, params, 
     for key, value in expected.items():
         assert seen["model_args"][key] == value
     assert not any("api_key" in key for key in seen["model_args"])
+    if kind in {"openai", "anthropic"}:
+        assert seen["model_args"]["client_args"] == {"timeout": 37, "max_retries": 4}
     if kind == "azure-openai":
         assert "client" in seen["model_args"]
         assert seen["client_args"] == {
             "azure_endpoint": "https://test.openai.azure.com",
             "api_version": "2024-10-21",
             "azure_deployment": "deployment-test",
+            "timeout": 37,
+            "max_retries": 4,
         }
 
 
@@ -125,3 +130,12 @@ def test_live_provider_never_returns_raw_error_from_api(monkeypatch, kind):
     response = TestClient(app).post("/invoke", json={"question": "hello"})
     assert response.status_code == 503
     assert "credential-or-private-host-in-SDK-exception" not in response.text
+
+
+def test_strands_transport_policy_validation():
+    for invalid in (0, 301):
+        with pytest.raises(ValueError):
+            Settings(model_timeout_seconds=invalid)
+    for invalid in (-1, 6):
+        with pytest.raises(ValueError):
+            Settings(model_max_retries=invalid)

@@ -7,7 +7,7 @@ This is a **real Strands Agents SDK** project: `strands.Agent` hosts a decorated
 | Mode | Behaviour | Prerequisites |
 | --- | --- | --- |
 | `mock` (default) | A tiny scripted Strands `Model` emits a tool request for `order status ORD-1001`, triggering a real Strands tool invocation. Other questions get a deterministic text reply. **This is not LLM reasoning.** | None beyond Python dependencies |
-| `bedrock` | Original Strands `BedrockModel` configuration, unchanged. | AWS SDK identity and Bedrock access |
+| `bedrock` | Native Strands `BedrockModel`, with explicitly bounded Botocore transport timeout and retry settings. | AWS SDK identity and Bedrock access |
 | `openai` | Native Strands `OpenAIModel` | `OPENAI_API_KEY`, selected `AET_OPENAI_MODEL` |
 | `anthropic` | Native Strands `AnthropicModel` | `ANTHROPIC_API_KEY`, `AET_ANTHROPIC_MODEL` |
 | `azure-openai` | Strands `OpenAIModel` with official `AsyncAzureOpenAI` client | `AZURE_OPENAI_API_KEY` (or supported identity), deployment, HTTPS endpoint and API version |
@@ -53,7 +53,7 @@ cd openai-agent
 python -m pip install -e ".[dev,openai]"
 ~~~
 
-Set `AET_OPENAI_MODEL` and securely supply `OPENAI_API_KEY` via your normal execution environment before live inference. For Azure, install `.[azure-openai]`, then set `AET_AZURE_OPENAI_DEPLOYMENT`, `AET_AZURE_OPENAI_ENDPOINT` (bare HTTPS origin) and `AET_AZURE_OPENAI_API_VERSION`. Its SDK accepts native Azure authentication configuration. For Anthropic, install `.[anthropic]`, configure `AET_ANTHROPIC_MODEL` and securely supply `ANTHROPIC_API_KEY`. The Strands SDK owns tool-use and model integration; this project does not implement any custom API transport.
+Set `AET_OPENAI_MODEL` and securely supply `OPENAI_API_KEY` via your normal execution environment before live inference. For Azure, install `.[azure-openai]`, then set `AET_AZURE_OPENAI_DEPLOYMENT`, `AET_AZURE_OPENAI_ENDPOINT` (bare HTTPS origin) and `AET_AZURE_OPENAI_API_VERSION`. Its SDK accepts native Azure authentication configuration. For Anthropic, install `.[anthropic]`, configure `AET_ANTHROPIC_MODEL` and securely supply `ANTHROPIC_API_KEY`. The Strands SDK owns tool-use and model integration; this project does not implement any custom API transport. Set `AET_MODEL_TIMEOUT_SECONDS` (1-300, default 90) and `AET_MODEL_MAX_RETRIES` (0-5, default 2) to configure provider-native per-attempt timeouts and retries. OpenAI and Anthropic receive native `client_args`, Azure configures the official SDK client and Bedrock receives a Botocore `Config`. A multi-turn agent run can still exceed the single-call timeout; cloud account/model compatibility remains unverified by offline CI.
 
 Provider dependencies are optional so fresh mock installations and CI require no API keys, external inference or paid service. Model availability and tool-calling support vary by selected deployment. Cloud inference sends user prompts and tool content to third parties; treat it as opt-in and review applicable data handling, token budgets and authorisation. The example remains unauthenticated and **must not** be directly deployed to production.
 
