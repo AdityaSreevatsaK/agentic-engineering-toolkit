@@ -178,7 +178,7 @@ def run_release_smoke() -> dict:
                 item["generation_ms"] = round((generated_at - started) * 1000, 2)
                 item["doctor_ms"] = round((doctor_at - generated_at) * 1000, 2)
                 item["api_probe_ms"] = round((probe_at - doctor_at) * 1000, 2)
-            except Exception as exc:
+            except Exception:
                 # Errors are deliberately a closed vocabulary; never expose
                 # arbitrary exception content, local paths or host details.
                 item["failure_stage"] = (

@@ -1,7 +1,6 @@
 """All data here is synthetic: no measured pilot observations or people."""
 import csv
 import json
-from pathlib import Path
 
 import pytest
 

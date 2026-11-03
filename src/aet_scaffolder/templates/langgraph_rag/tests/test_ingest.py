@@ -1,5 +1,4 @@
 """Local ingestion is bounded, deterministic and never overwrites a corpus."""
-import json
 
 import pytest
 

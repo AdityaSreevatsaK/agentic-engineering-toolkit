@@ -1,5 +1,4 @@
 """M14 scaffolder contract: production-oriented files without production claims."""
-from pathlib import Path
 
 import pytest
 
