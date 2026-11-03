@@ -27,7 +27,10 @@ def create_llm(settings: Settings) -> Any:
             )
         if settings.provider == "openai":
             from llama_index.llms.openai import OpenAI
-            return OpenAI(model=_required(settings.openai_model, "OpenAI model"))
+            return OpenAI(
+                model=_required(settings.openai_model, "OpenAI model"),
+                timeout=settings.model_timeout_seconds,
+            )
         if settings.provider == "azure-openai":
             from llama_index.llms.azure_openai import AzureOpenAI
             return AzureOpenAI(
@@ -35,13 +38,20 @@ def create_llm(settings: Settings) -> Any:
                 deployment_name=_required(settings.azure_openai_deployment, "Azure deployment"),
                 azure_endpoint=_required(settings.azure_openai_endpoint, "Azure endpoint"),
                 api_version=_required(settings.azure_openai_api_version, "Azure API version"),
+                timeout=settings.model_timeout_seconds,
             )
         if settings.provider == "anthropic":
             from llama_index.llms.anthropic import Anthropic
-            return Anthropic(model=_required(settings.anthropic_model, "Anthropic model"))
+            return Anthropic(
+                model=_required(settings.anthropic_model, "Anthropic model"),
+                timeout=settings.model_timeout_seconds,
+            )
         if settings.provider == "bedrock":
             from llama_index.llms.bedrock_converse import BedrockConverse
-            kwargs = {"model": _required(settings.bedrock_model_id, "Bedrock model")}
+            kwargs = {
+                "model": _required(settings.bedrock_model_id, "Bedrock model"),
+                "timeout": settings.model_timeout_seconds,
+            }
             if settings.aws_region:
                 kwargs["region_name"] = settings.aws_region
             return BedrockConverse(**kwargs)
