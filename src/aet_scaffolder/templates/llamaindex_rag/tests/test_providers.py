@@ -9,20 +9,24 @@ from app.config import Settings
 
 MODES = [
     ("ollama", "llama_index.llms.ollama", "Ollama", {},
-        {"model": "llama3.2:1b", "base_url": "http://127.0.0.1:11434"}),
+        {"model": "llama3.2:1b", "base_url": "http://127.0.0.1:11434",
+         "request_timeout": 37}),
     ("openai", "llama_index.llms.openai", "OpenAI",
-        {"openai_model": "gpt-test"}, {"model": "gpt-test"}),
+        {"openai_model": "gpt-test"}, {"model": "gpt-test", "timeout": 37}),
     ("azure-openai", "llama_index.llms.azure_openai", "AzureOpenAI",
         {"azure_openai_model": "gpt-test",
          "azure_openai_deployment": "azure-test",
          "azure_openai_endpoint": "https://example.openai.azure.com",
          "azure_openai_api_version": "2024-10-21"},
-        {"model": "gpt-test", "deployment_name": "azure-test"}),
+        {"model": "gpt-test", "deployment_name": "azure-test",
+          "timeout": 37}),
     ("anthropic", "llama_index.llms.anthropic", "Anthropic",
-        {"anthropic_model": "claude-test"}, {"model": "claude-test"}),
+        {"anthropic_model": "claude-test"},
+        {"model": "claude-test", "timeout": 37}),
     ("bedrock", "llama_index.llms.bedrock_converse", "BedrockConverse",
         {"bedrock_model_id": "amazon.test", "aws_region": "eu-west-1"},
-        {"model": "amazon.test", "region_name": "eu-west-1"}),
+        {"model": "amazon.test", "region_name": "eu-west-1",
+          "timeout": 37}),
 ]
 
 
@@ -42,7 +46,9 @@ def _fake_sdk(monkeypatch, module, cls):
 def test_explicit_provider_uses_correct_native_llamaindex_class(
         monkeypatch, name, module, cls, settings, expected):
     seen = _fake_sdk(monkeypatch, module, cls)
-    instance = providers.create_llm(Settings(provider=name, **settings))
+    instance = providers.create_llm(Settings(
+        provider=name, model_timeout_seconds=37, **settings
+    ))
     assert instance is not None
     assert seen["constructed"] == 1
     assert all(seen["kwargs"].get(key) == value for key, value in expected.items())
