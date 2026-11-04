@@ -227,6 +227,17 @@ jobs:
           path: m19-machine-smoke.json
           if-no-files-found: warn
           retention-days: 14
+      - name: Run all declared template-provider pairs with offline API probes
+        timeout-minutes: 20
+        run: python -m scripts.comprehensive_matrix --json-out comprehensive-matrix.json
+      - name: Retain per-pair exhaustive offline matrix evidence
+        if: always()
+        uses: actions/upload-artifact@v6
+        with:
+          name: comprehensive-matrix-${{ matrix.os }}-py${{ matrix.python-version }}
+          path: comprehensive-matrix.json
+          if-no-files-found: error
+          retention-days: 30
       - name: Benchmark local project generation (not human time saved)
         run: python -m aet_scaffolder.benchmark_cli --runs 3 --warmups 1 --provider mock
       - name: Capture resolved dependency versions (evidence, not a lockfile)
