@@ -41,16 +41,18 @@ def test_plan_does_not_contact_github(monkeypatch, capsys):
 
 def test_apply_and_verify_with_stubbed_gh(monkeypatch, capsys):
     requests = []
+    created = {"value": False}
     full = dict(ruleset.desired_ruleset(), id=8127)
 
     def fake_api(path, *, method="GET", payload=None):
         requests.append((path, method))
         if method == "POST":
             assert payload == ruleset.desired_ruleset()
+            created["value"] = True
             return full
         if path.endswith("/8127"):
             return full
-        if len(requests) == 1:
+        if not created["value"]:
             return []
         return [{"id": 8127, "name": ruleset.RULESET_NAME}]
 
