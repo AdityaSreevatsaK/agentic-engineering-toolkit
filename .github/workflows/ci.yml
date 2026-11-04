@@ -193,6 +193,8 @@ jobs:
       - name: Verify Bedrock wiring with injected offline SDK model
         run: python -m pytest -q
         working-directory: strands-bedrock-demo
+      - name: Check installed dependency consistency after generated-app installs
+        run: python -m pip check
       - name: Build generated tool-agent container (offline app)
         if: matrix.os == 'ubuntu-24.04' && matrix.python-version == '3.11'
         run: docker build --progress=plain -t aet-m14-tool-agent -f mock-demo/Dockerfile mock-demo

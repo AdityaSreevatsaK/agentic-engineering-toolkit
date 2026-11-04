@@ -9,6 +9,17 @@ The separate **Agent Engineering Accelerator (AEA)** owns LLM/agent evaluation, 
 
 Under Apache 2.0, others may reuse, modify and distribute this code, including commercially, provided they comply with the licence and attribution requirements. The licence does **not** guarantee production readiness or cover third-party dependencies under different licences. Each newly scaffolded project includes its own LICENSE and NOTICE.
 
+## Most recent offline evidence and governance
+
+The [4 November comprehensive test report](docs/testing/comprehensive-matrix-2026-11-04.md)
+records all **23 declared template/provider pairings** tested in offline mock
+mode across four Windows/Linux and Python 3.11/3.12 environments
+(92/92 pairing checks, 116/116 negative checks, five CI jobs passing).
+The provider SDKs were not contacted live. To protect master using your own
+GitHub administrator login, see the
+[owner-only ruleset setup](docs/governance/master-branch-protection.md).
+Repository rulesets cannot be enabled by merely changing tracked files.
+
 ## M19: Pilot adoption readiness (machine tests versus human evidence)
 
 The [M19 release kit](docs/release/README.md) includes an isolated-workspace

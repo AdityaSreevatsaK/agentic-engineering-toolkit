@@ -1,13 +1,14 @@
 # M15 evidence register: do not conflate categories
 
-**Snapshot: 28 October 2026**
-**Status: CI-backed preflight available, author-operated smoke test reported, external human validation uncollected.**
+**Snapshot: 4 November 2026**
+**Status: Automated four-platform offline matrix and quality gates passed; external human validation uncollected.**
 
 | Evidence category | Current status | Valid supporting evidence | What it does NOT show |
 | --- | --- | --- | --- |
 | AET engineering implementation | Verified via merged M11–M18 PRs and four-platform CI | PRs #11, #12, #14, #15, #22, #23, #24 and their four-platform checks | Adoption, productivity savings or model quality |
 | Licence and distribution | Apache-2.0 grant merged via PR #16 | Root/package/generated LICENSE and NOTICE files; CI validation | Security certification or employer endorsement |
 | M19 automated HTTP/corpus-change smoke | Four-template local acceptance suite under M19 PR; CI result depends on final checks | `scripts/release_smoke.py` uses child-process ASGI HTTP and synthetic RAG changes | Fresh-user completion, dependency install speed, human time saved, adoption |
+| Comprehensive provider/scaffold offline grid (4 November) | **92/92 supported pairs and 116/116 negative checks passed** across Linux/Windows, Python 3.11/3.12 | [Committed test report](../testing/comprehensive-matrix-2026-11-04.md), CI run 41782430839 | Paid provider inference, independence, productivity gains, security approval |
 | Automated M15 structural preflight | Script and repeatable CI test added; actual CI result depends on run | `scripts/adoption_preflight.py` output labelled `automated_structural_preflight` | Human task completion, actual HTTP operation or saved time |
 | Author-operated RAG smoke test (27 October 2026) | **Self-reported successful with two documentation gaps** | Private screenshots show 29 passed, 1 skipped in 3.30s; Uvicorn starting/stopping/restarting; and two POST /ask requests returning HTTP 200. The author reports the exercise worked and requested fuller file paths and stop/start instructions. | Independent reviewer usability; exact API response contents/source IDs (not visible in screenshots); cause of skipped test; productivity savings |
 | Independent fresh-user execution | **Not collected (optional when reviewers become available)** | Reproducible checklist, tests and authorised observations from an unfamiliar engineer | Statistical ROI or multi-team adoption |

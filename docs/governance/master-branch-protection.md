@@ -5,7 +5,36 @@ changes enter `master`. The repository owner must configure this in GitHub
 Settings. Version-controlled documentation alone **does not activate** GitHub
 branch protection.
 
-## Configure a branch ruleset
+## One-command owner setup (recommended)
+
+This GitHub integration can inspect rulesets but has no ruleset-write action.
+The repository owner can enforce these rules using the official **GitHub CLI**
+and their **own GitHub account**. No personal access token or secret is stored
+in this repository. Run from the repository root:
+
+~~~powershell
+gh auth login
+python -m scripts.configure_branch_ruleset
+python -m scripts.configure_branch_ruleset --apply
+python -m scripts.configure_branch_ruleset --verify
+~~~
+
+The first Python command is a **local plan-only dry run**. The explicit
+`--apply` makes the write using your authenticated `gh` CLI and then
+verifies the resulting active ruleset. Repeating `--apply` is read-only
+when the same ruleset is correctly installed; it never overwrites an
+existing incomplete ruleset. The final `--verify` is read-only.
+You need repository administration write access, and your GitHub plan must
+allow branch rulesets for this repository. If a request fails, check
+`gh auth status`, then use the Settings instructions below.
+
+**Do not run the write command from CI.** It is a one-time repository-owner
+governance action, not a source-code setting. It requires zero approvals
+for a solo maintainer but requires PRs, all five CI checks, branch currency,
+conversation resolution, and prevents deletion and force pushes. The rule
+is targeted only at the default branch, without bypass actors.
+
+## Configure a branch ruleset manually
 
 1. Open **Settings > Rules > Rulesets > New ruleset > New branch ruleset**.
 2. Name it `Protect master: PR and four-platform CI plus quality`, set **Enforcement
@@ -40,7 +69,7 @@ In **Settings > Rules > Rulesets**, confirm the ruleset is enabled for
 `master`. Open a PR with failing/pending checks and verify GitHub blocks
 merging. Do not force a failing merge or push directly to `master`.
 
-The four checks are enforced by a **repository settings rule**, not by
+The five checks are enforced by a **repository settings rule**, not by
 `.github/workflows/ci.yml`. The workflow alone does not prevent bypasses.
 
 ## Recovery
