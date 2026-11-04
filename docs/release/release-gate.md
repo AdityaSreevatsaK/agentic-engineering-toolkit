@@ -1,17 +1,22 @@
 # M19 evidence and release gate
 
 The goal is **pilot-readiness**, not declaring production readiness or
-claiming developer-time savings. Complete/check each gate only with evidence
+claiming developer-time savings.
+
+On 4 November 2026, the [comprehensive supported-combination report](../testing/comprehensive-matrix-2026-11-04.md)
+recorded 92/92 supported offline pair checks, 116/116 negative checks,
+all four Windows/Linux CI jobs and the dedicated quality gate passing on
+PR #29 run 41781179570. Cloud models were not invoked. Complete/check each gate only with evidence
 from its actual execution; this file contains no fabricated outcomes.
 
 | Gate | Acceptance requirement | Evidence | State in repository |
 | --- | --- | --- | --- |
 | Code and packaging | Four templates in one installable AET wheel; old generated projects remain valid | Unit tests, Doctor, package tests | Automated test coverage available |
-| Static quality | Ruff, focused mypy and Bandit checks succeed on the reviewed commit | Dedicated `quality` CI job | Implemented on remediation branch; verify PR CI before merge |
-| Provider policy | Bedrock and Strands transport timeout/retry parameters forwarded in offline constructor contracts | Generated unit tests and provider parity test | Implemented; paid inference remains unverified |
+| Static quality | Ruff, focused mypy and Bandit checks succeed on the reviewed commit | Dedicated `quality` CI job | Passed in PR #29 run 41781179570; full integrated merge should be rechecked |
+| Provider policy | Bedrock and Strands transport timeout/retry parameters forwarded in offline constructor contracts | Generated unit tests and provider parity test | Constructor double regression tests passed in PR #29; paid inference remains unverified |
 | Reproducibility | Pin CI runner images, keep installed dependency version snapshots per matrix leg | GitHub Actions `ci-resolved` artifacts | Resolved version evidence, not a full dependency lock |
-| Functional smoke | Four generated mock apps pass health/readiness, request handling and invalid-input checks; both RAG variants reflect corpus change | `scripts/release_smoke.py` per-platform JSON | Baseline `b348592` CI passed; confirm the new integrated review commit before claiming current success |
-| Compatibility | All four Windows/Linux Python 3.11/3.12 jobs successful on final integrated commit | GitHub Actions matrix | Baseline `755fbcc` CI passed; recheck after remediation PR |
+| Functional smoke | Four generated mock apps pass health/readiness, request handling and invalid-input checks; both RAG variants reflect corpus change | `scripts/release_smoke.py` per-platform JSON | All four platform jobs passed in PR #29 run 41781179570, including the M19 smoke |
+| Compatibility | All four Windows/Linux Python 3.11/3.12 jobs successful on final integrated commit | GitHub Actions matrix | All four matrix jobs passed in PR #29 run 41781179570 |
 | Optional public-data evaluation | External NYC 311 API must not block required CI | [Manual-only workflow](../../.github/workflows/nyc311-live.yml); synthetic fixture in required CI | Manual run available after merge; not a release gate | 
 | LlamaIndex provider timeouts | Validated timeout forwarded to all native provider constructors | Generated provider tests with injected SDK doubles | Regression coverage added; live provider operation unverified | 
 | Independent usability | At least one authorised non-author engineer independently performs the primary two-request corpus trial | Private completed observer notes | **Not collected** |
