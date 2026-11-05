@@ -55,7 +55,7 @@ import threading
 import tracemalloc
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
-from time import perf_counter, process_time
+from time import perf_counter, process_time, sleep
 
 from fastapi.testclient import TestClient
 from app.main import app
@@ -118,7 +118,17 @@ def atomic_update(path, content):
         temporary.write(content)
         candidate = Path(temporary.name)
     try:
-        os.replace(candidate, path)
+        # Windows can temporarily reject replacing an open destination while
+        # another reader is closing its file descriptor. Retry that narrow
+        # sharing violation only; never suppress an unrelated IO failure.
+        for attempt in range(30):
+            try:
+                os.replace(candidate, path)
+                break
+            except PermissionError:
+                if attempt == 29:
+                    raise
+                sleep(0.01)
     finally:
         candidate.unlink(missing_ok=True)
 
