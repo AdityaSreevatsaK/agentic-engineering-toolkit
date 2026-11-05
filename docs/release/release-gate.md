@@ -3,6 +3,8 @@
 The goal is **pilot-readiness**, not declaring production readiness or
 claiming developer-time savings.
 
+See the [5 November deep-audit remediation register](../testing/post-audit-remediation-2026-11-05.md) for fixed correctness findings, pre-existing provider transport controls, reproducible regression tests, and explicitly unverified gates. A separate optional GitHub Actions dependency-vulnerability workflow audits installed package resolutions; no advisory-scan success is claimed before a real run.
+
 On 4 November 2026, the [comprehensive supported-combination report](../testing/comprehensive-matrix-2026-11-04.md)
 recorded 92/92 supported offline pair checks, 116/116 negative checks,
 all four Windows/Linux CI jobs and the dedicated quality gate passing on

@@ -48,3 +48,11 @@ def test_aws_failure_never_leaks_exception_details(monkeypatch):
 def test_invalid_requests_are_rejected(body):
     response = client.post("/invoke", json=body)
     assert response.status_code == 422
+
+
+@pytest.mark.parametrize("provider", ["openai", "azure-openai", "anthropic", "bedrock"])
+def test_readiness_message_is_cloud_provider_neutral(monkeypatch, provider):
+    monkeypatch.setenv("AET_PROVIDER", provider)
+    response = client.get("/ready")
+    assert response.status_code == 503
+    assert response.json()["detail"] == "Live model readiness has not been verified"
