@@ -4,6 +4,9 @@ name: dependency-vulnerability-audit
 # so it is intentionally NOT a mandatory offline PR check.
 on:
   workflow_dispatch:
+  # A tag triggers evidence collection; the GitHub tag is not itself blocked.
+  push:
+    tags: ['v*']
   schedule:
     - cron: '20 5 1 * *'
 
@@ -19,10 +22,10 @@ jobs:
       matrix:
         template: [tool-agent, langgraph-rag, strands-agent, llamaindex-rag]
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
         with:
           persist-credentials: false
-      - uses: actions/setup-python@v6
+      - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
         with:
           python-version: '3.12'
       - name: Install audit tooling and scaffolder
@@ -31,6 +34,9 @@ jobs:
         run: python -m aet_scaffolder new audit-app --template ${{ matrix.template }} --provider mock
       - name: Resolve and install optional provider SDKs without credentials
         run: python -m pip install -e "./audit-app[dev,cloud]"
+      - name: Include the optional LlamaIndex Ollama dependency family
+        if: matrix.template == 'llamaindex-rag'
+        run: python -m pip install -e "./audit-app[ollama]"
       - name: Verify complete resolved environment is dependency-consistent
         run: python -m pip check
       - name: Save exact resolved dependency versions
@@ -40,7 +46,7 @@ jobs:
         run: python -m pip_audit --format json --output dependency-audit.json
       - name: Retain audit evidence even when vulnerabilities are found
         if: always()
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6
         with:
           name: dependency-audit-${{ matrix.template }}-linux-py3.12
           path: |

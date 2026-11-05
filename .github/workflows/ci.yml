@@ -18,10 +18,10 @@ jobs:
     name: quality (ruff, mypy, bandit)
     runs-on: ubuntu-24.04
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
         with:
           persist-credentials: false
-      - uses: actions/setup-python@v6
+      - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
         with:
           python-version: '3.12'
           cache: pip
@@ -43,10 +43,10 @@ jobs:
         os: [ubuntu-24.04, windows-2025]
         python-version: ['3.11', '3.12']
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
         with:
           persist-credentials: false
-      - uses: actions/setup-python@v6
+      - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
         with:
           python-version: ${{ matrix.python-version }}
           cache: pip
@@ -99,7 +99,7 @@ jobs:
       - name: Run offline M7 three-asset acceptance demo
         run: python scripts/run_demo.py --json-out m7-demo-results.json
       - name: Retain sanitized M7 demo evidence
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6
         with:
           name: m7-demo-${{ matrix.os }}-py${{ matrix.python-version }}
           path: m7-demo-results.json
@@ -108,7 +108,7 @@ jobs:
       - name: Evaluate generated agent against synthetic Olist-shaped records
         run: python scripts/evaluate_olist.py --input tests/fixtures/olist_orders_synthetic.csv --sample 8 --queries 8 --seed 19 --dataset-kind synthetic --json-out m9-olist-synthetic.json
       - name: Retain clearly labeled synthetic order evaluation
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6
         with:
           name: m9-synthetic-olist-${{ matrix.os }}-py${{ matrix.python-version }}
           path: m9-olist-synthetic.json
@@ -117,7 +117,7 @@ jobs:
       - name: Run synthetic NYC 311 status evaluator
         run: python scripts/evaluate_nyc311.py --synthetic-input tests/fixtures/nyc311_synthetic.json --queries 6 --json-out m10-nyc311-synthetic.json
       - name: Save clearly labeled synthetic NYC 311 results
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6
         with:
           name: m10-nyc311-synthetic-${{ matrix.os }}-py${{ matrix.python-version }}
           path: m10-nyc311-synthetic.json
@@ -223,7 +223,7 @@ jobs:
         run: python scripts/release_smoke.py --json-out m19-machine-smoke.json
       - name: Retain sanitised M19 machine-only evidence (not a human trial)
         if: always()
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6
         with:
           name: m19-machine-smoke-${{ matrix.os }}-py${{ matrix.python-version }}
           path: m19-machine-smoke.json
@@ -234,12 +234,27 @@ jobs:
         run: python -m scripts.comprehensive_matrix --json-out comprehensive-matrix.json
       - name: Retain per-pair exhaustive offline matrix evidence
         if: always()
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6
         with:
           name: comprehensive-matrix-${{ matrix.os }}-py${{ matrix.python-version }}
           path: comprehensive-matrix.json
           if-no-files-found: error
           retention-days: 30
+      - name: Bounded deep-event, concurrency and security testing (mock only)
+        timeout-minutes: 20
+        run: python -m scripts.deep_event_matrix --json-out deep-event-results.json --csv-out deep-event-metrics.csv --failures-out deep-event-failures.jsonl --security-out deep-event-security.json
+      - name: Retain deep-event security and performance evidence
+        if: always()
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6
+        with:
+          name: deep-event-${{ matrix.os }}-py${{ matrix.python-version }}
+          path: |
+            deep-event-results.json
+            deep-event-metrics.csv
+            deep-event-failures.jsonl
+            deep-event-security.json
+          if-no-files-found: error
+          retention-days: 90
       - name: Benchmark local project generation (not human time saved)
         run: python -m aet_scaffolder.benchmark_cli --runs 3 --warmups 1 --provider mock
       - name: Capture resolved dependency versions (evidence, not a lockfile)
@@ -247,7 +262,7 @@ jobs:
         run: python -m pip freeze --all > ci-resolved-dependencies.txt
       - name: Retain resolved CI dependency evidence
         if: always()
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6
         with:
           name: ci-resolved-${{ matrix.os }}-py${{ matrix.python-version }}
           path: ci-resolved-dependencies.txt

@@ -11,7 +11,6 @@ import argparse
 import csv
 import json
 import platform
-import statistics
 import subprocess
 import sys
 import tempfile
