@@ -11,7 +11,7 @@ def test_manifest_contains_only_base_names_commits_and_digests(tmp_path, monkeyp
     monkeypatch.setenv("GITHUB_SHA", "a" * 40)
     monkeypatch.setenv("GITHUB_RUN_ID", "12345")
     file = tmp_path / "metrics.csv"
-    file.write_text("safe,synthetic\n", encoding="utf-8")
+    file.write_bytes(b"safe,synthetic\n")
     manifest = evidence_manifest.manifest_for([file])
     assert manifest["cryptographically_signed"] is False
     assert manifest["source_commit"] == "a" * 40
