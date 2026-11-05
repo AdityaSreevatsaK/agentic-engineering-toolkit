@@ -5,6 +5,7 @@ We override ONLY keyword tokenisation; index storage, retrieval, scoring and
 source-node identities remain LlamaIndex-native.
 """
 import re
+from functools import lru_cache
 
 from llama_index.core import SimpleKeywordTableIndex
 from llama_index.core.indices.keyword_table.retrievers import KeywordTableSimpleRetriever
@@ -49,11 +50,19 @@ class _OfflineKeywordIndex(SimpleKeywordTableIndex):
         return _OfflineSimpleRetriever(self, **kwargs)
 
 
-def retrieve(question: str, documents: list[Document], top_k: int) -> list[Document]:
-    """Build a bounded transient native index and return native retrieved nodes."""
+@lru_cache(maxsize=8)
+def _index_for_documents(documents: tuple[Document, ...]) -> _OfflineKeywordIndex:
+    """Reuse a native LlamaIndex index; create a new retriever for each query."""
     nodes = [TextNode(id_=document.id, text=document.text) for document in documents]
     # Explicit MockLLM prevents default model resolution or paid API calls.
-    index = _OfflineKeywordIndex(nodes, llm=MockLLM(max_tokens=64))
+    return _OfflineKeywordIndex(nodes, llm=MockLLM(max_tokens=64))
+
+
+def retrieve(question: str, documents: list[Document], top_k: int) -> list[Document]:
+    """Search a bounded cached index and return native retrieved source nodes."""
+    if not 1 <= top_k <= 5:
+        raise ValueError("top_k must be between 1 and 5")
+    index = _index_for_documents(tuple(documents))
     results = index.as_retriever(num_chunks_per_query=top_k).retrieve(question)
     by_id = {document.id: document for document in documents}
     seen: set[str] = set()

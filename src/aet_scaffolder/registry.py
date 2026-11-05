@@ -19,6 +19,17 @@ _COMMON_FOUNDATION_FILES = (
 )
 _LANGCHAIN_PROVIDERS = ("mock", "ollama", "openai", "azure-openai", "anthropic", "bedrock")
 _LANGCHAIN_DEPS = frozenset({"fastapi", "langgraph", "uvicorn", "pydantic-settings"})
+# Doctor validates all documented options, not just the default/mock provider.
+_LANGCHAIN_CLOUD_FIELDS = (
+    "AET_OPENAI_MODEL=", "AET_AZURE_OPENAI_DEPLOYMENT=",
+    "AET_AZURE_OPENAI_ENDPOINT=", "AET_AZURE_OPENAI_API_VERSION=",
+    "AET_ANTHROPIC_MODEL=", "AET_BEDROCK_MODEL_ID=", "AET_AWS_REGION=",
+    "AET_MODEL_TIMEOUT_SECONDS=", "AET_MODEL_MAX_RETRIES=",
+)
+_LANGCHAIN_BASE_FIELDS = (
+    "AET_PROVIDER=", "AET_OLLAMA_MODEL=", "AET_OLLAMA_BASE_URL=",
+    "AET_OLLAMA_TIMEOUT_SECONDS=", "AET_LOG_LEVEL=",
+)
 
 
 @dataclass(frozen=True)
@@ -44,12 +55,7 @@ _TOOL_AGENT = TemplateSpec(
         "tests/test_app.py", "tests/test_providers.py", "tests/test_tools.py",
     ),
     required_dependencies=_LANGCHAIN_DEPS,
-    required_env_fields=(
-        "AET_PROVIDER=", "AET_OLLAMA_MODEL=", "AET_OLLAMA_BASE_URL=",
-        "AET_OPENAI_MODEL=", "AET_AZURE_OPENAI_DEPLOYMENT=",
-        "AET_ANTHROPIC_MODEL=", "AET_BEDROCK_MODEL_ID=",
-        "AET_LOG_LEVEL=",
-    ),
+    required_env_fields=(*_LANGCHAIN_BASE_FIELDS, *_LANGCHAIN_CLOUD_FIELDS),
 )
 
 _LANGGRAPH_RAG = TemplateSpec(
@@ -67,8 +73,8 @@ _LANGGRAPH_RAG = TemplateSpec(
     ),
     required_dependencies=_LANGCHAIN_DEPS,
     required_env_fields=(
-        "AET_PROVIDER=", "AET_OLLAMA_MODEL=", "AET_OLLAMA_BASE_URL=",
-        "AET_KNOWLEDGE_PATH=", "AET_LOG_LEVEL=",
+        *_LANGCHAIN_BASE_FIELDS, *_LANGCHAIN_CLOUD_FIELDS,
+        "AET_KNOWLEDGE_PATH=", "AET_TOP_K=",
     ),
 )
 
@@ -89,6 +95,9 @@ _STRANDS_AGENT = TemplateSpec(
     required_env_fields=(
         "AET_PROVIDER=", "AET_AWS_REGION=", "AET_BEDROCK_MODEL_ID=",
         "AET_MODEL_TIMEOUT_SECONDS=", "AET_MODEL_MAX_RETRIES=", "AET_LOG_LEVEL=",
+        "AET_OPENAI_MODEL=", "AET_ANTHROPIC_MODEL=",
+        "AET_ANTHROPIC_MAX_TOKENS=", "AET_AZURE_OPENAI_DEPLOYMENT=",
+        "AET_AZURE_OPENAI_ENDPOINT=", "AET_AZURE_OPENAI_API_VERSION=",
     ),
 )
 
@@ -111,9 +120,12 @@ _LLAMAINDEX_RAG = TemplateSpec(
     ),
     required_env_fields=(
         "AET_PROVIDER=", "AET_KNOWLEDGE_PATH=", "AET_TOP_K=",
-        "AET_OLLAMA_MODEL=", "AET_OLLAMA_BASE_URL=",
-        "AET_OPENAI_MODEL=", "AET_AZURE_OPENAI_DEPLOYMENT=",
-        "AET_ANTHROPIC_MODEL=", "AET_BEDROCK_MODEL_ID=", "AET_LOG_LEVEL=",
+        "AET_OLLAMA_MODEL=", "AET_OLLAMA_BASE_URL=", "AET_LOG_LEVEL=",
+        "AET_OPENAI_MODEL=", "AET_AZURE_OPENAI_MODEL=",
+        "AET_AZURE_OPENAI_DEPLOYMENT=", "AET_AZURE_OPENAI_ENDPOINT=",
+        "AET_AZURE_OPENAI_API_VERSION=", "AET_ANTHROPIC_MODEL=",
+        "AET_BEDROCK_MODEL_ID=", "AET_AWS_REGION=",
+        "AET_MODEL_TIMEOUT_SECONDS=",
     ),
 )
 

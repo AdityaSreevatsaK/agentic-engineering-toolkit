@@ -1,6 +1,7 @@
 """Real, deterministic BM25 lexical retrieval, with no hosted embedding dependency."""
 import math
 import re
+from functools import lru_cache
 from collections import Counter
 from dataclasses import dataclass
 
@@ -19,6 +20,17 @@ class SearchHit:
     score: float
 
 
+@lru_cache(maxsize=8)
+def _corpus_stats(
+    documents: tuple[Document, ...],
+) -> tuple[tuple[Counter, ...], tuple[int, ...], float]:
+    """Reuse immutable lexical statistics for identical document snapshots."""
+    counts = tuple(Counter(tokenize(doc.text)) for doc in documents)
+    lengths = tuple(sum(count.values()) for count in counts)
+    avg = sum(lengths) / len(lengths) if lengths else 1.0
+    return counts, lengths, avg or 1.0
+
+
 def search(query: str, documents: list[Document], *, top_k: int = 2) -> list[SearchHit]:
     """Return relevant documents ranked by BM25; zero-overlap hits are excluded."""
     if not 1 <= top_k <= 5:
@@ -26,9 +38,7 @@ def search(query: str, documents: list[Document], *, top_k: int = 2) -> list[Sea
     tokens = set(tokenize(query))
     if not tokens or not documents:
         return []
-    counts = [Counter(tokenize(doc.text)) for doc in documents]
-    lengths = [sum(c.values()) for c in counts]
-    average_length = sum(lengths) / len(lengths) or 1
+    counts, lengths, average_length = _corpus_stats(tuple(documents))
     df = {term: sum(term in count for count in counts) for term in tokens}
     hits: list[SearchHit] = []
     for document, count, length in zip(documents, counts, lengths):

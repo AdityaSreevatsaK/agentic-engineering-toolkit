@@ -29,14 +29,17 @@ def install_foundations(app: FastAPI) -> None:
     async def request_foundation(request: Request, call_next):
         request_id = uuid4().hex
         started = perf_counter()
-        failed = False
+        exception_type = None
         try:
             response = await call_next(request)
-        except Exception:
-            failed = True
+        except Exception as exc:
+            # Log exception class only; SDK errors can contain credentials.
+            # Never log exception messages, tracebacks, prompts or request data.
+            exception_type = type(exc).__name__
             response = JSONResponse(
                 status_code=500, content={"detail": "Internal server error"}
             )
+        failed = response.status_code >= 500
         response.headers["X-Request-ID"] = request_id
 
         # Avoid arbitrary route strings, query strings, headers and user content.
@@ -46,12 +49,15 @@ def install_foundations(app: FastAPI) -> None:
         log_level = os.environ.get("AET_LOG_LEVEL", "INFO").upper()
         _LOGGER.setLevel(log_level if log_level in
                          {"DEBUG", "INFO", "WARNING", "ERROR"} else "INFO")
-        _LOGGER.info(json.dumps({
+        event = {
             "event": "request_completed" if not failed else "request_failed",
             "request_id": request_id,
             "method": request.method,
             "route": path,
             "status_code": response.status_code,
             "duration_ms": round((perf_counter() - started) * 1000, 2),
-        }, separators=(",", ":")))
+        }
+        if exception_type is not None:
+            event["exception_type"] = exception_type
+        _LOGGER.info(json.dumps(event, separators=(",", ":")))
         return response

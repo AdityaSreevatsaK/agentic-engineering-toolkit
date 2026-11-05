@@ -28,13 +28,13 @@ def health() -> dict[str, str]:
 
 @app.get("/ready")
 def ready() -> dict[str, str]:
-    """Check offline configuration; Bedrock credentials are not probed."""
+    """Check offline configuration; hosted provider access is never probed."""
     try:
         settings = get_settings()
     except ValueError as exc:
         raise HTTPException(status_code=503, detail="Invalid local configuration") from exc
     if settings.provider != "mock":
-        raise HTTPException(status_code=503, detail="Live Bedrock readiness has not been verified")
+        raise HTTPException(status_code=503, detail="Live model readiness has not been verified")
     return {"status": "ready"}
 
 

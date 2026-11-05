@@ -11,6 +11,9 @@ import tomllib
 from dataclasses import asdict, dataclass
 from pathlib import Path
 
+from packaging.requirements import InvalidRequirement, Requirement
+from packaging.utils import canonicalize_name
+
 from .registry import (
     DEFAULT_TEMPLATE,
     MANIFEST_FILE,
@@ -129,11 +132,20 @@ def validate_project(path: str | Path) -> ValidationReport:
             raise ValueError("Project metadata is missing a nonempty name")
         if not isinstance(dependencies, list):
             raise ValueError("Project dependencies must be a list")
-        installed = {
-            dep.split(">")[0].split("<")[0].split("=")[0].split("!")[0].split("[")[0].strip().lower()
-            for dep in dependencies if isinstance(dep, str)
-        }
-        missing = sorted(spec.required_dependencies - installed)
+        installed: set[str] = set()
+        for dep in dependencies:
+            if not isinstance(dep, str):
+                raise ValueError("Project dependency entry must be a PEP 508 string")
+            try:
+                requirement = Requirement(dep)
+                if requirement.marker is None or requirement.marker.evaluate():
+                    installed.add(canonicalize_name(requirement.name))
+            except InvalidRequirement as exc:
+                raise ValueError("Invalid generated app dependency specification") from exc
+        missing = sorted(
+            canonicalize_name(dep) for dep in spec.required_dependencies
+            if canonicalize_name(dep) not in installed
+        )
         if missing:
             raise ValueError("Missing generated app dependencies: " + ", ".join(missing))
         checks.append(Check("project_metadata", True, f"Valid metadata for {name}"))
@@ -142,9 +154,34 @@ def validate_project(path: str | Path) -> ValidationReport:
 
     try:
         config = _text_file(root, ".env.example")
+        required_fields = spec.required_env_fields
+        if spec.name == "strands-agent":
+            cloud_adapter = root / "app" / "cloud_models.py"
+            documented_cloud_modes = any(
+                line.startswith("AET_OPENAI_MODEL=")
+                for line in config.splitlines()
+            )
+            if cloud_adapter.is_symlink():
+                raise ValueError("Strands cloud adapter may not be a symbolic link")
+            if not cloud_adapter.is_file() and documented_cloud_modes:
+                raise ValueError("Missing current Strands cloud model adapter")
+        if spec.name == "strands-agent" and not (root / "app" / "cloud_models.py").exists():
+            # Preserve the historical M13/M14 offline Strands layout, which
+            # predates the opt-in OpenAI/Anthropic/Azure adapter and env fields.
+            # Current projects include cloud_models.py and remain fully checked.
+            required_fields = tuple(
+                field for field in required_fields
+                if field not in {
+                    "AET_OPENAI_MODEL=", "AET_ANTHROPIC_MODEL=",
+                    "AET_ANTHROPIC_MAX_TOKENS=",
+                    "AET_AZURE_OPENAI_DEPLOYMENT=",
+                    "AET_AZURE_OPENAI_ENDPOINT=",
+                    "AET_AZURE_OPENAI_API_VERSION=",
+                }
+            )
         missing = [
             field
-            for field in spec.required_env_fields
+            for field in required_fields
             if not any(line.startswith(field) for line in config.splitlines())
         ]
         if missing:
