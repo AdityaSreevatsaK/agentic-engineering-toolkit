@@ -62,3 +62,38 @@ def test_reject_symbolic_link(tmp_path):
         pytest.skip("Symlink creation is unavailable")
     with pytest.raises(KnowledgeError, match="symbolic link"):
         load_documents(link)
+
+
+def test_corpus_snapshot_cache_refreshes_on_edit(tmp_path, monkeypatch):
+    from pathlib import Path
+    from app import knowledge
+    corpus = tmp_path / "cache.jsonl"
+    corpus.write_text('{"id":"one","text":"First immutable reference."}\n', encoding="utf-8")
+    knowledge._cached_documents.cache_clear()
+    calls = []
+    original_read = Path.read_text
+
+    def tracking_read(self, *args, **kwargs):
+        if self == corpus:
+            calls.append(1)
+        return original_read(self, *args, **kwargs)
+
+    monkeypatch.setattr(Path, "read_text", tracking_read)
+    assert knowledge.load_documents(corpus)[0].id == "one"
+    assert knowledge.load_documents(corpus)[0].id == "one"
+    assert len(calls) == 1
+    corpus.write_text('{"id":"two","text":"Second changed reference."}\n', encoding="utf-8")
+    assert knowledge.load_documents(corpus)[0].id == "two"
+    assert len(calls) == 2
+
+
+def test_bm25_corpus_statistics_cache_refreshes_with_new_documents():
+    from app.retrieval import _corpus_stats
+    _corpus_stats.cache_clear()
+    previous_docs = [Document("unique-1", "saffron seed sample")]
+    assert search("saffron", previous_docs)
+    before = _corpus_stats.cache_info()
+    assert search("saffron", list(previous_docs))
+    assert _corpus_stats.cache_info().hits == before.hits + 1
+    assert search("violet", [Document("unique-2", "violet policy note")])
+    assert _corpus_stats.cache_info().misses == before.misses + 1
