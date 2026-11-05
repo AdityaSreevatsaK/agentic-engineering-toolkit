@@ -87,5 +87,6 @@ def test_unexpected_exception_is_sanitised(monkeypatch):
     assert "a-private-secret" not in response.text
     event = json.loads(events[-1])
     assert event["event"] == "request_failed"
+    assert event["exception_type"] == "RuntimeError"
     assert event["route"] == "<unmatched>"
     assert "a-private-secret" not in events[-1]
