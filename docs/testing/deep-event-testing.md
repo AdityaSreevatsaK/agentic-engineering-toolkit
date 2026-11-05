@@ -1,7 +1,9 @@
 # Bounded deep-event testing: scope and evidence
 
-**Implementation status:** The test layer is committed on a feature branch
-and must pass the five-check CI gate before being described as executed.
+**Implementation status:** All five checks passed on the PR integration run
+[42041978382](https://github.com/AdityaSreevatsaK/agentic-engineering-toolkit/actions/runs/42041978382). See the
+[consolidated executed sweep report](deep-event-sweep-2026-11-05.md) for
+actual scenario counts, observed performance and the corrected Windows event.
 
 ## Test contract
 
