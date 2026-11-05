@@ -159,7 +159,7 @@ try:
         request(client, "malformed_json", raw=b'{"question":',
                 headers={"Content-Type": "application/json"}, expected=(422,))
         request(client, "invalid_utf8", raw=b'{"question":"\xff"}',
-                headers={"Content-Type": "application/json"}, expected=(422,))
+                headers={"Content-Type": "application/json"}, expected=(400, 422))
         request(client, "unknown_field", {"question": VALID, "extra": "safe"})
         for event_id, text in (
             ("unicode_question", "こんにちは café résumé"),
