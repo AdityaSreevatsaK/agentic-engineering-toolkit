@@ -243,6 +243,9 @@ jobs:
       - name: Bounded deep-event, concurrency and security testing (mock only)
         timeout-minutes: 20
         run: python -m scripts.deep_event_matrix --json-out deep-event-results.json --csv-out deep-event-metrics.csv --failures-out deep-event-failures.jsonl --security-out deep-event-security.json
+      - name: Hash deep-event evidence with commit/run provenance
+        if: always()
+        run: python -m scripts.evidence_manifest --out deep-event-manifest.json deep-event-results.json deep-event-metrics.csv deep-event-failures.jsonl deep-event-security.json
       - name: Retain deep-event security and performance evidence
         if: always()
         uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6
@@ -253,6 +256,7 @@ jobs:
             deep-event-metrics.csv
             deep-event-failures.jsonl
             deep-event-security.json
+            deep-event-manifest.json
           if-no-files-found: error
           retention-days: 90
       - name: Benchmark local project generation (not human time saved)
