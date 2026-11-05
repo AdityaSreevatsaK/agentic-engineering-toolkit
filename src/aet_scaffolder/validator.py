@@ -154,9 +154,24 @@ def validate_project(path: str | Path) -> ValidationReport:
 
     try:
         config = _text_file(root, ".env.example")
+        required_fields = spec.required_env_fields
+        if spec.name == "strands-agent" and not (root / "app" / "cloud_models.py").exists():
+            # Preserve the historical M13/M14 offline Strands layout, which
+            # predates the opt-in OpenAI/Anthropic/Azure adapter and env fields.
+            # Current projects include cloud_models.py and remain fully checked.
+            required_fields = tuple(
+                field for field in required_fields
+                if field not in {
+                    "AET_OPENAI_MODEL=", "AET_ANTHROPIC_MODEL=",
+                    "AET_ANTHROPIC_MAX_TOKENS=",
+                    "AET_AZURE_OPENAI_DEPLOYMENT=",
+                    "AET_AZURE_OPENAI_ENDPOINT=",
+                    "AET_AZURE_OPENAI_API_VERSION=",
+                }
+            )
         missing = [
             field
-            for field in spec.required_env_fields
+            for field in required_fields
             if not any(line.startswith(field) for line in config.splitlines())
         ]
         if missing:
