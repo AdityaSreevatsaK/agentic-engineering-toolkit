@@ -155,6 +155,16 @@ def validate_project(path: str | Path) -> ValidationReport:
     try:
         config = _text_file(root, ".env.example")
         required_fields = spec.required_env_fields
+        if spec.name == "strands-agent":
+            cloud_adapter = root / "app" / "cloud_models.py"
+            documented_cloud_modes = any(
+                line.startswith("AET_OPENAI_MODEL=")
+                for line in config.splitlines()
+            )
+            if cloud_adapter.is_symlink():
+                raise ValueError("Strands cloud adapter may not be a symbolic link")
+            if not cloud_adapter.is_file() and documented_cloud_modes:
+                raise ValueError("Missing current Strands cloud model adapter")
         if spec.name == "strands-agent" and not (root / "app" / "cloud_models.py").exists():
             # Preserve the historical M13/M14 offline Strands layout, which
             # predates the opt-in OpenAI/Anthropic/Azure adapter and env fields.

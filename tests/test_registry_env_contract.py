@@ -40,3 +40,14 @@ def test_doctor_rejects_any_missing_provider_field(tmp_path, template):
         ), (template, key)
     example.write_text(original, encoding="utf-8")
     assert validate_project(project).ok
+
+
+def test_current_strands_cloud_adapter_cannot_disappear_silently(tmp_path):
+    project = generate("strands-current", output_dir=tmp_path, template="strands-agent")
+    (project / "app" / "cloud_models.py").unlink()
+    report = validate_project(project)
+    assert not report.ok
+    assert any(
+        check.name == "sample_configuration" and not check.passed
+        for check in report.checks
+    )
