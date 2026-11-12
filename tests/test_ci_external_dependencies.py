@@ -11,12 +11,11 @@ def test_required_ci_uses_only_synthetic_nyc311_records():
     assert "evaluate_nyc311.py --live" not in ci
 
 
-def test_official_nyc311_check_requires_manual_dispatch():
-    live = (_ROOT / ".github/workflows/nyc311-live.yml").read_text(
-        encoding="utf-8"
-    )
-    assert "workflow_dispatch:" in live
-    assert "pull_request:" not in live
-    assert "push:" not in live
-    assert "schedule:" not in live
-    assert "evaluate_nyc311.py --live" in live
+def test_retired_external_nyc311_workflow_cannot_reenter_required_ci():
+    """Keep historical M10 evidence but do not run external API calls in CI."""
+    assert not (_ROOT / ".github/workflows/nyc311-live.yml").exists()
+    for name in ("ci.yml", "dependency-audit.yml"):
+        workflow = (_ROOT / ".github/workflows" / name).read_text(
+            encoding="utf-8"
+        )
+        assert "evaluate_nyc311.py --live" not in workflow
