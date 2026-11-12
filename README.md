@@ -7,6 +7,8 @@ AET is a **project scaffolder for Python agent applications**. It generates self
 
 The separate **Agent Engineering Accelerator (AEA)** owns LLM/agent evaluation, regression analysis, statistical testing, LLM judging and quality gates. AET does not recreate those functions, and does not currently depend on AEA.
 
+**Detailed project reference:** [PROJECT_DEEP_DIVE.md](PROJECT_DEEP_DIVE.md) explains the full architecture, templates, provider wiring, commands, CI, maintenance rules, evidence and limitations. Coding agents can start with the concise [AGENTS.md](AGENTS.md) guide, then open the relevant sections of the deep dive.
+
 Under Apache 2.0, others may reuse, modify and distribute this code, including commercially, provided they comply with the licence and attribution requirements. The licence does **not** guarantee production readiness or cover third-party dependencies under different licences. Each newly scaffolded project includes its own LICENSE and NOTICE.
 
 ## Most recent offline evidence and governance
