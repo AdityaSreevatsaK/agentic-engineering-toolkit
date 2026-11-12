@@ -267,3 +267,404 @@ Legacy behaviour is essential: **pre-M11 manifest-less generated tool-agent proj
 Doctor does **not** install dependencies, validate actual runtime SDK imports, execute tests, test an LLM, contact cloud APIs, inspect arbitrary other directories or certify an application for production. Its JSON is a structural report only.
 
 ---
+
+## 5. The four generated project types
+
+There are **four** templates, representing **three framework families**. Six provider names exist overall; Strands intentionally excludes Ollama. There are **23 declared and supported template/provider combinations**, not 24.
+
+| Template name passed to `--template` | Framework / role | Accepted providers | Main endpoint | Question limit |
+| --- | --- | --- | --- | --- |
+| `tool-agent` | LangGraph state graph with deterministic synthetic order lookup | mock, ollama, openai, azure-openai, anthropic, bedrock | `POST /invoke` | 4,000 characters |
+| `langgraph-rag` | LangGraph local BM25 retrieval and optional answer synthesis | mock, ollama, openai, azure-openai, anthropic, bedrock | `POST /ask` | 2,000 characters |
+| `strands-agent` | Actual Strands SDK agent loop and read-only synthetic order-status tool | mock, bedrock, openai, azure-openai, anthropic | `POST /invoke` | 1,000 characters |
+| `llamaindex-rag` | Native LlamaIndex keyword-table retrieval and optional synthesis | mock, ollama, openai, azure-openai, anthropic, bedrock | `POST /ask` | 2,000 characters |
+
+All apps have `GET /health` and `GET /ready`. In mock mode `/ready` checks safe local settings and, for RAG, availability of the local knowledge corpus. In non-mock modes `/ready` deliberately returns **503: live model readiness has not been verified**, even when a user might successfully invoke the provider. It is intentionally conservative, not a production readiness probe.
+
+### 5.1 `tool-agent`: deterministic LangGraph order routing
+
+**Source:** `src/aet_scaffolder/templates/tool_agent/`.
+
+Modules and responsibilities:
+
+- `app/main.py`: `InvokeRequest(question)`, `InvokeResponse(answer, tool_used)`, health/readiness and sanitised HTTP exceptions.
+- `app/config.py`: per-call Pydantic settings.
+- `app/workflow.py`: real LangGraph `StateGraph`, state keys and conditional control flow.
+- `app/tools.py`: deterministic, read-only demo order statuses; no real customer integration.
+- `app/providers.py`: mock string provider, bounded local Ollama HTTP integration and dispatch into optional cloud provider implementation.
+- `app/cloud_providers.py`: lazy LangChain-native SDK models.
+- `app/foundation.py`: request logging, IDs and errors.
+
+Graph nodes and transitions:
+
+```text
+START
+  -> detect_order_request
+       | exact regex "order status ORD-####" (case-insensitive)
+       +--> lookup_order -> END
+       |      get_order_status("ORD-1001") -> shipped
+       |
+       +--> respond -> END
+              selected TextProvider.generate(question)
+```
+
+The regex is a **full match** of `order status` followed by a synthetic ID of the form `ORD-1234`. Unknown IDs return an explicit not-found **demo** result. Other input is routed to a text provider, which returns deterministic mock text in mock mode. This demonstrates a simple graph with a tool boundary but **does not implement model-selected dynamic tool planning**.
+
+Typical request:
+
+```json
+{"question": "order status ORD-1001"}
+```
+
+Typical mock response shape:
+
+```json
+{"answer": "Demo order ORD-1001 status: shipped.", "tool_used": "get_order_status"}
+```
+
+Do not repurpose `get_order_status` as a real order service without reworking identity, authorisation, customer-data handling, audit and external API failure semantics.
+
+### 5.2 `langgraph-rag`: local BM25 RAG graph
+
+**Source:** `src/aet_scaffolder/templates/langgraph_rag/`.
+
+Modules:
+
+- `app/knowledge.py`: safe bounded JSONL loading, document IDs, metadata-keyed cache.
+- `app/retrieval.py`: lexical tokenisation and BM25 ranking, reusable corpus statistics.
+- `app/workflow.py`: LangGraph retrieve → respond.
+- `app/ingest.py`: optional controlled local `.txt`/`.md` corpus generation.
+- `app/providers.py` and `app/cloud_providers.py`: optional local/remote synthesis only after retrieval finds evidence.
+- `app/main.py`: `POST /ask` with `answer` and `source_ids`.
+- `data/knowledge.jsonl`: fictional example policies and other synthetic source text.
+
+Execution:
+
+```text
+POST /ask {"question": "..."}
+  -> Pydantic validation
+  -> retrieve node:
+       read/validate local corpus
+       tokenize query and documents
+       BM25 score and sort, top-k (default 2)
+       collect source {id, text} records
+  -> respond node:
+       no hits -> explicit no-evidence message
+       mock -> quote first retrieved passage with its source ID
+       live provider -> compose evidence-restricted prompt
+                        -> optional SDK model synthesis
+  -> answer + source_ids
+```
+
+Important: **source_ids are evidence identifiers, not proof that a generated answer is true**. Real LLM output may ignore citations or instructions. `Mock` demonstrates retrieval; it does not perform generative reasoning. The prompt labels retrieved text as untrusted, but this is not a complete prompt-injection defence.
+
+Request:
+
+```json
+{"question": "What is the return policy?"}
+```
+
+Response:
+
+```json
+{"answer": "Sample retrieved evidence [returns]: ...", "source_ids": ["returns"]}
+```
+
+The exact text depends on the bundled or subsequently edited synthetic corpus. Use the actual generated test fixtures rather than hardcoding imagined returns elsewhere.
+
+### 5.3 `strands-agent`: actual SDK agent with deterministic offline model
+
+**Source:** `src/aet_scaffolder/templates/strands_agent/`.
+
+This template is meaningfully different from the LangGraph tool starter. It runs a **real Strands Agent** with a real Strands `@tool` declaration. The bundled `OfflineModel` implements Strands' model streaming interface with scripted events, so it can exercise the SDK's tool-call execution path without sending prompts to AWS or another provider.
+
+Module sequence:
+
+- `app/main.py`: FastAPI endpoint accepts `InvokeRequest(question)`, returns `answer`, `tool_used` (boolean) and `provider`.
+- `app/config.py`: constrained model/protocol settings, region, timeouts, model/token options.
+- `app/agent.py`: constructs a fresh `strands.Agent` per request, selects the configured model, passes the synthetic tool and detects actual tool-use blocks from agent messages.
+- `app/offline_model.py`: scripted `Model.stream` emitting Strands tool-use, final-answer and usage event shapes. It is not an LLM.
+- `app/tools.py`: `@tool get_order_status` with validated synthetic IDs.
+- `app/cloud_models.py`: lazy Strands-native OpenAI/Anthropic integration and official Azure client injection; Bedrock model selection lives in `agent.py`.
+- `app/foundation.py`: same standalone privacy-conscious HTTP foundation.
+
+The mock tool sequence is:
+
+```text
+Strands Agent instantiated for request
+  -> OfflineModel receives question
+  -> if synthetic order command:
+       OfflineModel emits structured toolUse event
+       Strands SDK invokes @tool get_order_status
+       SDK records toolResult
+       OfflineModel streams a final response containing tool text
+  -> response includes tool_used=true, provider="mock"
+```
+
+In contrast, a question without a synthetic matching order command produces the mock instructional response and `tool_used=false`. A **new Agent per request** avoids accidental shared conversation state across distinct HTTP callers; it is not a full state-management solution for multi-turn agents.
+
+Cloud mapping in this template is provider-specific:
+
+- `bedrock` → `strands.models.BedrockModel` with botocore `Config` timeouts and retry policy.
+- `openai` → `strands.models.openai.OpenAIModel`.
+- `azure-openai` → official `AsyncAzureOpenAI` injected into Strands `OpenAIModel`.
+- `anthropic` → `strands.models.anthropic.AnthropicModel`.
+- `mock` → local scripted `OfflineModel`.
+
+**Ollama is not an allowed Strands provider** in the current registry; changing that requires new code and tests, not a documentation-only claim.
+
+Example:
+
+```json
+{"question": "order status ORD-1001"}
+```
+
+Mock response shape:
+
+```json
+{"answer": "Sample order ORD-1001 status: shipped.", "tool_used": true, "provider": "mock"}
+```
+
+### 5.4 `llamaindex-rag`: native keyword table and optional LLM
+
+**Source:** `src/aet_scaffolder/templates/llamaindex_rag/`.
+
+This is **not** a LangGraph reimplementation. It uses native LlamaIndex `SimpleKeywordTableIndex`, `KeywordTableSimpleRetriever`, `TextNode` and `MockLLM` for offline index construction. The local extractor replaces a default keyword extractor to avoid implicit NLTK downloads; source identities and retrieval remain LlamaIndex-native.
+
+Modules:
+
+- `app/main.py`: `POST /ask`, config, bounded corpus loading, retrieval, mock evidence or optional synthesis.
+- `app/knowledge.py`: bounded JSONL parser and metadata-based snapshot cache, paralleling LangGraph RAG's source contract.
+- `app/retrieval.py`: keyword extraction, stopword filtering, cached `_OfflineKeywordIndex` and new retriever per query.
+- `app/providers.py`: lazy LlamaIndex provider-native model constructors; `synthesise` calls `model.complete` with retrieved text.
+- `app/config.py`: local and optional provider settings.
+- `data/knowledge.jsonl`: synthetic corpus.
+
+Execution:
+
+```text
+HTTP question
+  -> load_documents (bounded JSONL, cached immutable documents)
+  -> retrieve (native keyword index, top-k)
+  -> no source: explicit no-evidence message
+  -> mock: quote first retrieved source
+  -> opted-in model: LlamaIndex-native complete(prompt)
+  -> return answer and source_ids
+```
+
+The keyword index is a **lexical** mechanism. Do not call it vector similarity, embeddings, dense retrieval or RAG evaluation. The generated `pyproject.toml` declares optional native integrations separately from its `llama-index-core` base dependency. No model download or cloud call happens during mock retrieval.
+
+### 5.5 Common generated project structure and API semantics
+
+The templates each contain a complete starter in their own directory:
+
+```text
+generated-project/
+  .aet-template.json         # Registry identity and schema version, no secret
+  .env.example               # Committable documented defaults, no real keys
+  .gitignore, .dockerignore
+  .github/workflows/ci.yml   # Generated project's own offline tests
+  pyproject.toml             # Independent app and provider extras
+  README.md, LICENSE, NOTICE
+  Dockerfile                  # Development reference, not prod security design
+  app/                        # API, config, provider, framework, foundation
+  tests/                      # Local runtime / contract tests
+  data/knowledge.jsonl        # Only present for RAG templates
+```
+
+The generated project is a new unit of ownership. Editing a generated copy does **not** update AET's bundled template. Editing the bundled template changes **future generations**, not existing consumer applications. A backward-compatible AET release never silently rewrites previously generated project directories.
+
+## 6. Provider configuration and adapters
+
+### 6.1 Supported model-provider matrix
+
+| Provider | tool-agent | langgraph-rag | strands-agent | llamaindex-rag |
+| --- | :---: | :---: | :---: | :---: |
+| `mock` | Yes | Yes | Yes | Yes |
+| `ollama` | Yes | Yes | **No** | Yes |
+| `openai` | Yes | Yes | Yes | Yes |
+| `azure-openai` | Yes | Yes | Yes | Yes |
+| `anthropic` | Yes | Yes | Yes | Yes |
+| `bedrock` | Yes | Yes | Yes | Yes |
+| **Total per template** | **6** | **6** | **5** | **6** |
+
+This is **23 declared configurations** and not 23 fully exercised live model services. The comprehensive matrix forces each configured project to **mock** for runtime ASGI probes, while per-template fake-SDK tests validate much of the provider model construction.
+
+### 6.2 Provider implementations are native to each framework
+
+| Template family | Integration mechanism | Where to inspect |
+| --- | --- | --- |
+| LangGraph tool + RAG | LangChain `ChatOpenAI`, `AzureChatOpenAI`, `ChatAnthropic`, `ChatBedrock` | `app/cloud_providers.py`, plus `providers.py` and `config.py` |
+| Strands SDK | `BedrockModel`, Strands `OpenAIModel`/`AnthropicModel` and injected official Azure OpenAI async client | `app/agent.py` and `app/cloud_models.py` |
+| LlamaIndex | Native `llama_index.llms` OpenAI, Azure, Anthropic, Bedrock Converse and Ollama clients | `app/providers.py` |
+| Default offline | Deterministic mock outputs, or Strands' scripted `OfflineModel` | Provider code / Strands offline-model module |
+
+There is **no single universal runtime adapter object shared by all four frameworks**. This is intentional. The *generator interface* is cross-framework; the output applications remain framework-native, readable and extensible. The historical standalone provider-contract package is a separate compatibility/reference asset, not a dependency secretly imported by every generated service.
+
+### 6.3 Settings, conventions and validation
+
+All generated apps use Pydantic Settings with the `AET_` environment prefix and optional local `.env`. Do not commit actual secret values or use generated `.env.example` as a credential store.
+
+Common and relevant settings:
+
+| Setting | Meaning |
+| --- | --- |
+| `AET_PROVIDER` | Explicit runtime provider: defaults to generator-selected value, normally mock |
+| `AET_LOG_LEVEL` | DEBUG, INFO, WARNING or ERROR for structured request logging |
+| `AET_OLLAMA_MODEL` | Local Ollama model identifier; use `--model` only with `--provider ollama` |
+| `AET_OLLAMA_BASE_URL` | Explicit loopback HTTP host/port; non-loopback URLs are rejected |
+| `AET_OLLAMA_TIMEOUT_SECONDS` | Local Ollama timeout in the LangGraph implementations |
+| `AET_KNOWLEDGE_PATH` | RAG local JSONL file path |
+| `AET_TOP_K` | Number of lexical retrieval hits, default 2; allowed 1 to 5 |
+| `AET_OPENAI_MODEL` | Model identifier for OpenAI native integration |
+| `AET_AZURE_OPENAI_DEPLOYMENT` | Azure deployed-model name |
+| `AET_AZURE_OPENAI_MODEL` | LlamaIndex Azure model field, additionally used there |
+| `AET_AZURE_OPENAI_ENDPOINT` | HTTPS origin without embedded credentials, extra path/query or fragment |
+| `AET_AZURE_OPENAI_API_VERSION` | API version string |
+| `AET_ANTHROPIC_MODEL` | Anthropic selected model |
+| `AET_ANTHROPIC_MAX_TOKENS` | Strands-specific upper limit for Anthropic output |
+| `AET_BEDROCK_MODEL_ID` | AWS Bedrock model identifier |
+| `AET_AWS_REGION` | AWS region choice; may also be provided via standard AWS SDK environment |
+| `AET_MODEL_TIMEOUT_SECONDS` | Bounded cloud/model request timeout |
+| `AET_MODEL_MAX_RETRIES` | Available on LangGraph and Strands templates; passed to those model SDKs |
+
+**Not every setting is accepted or used by every template.** The exact generated `app/config.py` and `.env.example` are authoritative. LlamaIndex currently documents model timeout but does not expose the same universal retry field as the LangGraph/Strands starters.
+
+Ollama URL validation rejects public-network endpoints, embedded credentials, custom paths and missing ports. Azure endpoints are constrained to HTTPS origins. These checks mitigate accidental misconfiguration; they do not implement a general outbound-network firewall.
+
+Credentials are resolved by official SDKs or secure process environment/IAM identity. Common names include `OPENAI_API_KEY`, `AZURE_OPENAI_API_KEY`, `ANTHROPIC_API_KEY` and AWS SDK credentials/role mechanisms. Never inject secret values into generated README, sample config, tests, JSONL reports, CI output or repository issues.
+
+### 6.4 Generated dependency extras
+
+Base project installs support default offline execution. Optional extras vary by template:
+
+- LangGraph templates: `.[dev]`, `.[openai]`, `.[azure-openai]`, `.[anthropic]`, `.[bedrock]` and `.[cloud]`.
+- Strands: `.[dev]`, `.[openai]`, `.[azure-openai]`, `.[anthropic]` and `.[cloud]`. Bedrock is a supported core Strands SDK path, not necessarily a separate `bedrock` extra.
+- LlamaIndex: `.[dev]`, `.[ollama]`, `.[openai]`, `.[azure-openai]`, `.[anthropic]`, `.[bedrock]` and `.[cloud]`.
+
+The `[cloud]` extra bundles optional cloud integration dependencies for the given generated project; it does not make all providers available at runtime without credentials, model access and correct settings. Some SDKs and models also require external network access and billing approval.
+
+### 6.5 Operational limits of a configured provider
+
+The framework-native integrations perform lazy imports or SDK construction when selected. For LangGraph, the cloud constructors pass timeout/retry settings into their native clients; Strands configures SDK client args or botocore timeouts/retries; LlamaIndex passes timeout into its native constructors. Provider-specific exceptions are wrapped into generic user-facing errors rather than exposing SDK payloads.
+
+In any non-mock provider test, distinguish:
+
+1. **Generation passed:** project files were created.
+2. **Doctor passed:** source structure and samples are valid.
+3. **Fake provider-constructor test passed:** SDK wiring was exercised with fakes.
+4. **Local Ollama transport test passed:** loopback request protocol was mocked.
+5. **Actual provider inference passed:** an approved live model returned a result, with credential/region/version/cost evidence.
+
+Only the first four have broad automated repository coverage. Do not claim the fifth without a separate authorised live integration run.
+
+## 7. Runtime foundations, errors and security boundaries
+
+### 7.1 HTTP foundation common to all templates
+
+Each generated `app/foundation.py` installs FastAPI middleware with:
+
+- Server-generated random `X-Request-ID`, **not** copied from an arbitrary inbound client header.
+- A monotonic `duration_ms` observation.
+- One compact structured JSON log record with event, request ID, HTTP method, a **known route name or redacted placeholder**, status and duration.
+- A failed-request event for HTTP 5xx outcomes and an optional **exception class name only** for otherwise unhandled exceptions.
+- Sanitised unexpected 500 responses of the form `{"detail": "Internal server error"}`.
+
+Never add prompt/answer text, question bodies, arbitrary URL paths, query strings, client IPs, request headers, raw exception messages, tracebacks, account identifiers or credentials to this routine. Existing redaction is intentional and security-tested.
+
+### 7.2 Endpoints are not deployment health guarantees
+
+- `GET /health`: process-level liveness indicator, usually `{"status":"ok"}`. It does not prove model access, external dependencies or security readiness.
+- `GET /ready` in mock mode: locally validate settings and, for RAG, that a well-formed corpus is available.
+- `GET /ready` outside mock mode: 503 with a generic message indicating live-provider readiness is not verified.
+- `POST /invoke`: tool or Strands template. Performs locally bounded request-body validation and runs the selected workflow.
+- `POST /ask`: RAG templates. Returns answer plus explicit source IDs.
+
+Request validation errors are rejected by FastAPI/Pydantic, usually HTTP 422 (some malformed input parsing can return 400). Local model/config/corpus failures typically surface as sanitised HTTP 503. Unhandled exceptions surface as sanitised 500. Do not reinterpret success/failure codes or response schemas without corresponding generated tests, Doctor updates where relevant, and a backwards-compatibility decision.
+
+### 7.3 Containers
+
+All four templates include a **development-reference** Dockerfile. The reference uses a Python 3.12 slim base, installs the generated package, sets offline mock defaults, uses a non-root UID (10001), includes a liveness HEALTHCHECK and starts Uvicorn inside the container on port 8000. The container exposes a server internally; the **host-side** Docker port must be bound to loopback, for example:
+
+```powershell
+docker build -t aet-local-agent .
+docker run --rm -p 127.0.0.1:8000:8000 aet-local-agent
+```
+
+Run these commands **from the generated project**. There is no need for Docker or WSL to run the normal local Python mock path. These images are **not** production-certified: dependency/image pinning, scanning, container limits, network policy, secrets injection, external authentication and ingress design remain separate deployment responsibilities.
+
+### 7.4 Threat model boundaries
+
+Current benefits include bounded inputs/corpora, local endpoint validation, optional provider selection, safe error messages and synthetic credentials/data in tests. These do **not** solve enterprise access control. A public production app would need, at minimum:
+
+- an authentication strategy, per-action authorisation and (if relevant) tenant-level isolation;
+- secret storage and key rotation; egress and ingress controls; TLS and identity middleware;
+- rate limiting, request budgets, cancellation, resource quotas and abuse monitoring;
+- a reviewed threat model for tool effects, prompt injection and data exfiltration;
+- retrieval document ACLs, source provenance/poisoning controls and tenancy filters;
+- provider-level residency, contractual, logging and cost safeguards;
+- environment-specific deployment, health/alerting and rollback practices.
+
+The current synthetic order tool is read-only. Allowing arbitrary effectful tools or real customer/enterprise documents changes the threat model significantly.
+
+## 8. RAG corpus design, retrieval and invalidation
+
+### 8.1 JSONL schema and loader
+
+Both RAG templates read `data/knowledge.jsonl` by default, using records containing exactly the required fields `id` and `text` (other record keys are not needed). Example:
+
+```json
+{"id": "returns", "text": "Fictional sample return policy text."}
+```
+
+Loader contract in both `app/knowledge.py` implementations:
+
+- Corpus must be a regular local file, not a symlink.
+- Maximum file size: **1,000,000 bytes**.
+- Maximum non-blank records: **200**.
+- `id` must be a unique string matching `[A-Za-z0-9][A-Za-z0-9._-]{0,79}`.
+- `text` must be a non-empty string of **at most 4,000 characters**.
+- Malformed JSONL, duplicate IDs, invalid encodings, empty corpus, excessive file size or invalid structure cause a controlled `KnowledgeError`.
+- Documents are immutable dataclass instances; the returned Python list is a fresh container to avoid accidental mutation of shared cached state.
+
+### 8.2 Cached snapshots and corpus changes
+
+`load_documents` resolves paths against the generated project's root and uses an LRU cache with **maxsize 8** keyed by the file's resolved path plus filesystem metadata (mtime in nanoseconds, ctime in nanoseconds, size, inode). The loader uses the cached validated document snapshot when the file has not changed. Subsequent requests can load a changed corpus without restarting the web server when metadata changes.
+
+This is a bounded local design, **not a globally transactional data store or a strong distributed consistency mechanism**. When changing corpus contents concurrently with request handling, prefer an atomic replace of the complete file. On Windows the test harness retries transient sharing violations while atomically replacing corpus files. It verifies eventual final corpus visibility but does not prove correctness for arbitrary external writers.
+
+### 8.3 LangGraph RAG BM25
+
+`app/retrieval.py` lowercases and tokenises words matching `[a-z0-9]+`, computes query-term document frequencies and BM25 scores, excludes zero-overlap documents, sorts by descending score with source ID as deterministic tie-breaker, and returns at most `top_k` hits. `top_k` must be from **1 to 5**; its default is **2**.
+
+The algorithm caches per-document word counters, lengths and average length for immutable document tuples (LRU 8). This accelerates repeated lexical retrieval without changing the deterministic mock output contract.
+
+Consequences:
+
+- The method matches **lexical overlap**, not embeddings or natural-language semantic similarity.
+- Tokenisation is deliberately simple and may be weak for non-Latin scripts, synonyms, typos and complex morphology.
+- BM25 output is still untrusted content if the underlying corpus is untrusted.
+- Source IDs identify evidence, not a guarantee of source quality or answer correctness.
+
+### 8.4 LlamaIndex keyword index
+
+`app/retrieval.py` uses a custom local keyword extractor based on a bounded regex and a static stopword list, while keeping the native LlamaIndex keyword index, retriever and node/source identity. A `MockLLM` is explicitly supplied for index construction to prevent default hosted model resolution. An LRU 8 cache reuses a keyword index for the same immutable document tuple, but a new retriever object is made for each query.
+
+Do not silently replace this with embedding/vector retrieval or a default LlamaIndex global language model: doing so changes dependencies, network behaviour, latency, cost, determinism and testing assumptions.
+
+### 8.5 LangGraph RAG ingestion
+
+`python -m app.ingest --input INPUT_DIR --output NEW_CORPUS.jsonl` is available **only in the LangGraph RAG generated template** at the baseline; do not assume an identical ingest CLI exists in LlamaIndex RAG.
+
+Supported ingestion rules:
+
+- Input directory must exist and cannot be a symlink.
+- Accept **1 to 30** immediate local `.txt` or `.md` files.
+- Each source must be a readable, non-symlink UTF-8 regular file no larger than **200,000 bytes**.
+- Each source is split by whitespace into word-based chunks. Default chunk limit **600 characters**, configurable **100 to 4,000**.
+- Over-long individual words, invalid file stems/IDs, duplicated generated IDs, empty result, over **200** resulting records or over **1 MB** of JSONL output are rejected.
+- Destination must **not** already exist; ingestion refuses overwrites.
+
+To apply a newly created corpus, set `AET_KNOWLEDGE_PATH` to that file, keeping it under your approved project data governance. Do not import customer secrets or confidential documents into public examples or logs.
+
+---
