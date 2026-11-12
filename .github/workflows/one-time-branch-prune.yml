@@ -1,0 +1,79 @@
+name: one-time-delete-verified-merged-branches
+# One-time maintenance. Remove this workflow after the successful master run.
+# No third-party actions; branch deletion requires the repository GITHUB_TOKEN.
+on:
+  push:
+    branches: [master]
+    paths:
+      - '.github/workflows/one-time-branch-prune.yml'
+permissions:
+  contents: write
+jobs:
+  prune:
+    if: github.repository == 'AdityaSreevatsaK/agentic-engineering-toolkit'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - name: Verify merged PRs and unchanged branch SHA before deletion
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          python3 - <<'PY'
+          import json, os, urllib.error, urllib.parse, urllib.request
+          REPO = "AdityaSreevatsaK/agentic-engineering-toolkit"
+          SELF_BRANCH = "chore/cleanup-branches-and-legacy-workflow-20261112"
+          TARGETS = [[1,"feat/m1-local-scaffolder","bbfec0fdc60467b19ca4da27c76da6aa7c3e77fb"],[2,"feat/m2-configurable-local-providers","8c7f131f7a19247498bd5136132f3c6fb83b7323"],[3,"feat/m3-cli-doctor-and-wheel-smoke","8007f25cb7a8bbeeaf702041d179037bb1979eb9"],[4,"feat/m4-productivity-benchmarking","23d2458d86993296d813e741b9074d06d7350240"],[5,"feat/m5-standalone-agent-quality-kit","5e03aa23f025d5cfded99f783152905022cdd475"],[6,"feat/m6-portable-provider-contract","82a9b441ced520cda5ee5a36f294bfef6f6b6d50"],[7,"feat/m7-reproducible-e2e-demo","7d2176e467381f21ffe52d0f7fe8b697b622e20c"],[8,"feat/m8-pilot-readiness-and-impact-evidence","6f95047d98b7dc10806c243ac3a30bd791b43111"],[9,"feat/m9-olist-order-evaluation","bb0a66786d99469c7a8b94b44bff285ac644d871"],[10,"feat/m10-nyc311-public-data-benchmark","47a0579120fbd15eaff9b09b439ca1c07c4f0133"]]
+          if os.environ.get("GITHUB_REPOSITORY") != REPO or os.environ.get("GITHUB_REF") != "refs/heads/master":
+              raise SystemExit("Refusing to run outside the expected default branch")
+          TOKEN = os.environ["GH_TOKEN"]
+          def api(method, path):
+              request = urllib.request.Request(
+                  "https://api.github.com/repos/" + REPO + path,
+                  method=method,
+                  headers={"Authorization": "Bearer " + TOKEN,
+                           "Accept": "application/vnd.github+json",
+                           "X-GitHub-Api-Version": "2022-11-28",
+                           "User-Agent": "aet-one-time-merged-branch-prune"},
+              )
+              try:
+                  with urllib.request.urlopen(request, timeout=20) as response:
+                      data = response.read()
+                      return json.loads(data) if data else None
+              except urllib.error.HTTPError as exc:
+                  if method == "GET" and exc.code == 404:
+                      return None
+                  raise
+          def prune(name, expected_sha):
+              ref = api("GET", "/branches/" + urllib.parse.quote(name, safe="/"))
+              if ref is None:
+                  print("Already absent: " + name)
+                  return
+              if ref["name"] != name or ref["protected"] or ref["commit"]["sha"] != expected_sha:
+                  raise SystemExit("Unexpected or protected branch state; refusing to delete " + name)
+              api("DELETE", "/git/refs/heads/" + urllib.parse.quote(name, safe="/"))
+              print("Deleted verified merged branch: " + name)
+          for number, name, expected_sha in TARGETS:
+              pr = api("GET", "/pulls/" + str(number))
+              if (not pr or not pr["merged_at"] or pr["state"] != "closed"
+                      or pr["head"]["ref"] != name
+                      or pr["head"]["sha"] != expected_sha
+                      or pr["head"]["repo"]["full_name"] != REPO
+                      or pr["base"]["ref"] != "master"):
+                  raise SystemExit("Historical PR metadata mismatch for #" + str(number))
+              prune(name, expected_sha)
+          # After this PR is squash-merged, its source branch is also redundant.
+          query = urllib.parse.urlencode({"state": "closed", "per_page": 100,
+                                          "head": "AdityaSreevatsaK:" + SELF_BRANCH})
+          prs = api("GET", "/pulls?" + query)
+          matches = [p for p in prs if p.get("merged_at") and p["head"]["ref"] == SELF_BRANCH
+                     and p["head"]["repo"]["full_name"] == REPO and p["base"]["ref"] == "master"]
+          if len(matches) != 1:
+              raise SystemExit("No unique merged maintenance PR; refusing to delete source branch")
+          pr = matches[0]
+          prune(SELF_BRANCH, pr["head"]["sha"])
+          remaining = api("GET", "/branches?per_page=100")
+          remaining_names = [item["name"] for item in remaining]
+          print("Remaining branches: " + ", ".join(remaining_names))
+          if remaining_names != ["master"]:
+              raise SystemExit("Unexpected additional branches remain; never delete without PR verification")
+          PY
