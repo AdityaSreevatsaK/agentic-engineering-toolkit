@@ -23,6 +23,7 @@
 6. Protect privacy: no secrets/client data in code, PRs or Actions artifacts; no raw prompts/answers/exception messages in request logs; no unauthenticated public API deployment.
 7. Verify real results before reporting success. Distinguish generation, Doctor, SDK fakes, mock ASGI tests, actual live inference, independent trials and production security.
    - Four-image Docker smoke runs only in the existing Ubuntu/Python 3.11 CI job. Bind containers to loopback; verify both actual HTTP mock probes and the recorded evidence before claiming Docker coverage.
+   - The Ubuntu Python 3.11/3.12 CI jobs also install each generated template in a **fresh separate virtualenv**, run each app's pytest and mock ASGI probes, verify `pip check`, and retain dependency resolutions. Run manually with `python -m scripts.isolated_install_smoke --json-out isolated-installations.json --versions-dir isolated-resolved`.
 8. Merge only after final-head checks pass. Do not bypass or weaken branch protection, silently delete historical work or mix changes with AEA.
 
 ## Source map
