@@ -1,5 +1,7 @@
 # M15 evidence register: do not conflate categories
 
+> This is a 4 November 2026 historical snapshot. Refer to [15 November leadership readiness](../release/leadership-readiness-2026-11-15.md) for newer verified CI and supply-chain evidence. Human adoption, independent usability and active-time savings remain uncollected.
+
 **Snapshot: 4 November 2026**
 **Status: Automated four-platform offline matrix and quality gates passed; external human validation uncollected.**
 
