@@ -13,6 +13,7 @@ import re
 import subprocess
 import tempfile
 import venv
+from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 
 from aet_scaffolder.generator import generate
@@ -30,48 +31,65 @@ def _run(arguments: list[str], *, cwd: Path, stage: str, timeout: int = 420,
     return result.stdout
 
 
-def verify_isolated_installations(versions_dir: Path) -> list[dict]:
+def _verify_template(root: Path, versions_dir: Path, template: str) -> dict:
+    """Install and probe one project in its own interpreter and working directory."""
+    project = generate(f"isolated-{template}", output_dir=root, template=template)
+    environment = root / f"venv-{template}"
+    venv.EnvBuilder(with_pip=True).create(environment)
+    interpreter = environment / ("Scripts/python.exe" if os.name == "nt" else "bin/python")
+    _run([str(interpreter), "-m", "pip", "install", "-e", ".[dev]"], cwd=project,
+         stage=f"{template}/install", timeout=600)
+    _run([str(interpreter), "-m", "pip", "check"], cwd=project,
+         stage=f"{template}/pip-check")
+    output = _run([str(interpreter), "-m", "pytest", "-q"], cwd=project,
+                  env=_clean_environment(), stage=f"{template}/pytest")
+    match = re.search(r"(\d+) passed", output)
+    if not match:
+        raise RuntimeError(f"{template}/pytest summary not recognised")
+    _run([str(interpreter), "-c", _PROBE, template], cwd=project,
+         env=_clean_environment(), stage=f"{template}/api")
+    versions = _run([str(interpreter), "-m", "pip", "freeze", "--all"], cwd=project,
+                    stage=f"{template}/versions")
+    (versions_dir / f"{template}.txt").write_text(versions, encoding="utf-8")
+    print(f"PASS isolated install: {template}", flush=True)
+    return {"template": template, "provider": "mock",
+            "python": platform.python_version(), "venv_isolated": True,
+            "package_installed": True, "pip_check": True,
+            "generated_app_tests_passed": int(match.group(1)),
+            "actual_asgi_probe": True}
+
+
+def verify_isolated_installations(versions_dir: Path, *, jobs: int = 1) -> list[dict]:
+    """Verify every template, optionally with bounded independent subprocesses.
+
+    Each project has an exclusive directory, virtualenv and Python interpreter.
+    Parallel execution changes only scheduling, not tests or evidence content.
+    The default stays sequential for local diagnostics.
+    """
+    if not 1 <= jobs <= len(SUPPORTED_TEMPLATES):
+        raise ValueError("jobs must be between 1 and the number of templates")
     if versions_dir.exists():
         raise ValueError("Refusing to overwrite an existing dependency report directory")
     versions_dir.mkdir(parents=True)
-    results = []
     with tempfile.TemporaryDirectory(prefix="aet-isolated-") as root:
-        for template in SUPPORTED_TEMPLATES:
-            project = generate(f"isolated-{template}", output_dir=root, template=template)
-            environment = Path(root) / f"venv-{template}"
-            venv.EnvBuilder(with_pip=True).create(environment)
-            interpreter = environment / ("Scripts/python.exe" if os.name == "nt" else "bin/python")
-            _run([str(interpreter), "-m", "pip", "install", "-e", ".[dev]"], cwd=project,
-                 stage=f"{template}/install", timeout=600)
-            _run([str(interpreter), "-m", "pip", "check"], cwd=project,
-                 stage=f"{template}/pip-check")
-            output = _run([str(interpreter), "-m", "pytest", "-q"], cwd=project,
-                          env=_clean_environment(), stage=f"{template}/pytest")
-            match = re.search(r"(\d+) passed", output)
-            if not match:
-                raise RuntimeError(f"{template}/pytest summary not recognised")
-            _run([str(interpreter), "-c", _PROBE, template], cwd=project,
-                 env=_clean_environment(), stage=f"{template}/api")
-            versions = _run([str(interpreter), "-m", "pip", "freeze", "--all"], cwd=project,
-                            stage=f"{template}/versions")
-            (versions_dir / f"{template}.txt").write_text(versions, encoding="utf-8")
-            results.append({"template": template, "provider": "mock",
-                            "python": platform.python_version(), "venv_isolated": True,
-                            "package_installed": True, "pip_check": True,
-                            "generated_app_tests_passed": int(match.group(1)),
-                            "actual_asgi_probe": True})
-            print(f"PASS isolated install: {template}", flush=True)
-    return results
+        with ThreadPoolExecutor(max_workers=jobs) as pool:
+            # map preserves registry order and propagates worker exceptions.
+            return list(pool.map(
+                lambda template: _verify_template(Path(root), versions_dir, template),
+                SUPPORTED_TEMPLATES,
+            ))
 
 
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--json-out", type=Path, required=True)
     parser.add_argument("--versions-dir", type=Path, required=True)
+    parser.add_argument("--jobs", type=int, default=1, choices=range(1, len(SUPPORTED_TEMPLATES) + 1),
+                        help="Independent project installations to run concurrently (default: 1)")
     args = parser.parse_args()
     if args.json_out.exists():
         parser.error("Refusing to overwrite existing evidence")
-    results = verify_isolated_installations(args.versions_dir)
+    results = verify_isolated_installations(args.versions_dir, jobs=args.jobs)
     args.json_out.write_text(json.dumps({"scope": "fresh isolated venv and local ASGI mock only",
                                          "results": results}, indent=2) + "\n", encoding="utf-8")
     return 0
