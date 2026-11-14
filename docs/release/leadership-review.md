@@ -1,5 +1,7 @@
 # AET: architecture and reusable-asset leadership review (M19)
 
+> Historical M19 architecture summary. For the verified 15 November 2026 evidence, KRA gaps and current presentation decision, use the [leadership-readiness assessment](leadership-readiness-2026-11-15.md). The material below captures the original controlled-pilot proposal.
+
 **Decision requested:** Approve AET as a candidate for a *controlled, synthetic
 data pilot* and identify one authorised delivery-team contact. This is not
 a request for public production deployment or a claim of proven ROI.

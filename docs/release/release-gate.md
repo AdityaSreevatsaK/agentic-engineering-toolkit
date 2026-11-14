@@ -1,5 +1,7 @@
 # M19 evidence and release gate
 
+> Historical M19 checklist, including dated 4 November governance statements. The latest evidence and gate classifications are in [15 November 2026 leadership readiness](leadership-readiness-2026-11-15.md). Do not treat earlier "not yet tested" or "unprotected" entries as statements about today's `master` without checking its actual GitHub settings and CI.
+
 The goal is **pilot-readiness**, not declaring production readiness or
 claiming developer-time savings.
 

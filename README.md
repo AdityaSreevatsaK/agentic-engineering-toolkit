@@ -11,17 +11,13 @@ The separate **Agent Engineering Accelerator (AEA)** owns LLM/agent evaluation, 
 
 Under Apache 2.0, others may reuse, modify and distribute this code, including commercially, provided they comply with the licence and attribution requirements. The licence does **not** guarantee production readiness or cover third-party dependencies under different licences. Each newly scaffolded project includes its own LICENSE and NOTICE.
 
-## Most recent offline evidence and governance
+## Latest engineering evidence and leadership readiness
 
-The [4 November comprehensive test report](docs/testing/comprehensive-matrix-2026-11-04.md)
-records all **23 declared template/provider pairings** tested in offline mock
-mode across four Windows/Linux and Python 3.11/3.12 environments
-(92/92 pairing checks, 116/116 negative checks, five CI jobs passing).
-The provider SDKs were not contacted live. To protect master using your own
-GitHub administrator login, see the
-[owner-only ruleset setup](docs/governance/master-branch-protection.md).
-Repository rulesets cannot be enabled by merely changing tracked files.
+The [15 November 2026 leadership-readiness assessment](docs/release/leadership-readiness-2026-11-15.md) is the current, source-linked technical review and reusable-assets decision pack. It separates verified engineering implementation and synthetic CI from **uncollected** stakeholder approval, independent usability, measured developer-time savings and multi-team adoption.
 
+At [master CI run #43630438965](https://github.com/AdityaSreevatsaK/agentic-engineering-toolkit/actions/runs/43630438965), all **five required checks** passed: Windows/Linux Python 3.11/3.12 plus static quality. Each OS/Python leg passed all **23 offline template/provider combinations** (92 environment-pair executions) and **716 bounded synthetic/adversarial scenarios** (2,864 environment-scenario executions). Windows Python 3.12 additionally passed **16/16** RAG corpus-replacement stress trials, and Ubuntu Python 3.11 exercised all **four** generated Docker images on loopback. The [dated dependency audit](docs/testing/dependency-security-audit-2026-11-14.md) separately checked resolved third-party packages against then-current advisories. None of this demonstrates live model performance, production deployment, human time saved or actual delivery-team adoption.
+
+For repository-owner branch protection and its five mandatory check names, see the [ruleset guide](docs/governance/master-branch-protection.md).
 ## M19: Pilot adoption readiness (machine tests versus human evidence)
 
 The [M19 release kit](docs/release/README.md) includes an isolated-workspace
