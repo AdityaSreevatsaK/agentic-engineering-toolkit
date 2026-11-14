@@ -4,6 +4,13 @@ name: dependency-vulnerability-audit
 # so it is intentionally NOT a mandatory offline PR check.
 on:
   workflow_dispatch:
+  # Audit changed dependency declarations before they are merged. No secrets or paid inference.
+  pull_request:
+    branches: [master]
+    paths:
+      - '.github/workflows/dependency-audit.yml'
+      - 'pyproject.toml'
+      - 'src/aet_scaffolder/templates/**/pyproject.toml'
   # A tag triggers evidence collection; the GitHub tag is not itself blocked.
   push:
     tags: ['v*']

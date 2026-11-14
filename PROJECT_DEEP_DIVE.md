@@ -767,9 +767,9 @@ The scripts intentionally refuse to overwrite existing reports. With mixed edita
 
 ### 9.6 Optional dependency audit
 
-The **second and only other root workflow** is `.github/workflows/dependency-audit.yml`. Triggers: manual `workflow_dispatch`, a `v*` tag push or the monthly schedule on the **first day of each month** (cron `20 5 1 * *`). It uses four matrix entries, one per template, to generate an offline project, install its cloud extras, additionally cover LlamaIndex's Ollama extra, run `pip check`, record installed versions and run `pip-audit` against current advisories.
+The **second and only other root workflow** is `.github/workflows/dependency-audit.yml`. Triggers: manual `workflow_dispatch`, a `v*` tag push, the monthly schedule on the **first day of each month** (cron `20 5 1 * *`), or a PR to `master` changing the audit workflow, root `pyproject.toml` or generated-template `pyproject.toml` files. It uses four matrix entries, one per template, to generate an offline project, install its cloud extras, additionally cover LlamaIndex's Ollama extra, run `pip check`, record installed versions and run `pip-audit` against current advisories.
 
-This workflow **does not call model inference**. It may access package indices and vulnerability advisory services. It is not the required PR smoke gate and cannot block a GitHub tag merely by running after the tag push. A release maintainer must inspect the actual audit outcome before claiming a clean security advisory check. The existence of this workflow is **not evidence that a recent CVE audit has passed**.
+This workflow **does not call model inference**. It may access package indices and vulnerability advisory services. It is not the required PR smoke gate and cannot block a GitHub tag merely by running after the tag push. A release maintainer must inspect the actual audit outcome before claiming a clean security advisory check. The existence of this workflow is **not evidence that a recent CVE audit has passed**. On 14 November 2026, [PR #39's executed audit](docs/testing/dependency-security-audit-2026-11-14.md) reported zero third-party advisories in four Linux/Python 3.12 resolved environments; eight environment-specific local-package entries were explicitly skipped. Read the dated evidence rather than treating it as a permanent clearance.
 
 ## 10. Legacy assets versus the separate AEA project
 
@@ -1055,7 +1055,7 @@ The original governance/licensing issue [#13](https://github.com/AdityaSreevatsa
 At baseline the root repository has exactly:
 
 - `ci.yml`: required PR/master verification, quality checks, four OS/Python jobs and extensive offline regression tests.
-- `dependency-audit.yml`: optional/manual, tagged release and scheduled dependency advisory checks.
+- `dependency-audit.yml`: dependency-file-sensitive PR checks, optional/manual, tagged release and scheduled dependency advisory checks. This is not among the five required smoke/quality check names.
 
 The live NYC 311 evaluation workflow and temporary branch-cleanup workflow were retired. A separate `.github/workflows/ci.yml` is still **generated inside each new project**, because those consumer projects need their own CI.
 
