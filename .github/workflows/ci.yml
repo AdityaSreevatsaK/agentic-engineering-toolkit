@@ -232,7 +232,7 @@ jobs:
           retention-days: 14
       - name: Install and exercise four independent generated-app virtualenvs
         timeout-minutes: 30
-        run: python -m scripts.isolated_install_smoke --json-out isolated-installations.json --versions-dir isolated-resolved
+        run: python -m scripts.isolated_install_smoke --json-out isolated-installations.json --versions-dir isolated-resolved --jobs 2
       - name: Retain per-template independent Python environment evidence
         if: always()
         uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6
