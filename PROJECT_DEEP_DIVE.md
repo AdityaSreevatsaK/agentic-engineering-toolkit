@@ -1104,7 +1104,7 @@ Do not change visibility without an explicit owner decision after reviewing thes
 | Observability | Minimal JSON access events and request IDs | Distributed tracing, incident response, audit logging for regulated data |
 | Benchmarking | Machine generation/request timings and test event measurements | Validated human setup-time savings or production latency SLA |
 | Adoption | Repeatable hand-off protocol and pilot instructions | Confirmed independent team adoption |
-| Deployment | Development Docker references and offline CI | Managed deployment, production identity, data residency and cost controls |
+| Deployment | Four development Docker images built and loopback HTTP-probed in CI, alongside offline ASGI tests | Managed deployment, production identity, data residency and cost controls |
 
 ### 14.2 Specific debt and important boundaries
 
