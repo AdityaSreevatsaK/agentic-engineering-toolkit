@@ -217,7 +217,7 @@ Installed commands:
 | `python -m aet_scaffolder ...` | Module form of the CLI, including in CI |
 | `agentkit-benchmark --runs 10 --warmups 2` | Local generation/validation benchmark, not human time saved |
 
-The global CLI provider vocabulary is broader than some templates. `generator.py` checks support against **the selected template's** `TemplateSpec.providers` and fails on an invalid pairing.
+`agentkit list` also prints the provider set for each template. The global CLI provider vocabulary is broader than some templates. `generator.py` checks support against **the selected template's** `TemplateSpec.providers` and fails on an invalid pairing.
 
 ### 4.2 Generation algorithm and invariants
 
@@ -232,9 +232,9 @@ In `generator.generate(name, *, output_dir, template, provider, model)`:
 7. Create a temporary staging directory beneath the parent, recursively copy template text files and replace four placeholders: `__PROJECT_NAME__`, `__PACKAGE_NAME__`, `__PROVIDER__` and `__OLLAMA_MODEL__`.
 8. Convert template file/directory names prefixed `_dot_` to hidden output names: e.g. `_dot_env.example` → `.env.example`, `_dot_gitignore` → `.gitignore`, `_dot_github` → `.github`.
 9. Write `.aet-template.json` with `{"schema_version": 1, "template": "<registered-template>"}`.
-10. Rename the staged project to the final target; temporary files are cleaned up on exit. An existing destination or filesystem error must never be silently overwritten.
+10. Publish the staged project atomically without replacing an existing target. On Linux, use `renameat2(RENAME_NOREPLACE)`; on Windows, use non-replacing `os.rename` semantics. An unsupported libc/filesystem/platform fails closed rather than risking a replacement; temporary staging files are cleaned up on exit.
 
-**Interpretation:** the stage-and-rename strategy reduces partially written outputs, but it is not a transactional distributed filesystem guarantee. Do not present it as a security sandbox. `_copy_template` assumes trusted bundled UTF-8 text templates, not arbitrary third-party downloads.
+**Interpretation:** Stage-and-publish prevents readers seeing a partially generated final project on supported local filesystems, even if another process claims an empty destination at the last moment. Linux must expose a working `renameat2` and support `RENAME_NOREPLACE`; Windows uses its native no-replace rename. Other platforms fail closed until their atomic semantics are explicitly implemented and tested. This does not certify distributed/network filesystem atomicity or protect against hostile modifications to parent directories. `_copy_template` assumes trusted bundled UTF-8 text templates, not arbitrary third-party downloads. See [the 14 November publication-race audit](docs/testing/atomic-publication-docker-2026-11-14.md).
 
 ### 4.3 Declarative registry
 
@@ -954,7 +954,8 @@ For actual inference, choose an approved model (`AET_OPENAI_MODEL`), then obtain
 | --- | --- | --- |
 | `agentkit` command not found | Editable package not installed / wrong interpreter | `python -m aet_scaffolder list`, inspect venv and pip |
 | `invalid template/provider` | Registry rejects the combination | `agentkit list` and `registry.py`; Strands has no Ollama |
-| `refusing to overwrite existing path` | Destination already exists | Choose a new project name; never automatically delete the target |
+| `refusing to overwrite existing path` | Destination already exists, including a concurrent last-moment claim | Choose a new project name; never automatically delete the target |
+| Atomic publication is unsupported | Linux libc/filesystem lacks `renameat2(RENAME_NOREPLACE)`, or unsupported OS | Use supported local Windows/Linux filesystem; never substitute ordinary Linux rename |
 | Doctor reports missing manifest or bad schema | Corrupted/new project metadata | Inspect `.aet-template.json`; manifest-less **legacy** projects are special |
 | Doctor rejects required .env field | Incomplete generation or template editing | Compare registry `required_env_fields` with emitted `.env.example` |
 | `ModuleNotFoundError: app` | Wrong working directory or mixed editable projects | Run from generated project root, isolate virtual environments |
@@ -1115,6 +1116,7 @@ Do not change visibility without an explicit owner decision after reviewing thes
 - **No complete lifecycle/resource controls:** full app-level cancellation, global rate limiting, traffic quotas and distributed back-pressure are out of scope.
 - **No complete dependency lock:** dependency version intervals are intentionally broad; CI records resolutions but does not make every future installation identical.
 - **Development container only:** base-image and Python dependency integrity deserve independent deployment-specific pinning and scans.
+- **Atomic publication platform boundary:** generator deliberately fails closed outside verified Windows/Linux primitives or when Linux no-replace rename is unavailable; network/distributed filesystem guarantees are not established.
 - **Historical CI length:** comprehensive legacy checks increase runtime; future optimisation must preserve reproducibility and protected status checks.
 - **Self-contained template duplication:** foundations/provider helpers appear several times. Synchronise changes, but do not replace them with a hidden scaffolder runtime dependency.
 - **No established ROI or multiple-team usage:** the evidence-register and blank trial forms do not represent real observations.
