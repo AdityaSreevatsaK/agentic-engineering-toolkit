@@ -24,12 +24,25 @@ No installation/test can be removed without losing an explicit acceptance requir
 ## Change under review
 
 - Add `--jobs` (1 to 4) to the existing isolated smoke runner, defaulting to 1 for conservative local debugging.
-- CI passes `--jobs 2`, allowing two *independent* generated projects to progress concurrently in separate directories and Python interpreters.
+- Ubuntu CI passes `--jobs 2`, allowing two *independent* generated projects to progress concurrently; Windows retains sequential `--jobs 1` because the first concurrent trial failed during a pip installation.
 - The same four apps still execute real installs, `pip check`, their entire generated test suites, a mock ASGI request probe and dependency-resolution capture.
 - A new root regression test uses a two-party barrier to verify that concurrency actually occurs, while checking four unique interpreter paths, the full stage matrix, the same deterministic registry order and complete evidence output.
 - There are no new Actions workflows, check names, external data, paid inference calls or new packages.
 
 Potential trade-offs: concurrent pip operations may compete for runner CPU, download bandwidth or Windows file-system resources; wall-clock duration may stay flat or worsen. File-level pip operations take place in separate app projects and virtual environments, with pip's standard shared cache. If the complete CI matrix fails or consistently slows down, revert or tune `--jobs` rather than claiming improvement.
+
+## First PR trial: observed outcomes and corrective decision
+
+[PR run #43590090293](https://github.com/AdityaSreevatsaK/agentic-engineering-toolkit/actions/runs/43590090293) exercised two concurrent installations on **all** four runners. The root tests and quality check passed. Three of five required jobs passed, but **Windows/Python 3.12 failed**: the runner reported `tool-agent/install failed (exit status 1)` while performing concurrent independent installs. The harness intentionally omits arbitrary pip stderr from public logs, so the underlying pip error (such as a cache lock, network problem or transient package failure) **was not established**. Missing downstream matrix artifacts on that job were cascading effects. Do not claim this run was green.
+
+| Runner | Baseline stage | Concurrent trial | Interpretation |
+| --- | ---: | ---: | --- |
+| Ubuntu Python 3.11 | 65.5 s | 56.9 s | Passed; 13% reduction in measured step interval |
+| Ubuntu Python 3.12 | 70.0 s | 31.1 s | Passed; 56% reduction in measured step interval |
+| Windows Python 3.11 | 153.1 s | 130.3 s | Passed, but limited improvement |
+| Windows Python 3.12 | 150.1 s | 58.5 s to failing step exit | **Failed**, not a valid speed comparison |
+
+**Correction under review:** Run two concurrent workers on Ubuntu only. Windows reverts to the earlier proven sequential mode, retaining all four installations, test suites, ASGI probes and evidence per runner. Full five-job CI must pass again on this corrected final head before merge; first-run Linux measurements are not final-head measurements.
 
 ## Verification required before merge
 
@@ -39,4 +52,4 @@ Potential trade-offs: concurrent pip operations may compete for runner CPU, down
 4. Inspect the new final-head timestamped job logs and compare *like-for-like* isolated-install stage durations with the table above. Quantify observed effects rather than guaranteeing a speed-up.
 5. Verify the post-merge `master` run and retain any remaining limitations. GitHub runner variance prevents reliable production performance claims.
 
-**Status at authoring:** Baseline run inspected and scheduling/test patch committed on `perf/bounded-isolated-install-parallelism`. No PR performance results are asserted here until actually observed.
+**Status:** Baseline and first PR run inspected; a Windows concurrent-install failure prompted an Ubuntu-only concurrency correction. The complete corrected final-head five-job validation and post-merge measurements remain pending.
