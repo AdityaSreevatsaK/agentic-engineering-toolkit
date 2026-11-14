@@ -37,6 +37,34 @@ def test_reject_invalid_names(tmp_path):
             generate(name, output_dir=tmp_path)
 
 
+def test_does_not_replace_destination_created_while_staging(tmp_path, monkeypatch):
+    from aet_scaffolder import generator
+
+    target = tmp_path / "demo"
+    original_copy = generator._copy_template
+
+    def copy_then_claim(src, dest, replacements):
+        original_copy(src, dest, replacements)
+        target.mkdir()
+
+    monkeypatch.setattr(generator, "_copy_template", copy_then_claim)
+    with pytest.raises(GenerationError, match="overwrite"):
+        generate("demo", output_dir=tmp_path)
+    assert target.is_dir()
+    assert list(target.iterdir()) == []
+
+
+def test_do_not_overwrite_dangling_symlink(tmp_path):
+    target = tmp_path / "demo"
+    try:
+        target.symlink_to(tmp_path / "missing", target_is_directory=True)
+    except (OSError, NotImplementedError) as exc:
+        pytest.skip(f"Creating symlinks is unavailable: {exc}")
+    with pytest.raises(GenerationError, match="overwrite"):
+        generate("demo", output_dir=tmp_path)
+    assert target.is_symlink()
+
+
 def test_do_not_overwrite_existing_project(tmp_path):
     first = generate("demo", output_dir=tmp_path)
     marker = first / "data.txt"
