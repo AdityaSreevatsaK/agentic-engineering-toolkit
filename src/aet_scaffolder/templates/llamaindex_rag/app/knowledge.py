@@ -1,5 +1,7 @@
 """Bounded JSONL knowledge loading; no implicit HTTP calls or document execution."""
 import json
+import os
+from time import sleep
 from functools import lru_cache
 import re
 from dataclasses import dataclass
@@ -7,6 +9,8 @@ from pathlib import Path
 
 _ID = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._-]{0,79}$")
 _ROOT = Path(__file__).resolve().parent.parent
+# Windows atomic file replacement may briefly block metadata/open operations.
+_READ_ATTEMPTS = 8 if os.name == "nt" else 1
 
 
 class KnowledgeError(ValueError):
@@ -51,22 +55,37 @@ def _cached_documents(
 
 
 def load_documents(path: str | Path = "data/knowledge.jsonl") -> list[Document]:
-    """Load a bounded file; invalidate cache on metadata changes without a restart."""
+    """Load a validated corpus; tolerate brief Windows atomic-swap read locks.
+
+    Retrying applies only to transient missing/permission access during a
+    concurrent local file replacement. Invalid JSONL, oversized corpora and
+    symlinks still fail closed without retrying. No stale fallback is served.
+    """
     target = Path(path).expanduser()
     if not target.is_absolute():
         target = _ROOT / target
-    if target.is_symlink() or not target.is_file():
-        raise KnowledgeError("Knowledge file is missing or is a symbolic link")
-    try:
-        stat = target.stat()
-        if stat.st_size > 1_000_000:
-            raise KnowledgeError("Knowledge file exceeds 1 MB")
-        # Copy the list so callers cannot modify shared cached state.
-        return list(_cached_documents(
-            str(target), stat.st_mtime_ns, stat.st_ctime_ns,
-            stat.st_size, stat.st_ino,
-        ))
-    except (OSError, UnicodeError, ValueError) as exc:
-        if isinstance(exc, KnowledgeError):
-            raise
-        raise KnowledgeError("Knowledge file is unreadable or invalid JSONL") from exc
+    for attempt in range(_READ_ATTEMPTS):
+        try:
+            if target.is_symlink():
+                raise KnowledgeError("Knowledge file is missing or is a symbolic link")
+            if not target.is_file():
+                raise FileNotFoundError("Knowledge file is temporarily unavailable")
+            stat = target.stat()
+            if stat.st_size > 1_000_000:
+                raise KnowledgeError("Knowledge file exceeds 1 MB")
+            # Copy so callers cannot modify shared cached state. A replacement
+            # between stat and open still yields one fully written file version.
+            return list(_cached_documents(
+                str(target), stat.st_mtime_ns, stat.st_ctime_ns,
+                stat.st_size, stat.st_ino,
+            ))
+        except (PermissionError, FileNotFoundError) as exc:
+            if attempt + 1 < _READ_ATTEMPTS:
+                sleep(0.01)
+                continue
+            raise KnowledgeError("Knowledge file is unreadable or invalid JSONL") from exc
+        except (OSError, UnicodeError, ValueError) as exc:
+            if isinstance(exc, KnowledgeError):
+                raise
+            raise KnowledgeError("Knowledge file is unreadable or invalid JSONL") from exc
+    raise KnowledgeError("Knowledge file is unreadable or invalid JSONL")

@@ -278,6 +278,9 @@ try:
                     "writer_completed": writer_completed,
                     "atomic_replace_failed": swap_failed,
                     "non_200_response_count": non_200_count,
+                    "non_200_http_statuses": sorted({
+                        r.status_code for r in race_responses if r.status_code != 200
+                    }),
                     "latency_ms": round((perf_counter() - race_begin) * 1000, 3),
                     "cpu_ms": None,
                     "batch_requests": 12,
@@ -446,6 +449,10 @@ def run_matrix() -> tuple[dict, list[dict], list[dict], dict]:
                             "non_200_response_count": min(
                                 12, max(0, int(event.get("non_200_response_count", 0)))
                             ),
+                            "non_200_http_statuses": sorted({
+                                status for status in event.get("non_200_http_statuses", [])
+                                if type(status) is int and 400 <= status <= 599
+                            })[:12],
                         }
                     failures.append(failure)
             if not entry["passed"] and not any(

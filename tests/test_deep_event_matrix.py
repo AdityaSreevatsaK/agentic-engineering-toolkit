@@ -197,6 +197,7 @@ def test_race_failures_report_only_allowlisted_categorical_diagnostics(monkeypat
                 "status_code": 503, "passed": False,
                 "writer_completed": True, "atomic_replace_failed": True,
                 "non_200_response_count": 2,
+                "non_200_http_statuses": [503, 500, 200, 999, "NEVER-EXPORT-SECRET"],
                 "synthetic_raw_exception": "NEVER-EXPORT-SECRET",
             }],
         }
@@ -213,6 +214,7 @@ def test_race_failures_report_only_allowlisted_categorical_diagnostics(monkeypat
             "writer_completed": True,
             "atomic_replace_failed": True,
             "non_200_response_count": 2,
+            "non_200_http_statuses": [500, 503],
         },
     }]
     assert "NEVER-EXPORT-SECRET" not in json.dumps(failures)

@@ -278,10 +278,10 @@ jobs:
       # Reproduce the previously intermittent Windows 3.12 RAG atomic-swap
       # assertion. This runs even if the preceding event matrix fails, so its
       # categorical output remains available for diagnosis.
-      - name: Repeat Windows RAG corpus race with mock inference
+      - name: Repeat both Windows RAG corpus races with mock inference
         if: always() && matrix.os == 'windows-2025' && matrix.python-version == '3.12'
         timeout-minutes: 6
-        run: python -m scripts.stress_corpus_race --trials 8 --json-out corpus-race-stress.json
+        run: python -m scripts.stress_corpus_race --template both --trials 8 --json-out corpus-race-stress.json
       - name: Retain sanitised Windows RAG concurrency evidence
         if: always() && matrix.os == 'windows-2025' && matrix.python-version == '3.12'
         uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6
