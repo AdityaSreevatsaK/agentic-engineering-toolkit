@@ -29,6 +29,7 @@ def main(argv: list[str] | None = None) -> int:
     if args.command == "list":
         for spec in TEMPLATES.values():
             print(f"Template: {spec.name}")
+            print(f"  Supported providers: {', '.join(spec.providers)}")
         print("Providers: " + ", ".join(SUPPORTED_PROVIDERS))
         print(f"Default: {DEFAULT_TEMPLATE} with mock (offline, deterministic)")
         return 0
