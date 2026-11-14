@@ -60,6 +60,19 @@ def test_doctor_rejects_invalid_manifest_without_mutation(tmp_path, data):
     assert marker.read_text(encoding="utf-8") == data
 
 
+def test_cli_lists_supported_providers_per_template(capsys):
+    from aet_scaffolder.registry import TEMPLATES
+
+    assert main(["list"]) == 0
+    output = capsys.readouterr().out
+    for spec in TEMPLATES.values():
+        assert (
+            f"Template: {spec.name}\n"
+            f"  Supported providers: {', '.join(spec.providers)}"
+        ) in output
+    assert "Template: strands-agent\n  Supported providers: mock, bedrock, openai, azure-openai, anthropic" in output
+
+
 def test_cli_explicit_template_and_list_backward_compatible(tmp_path, capsys):
     assert main(["list"]) == 0
     output = capsys.readouterr().out

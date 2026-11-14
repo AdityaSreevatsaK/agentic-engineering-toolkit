@@ -45,7 +45,7 @@ def generate(
     if not parent.is_dir():
         raise GenerationError(f"output directory does not exist: {parent}")
     target = parent / name
-    if target.exists():
+    if target.exists() or target.is_symlink():
         raise GenerationError(f"refusing to overwrite existing path: {target}")
     source = files("aet_scaffolder").joinpath("templates", spec.directory)
     replacements = {
@@ -67,6 +67,9 @@ def generate(
                 encoding="utf-8",
                 newline="\n",
             )
+            # Recheck after staging: another process may have claimed the path.
+            if target.exists() or target.is_symlink():
+                raise GenerationError(f"refusing to overwrite existing path: {target}")
             staging.rename(target)
     except OSError as exc:
         raise GenerationError(f"could not generate project: {exc}") from exc
