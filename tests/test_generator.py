@@ -44,6 +44,8 @@ def test_does_not_replace_destination_created_while_staging(tmp_path, monkeypatc
     original_copy = generator._copy_template
 
     def copy_then_claim(src, dest, replacements):
+        # Restore the real implementation before it recursively copies subdirectories.
+        monkeypatch.setattr(generator, "_copy_template", original_copy)
         original_copy(src, dest, replacements)
         target.mkdir()
 
