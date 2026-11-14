@@ -1,5 +1,7 @@
 # M19: Pilot-release readiness and adoption evidence
 
+**Latest decision-oriented assessment (15 November 2026):** [AET engineering leadership readiness](leadership-readiness-2026-11-15.md), with final post-merge CI, separate supply-chain checks, candid KRA gates and a solo-executable next-step plan. The M19 material below remains the original release-kit guidance.
+
 **Status:** The automated release-smoke is testable, but the toolkit remains a
 prototype, not production-approved. No independent developer trial, team reuse
 or human setup-time reduction has been verified.
