@@ -230,9 +230,11 @@ jobs:
             docker-smoke.json
           if-no-files-found: warn
           retention-days: 14
+      # Linux passed with two workers. Windows 3.12 hit an isolated pip install
+      # error in the concurrent run; keep Windows installs sequential and fully tested.
       - name: Install and exercise four independent generated-app virtualenvs
         timeout-minutes: 30
-        run: python -m scripts.isolated_install_smoke --json-out isolated-installations.json --versions-dir isolated-resolved
+        run: python -m scripts.isolated_install_smoke --json-out isolated-installations.json --versions-dir isolated-resolved --jobs ${{ matrix.os == 'ubuntu-24.04' && '2' || '1' }}
       - name: Retain per-template independent Python environment evidence
         if: always()
         uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6
