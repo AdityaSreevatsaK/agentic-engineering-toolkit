@@ -17,10 +17,12 @@
 1. Inspect the latest `master`, relevant files, open PRs/issues and accepted ADRs. Check the [deep dive](PROJECT_DEEP_DIVE.md) for architecture and source pointers.
 2. Make narrowly scoped changes on a feature branch and PR. The protected `master` requires **five** CI checks (Ubuntu/Windows × Python 3.11/3.12, plus Ruff/mypy/Bandit quality) and resolved conversations.
 3. Preserve the legacy `agentkit` contract, manifest-less pre-M11 Project Doctor support, generated API schemas, safe names, no-overwrite semantics and bundled wheel templates.
+   - Project publication must stay atomic and non-replacing: Linux uses `renameat2(RENAME_NOREPLACE)`, Windows uses non-replacing rename; fail closed on unsupported local filesystems rather than using a racy fallback.
 4. For template changes, update the declarative registry, emitted files, Docker/CI/docs as applicable, generated tests and root regression tests. All templates should work with mock inference without secrets.
 5. For provider changes, use framework-native SDK integrations, optional dependency extras, safe environment configuration and injected fake-SDK tests. **No live billable model calls in automated CI.**
 6. Protect privacy: no secrets/client data in code, PRs or Actions artifacts; no raw prompts/answers/exception messages in request logs; no unauthenticated public API deployment.
 7. Verify real results before reporting success. Distinguish generation, Doctor, SDK fakes, mock ASGI tests, actual live inference, independent trials and production security.
+   - Four-image Docker smoke runs only in the existing Ubuntu/Python 3.11 CI job. Bind containers to loopback; verify both actual HTTP mock probes and the recorded evidence before claiming Docker coverage.
 8. Merge only after final-head checks pass. Do not bypass or weaken branch protection, silently delete historical work or mix changes with AEA.
 
 ## Source map
