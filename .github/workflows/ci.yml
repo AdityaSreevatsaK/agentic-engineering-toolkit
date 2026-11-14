@@ -193,9 +193,10 @@ jobs:
         working-directory: strands-bedrock-demo
       - name: Check installed dependency consistency after generated-app installs
         run: python -m pip check
-      - name: Build generated tool-agent container (offline app)
+      - name: Build and smoke-test all four generated Docker images (loopback only)
         if: matrix.os == 'ubuntu-24.04' && matrix.python-version == '3.11'
-        run: docker build --progress=plain -t aet-m14-tool-agent -f mock-demo/Dockerfile mock-demo
+        timeout-minutes: 24
+        run: python scripts/docker_smoke.py --json-out docker-smoke.json
       - name: Build standalone wheel
         run: python -m pip wheel . --no-deps --wheel-dir wheelhouse
       - name: Install the packaged wheel (not editable)
@@ -224,9 +225,25 @@ jobs:
         uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6
         with:
           name: m19-machine-smoke-${{ matrix.os }}-py${{ matrix.python-version }}
-          path: m19-machine-smoke.json
+          path: |
+            m19-machine-smoke.json
+            docker-smoke.json
           if-no-files-found: warn
           retention-days: 14
+      - name: Install and exercise four independent generated-app virtualenvs
+        if: matrix.os == 'ubuntu-24.04'
+        timeout-minutes: 25
+        run: python -m scripts.isolated_install_smoke --json-out isolated-installations.json --versions-dir isolated-resolved
+      - name: Retain per-template independent Python environment evidence
+        if: always() && matrix.os == 'ubuntu-24.04'
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6
+        with:
+          name: isolated-install-${{ matrix.os }}-py${{ matrix.python-version }}
+          path: |
+            isolated-installations.json
+            isolated-resolved/
+          if-no-files-found: warn
+          retention-days: 30
       - name: Run all declared template-provider pairs with offline API probes
         timeout-minutes: 20
         run: python -m scripts.comprehensive_matrix --json-out comprehensive-matrix.json

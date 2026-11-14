@@ -1,6 +1,10 @@
 """Generate a local-first agent project from a registered bundled template."""
+import ctypes
+import errno
 import json
+import os
 import re
+import sys
 import tempfile
 from importlib.resources import files
 from pathlib import Path
@@ -70,10 +74,43 @@ def generate(
             # Recheck after staging: another process may have claimed the path.
             if target.exists() or target.is_symlink():
                 raise GenerationError(f"refusing to overwrite existing path: {target}")
-            staging.rename(target)
+            _publish_without_replacing(staging, target)
     except OSError as exc:
+        if exc.errno in (errno.EEXIST, errno.ENOTEMPTY):
+            raise GenerationError(f"refusing to overwrite existing path: {target}") from exc
         raise GenerationError(f"could not generate project: {exc}") from exc
     return target
+
+
+
+def _publish_without_replacing(staging: Path, target: Path) -> None:
+    """Publish a fully staged directory atomically, never replacing a claimant.
+
+    Linux's ordinary rename replaces an existing empty directory, so use
+    renameat2(RENAME_NOREPLACE). Windows os.rename refuses existing targets.
+    Unsupported platforms/filesystems fail closed rather than risking data loss.
+    """
+    if sys.platform.startswith("linux"):
+        libc = ctypes.CDLL(None, use_errno=True)
+        try:
+            renameat2 = libc.renameat2
+        except AttributeError as exc:
+            raise GenerationError(
+                "Atomic no-overwrite publication requires Linux renameat2 support"
+            ) from exc
+        renameat2.argtypes = (
+            ctypes.c_int, ctypes.c_char_p, ctypes.c_int, ctypes.c_char_p, ctypes.c_uint
+        )
+        renameat2.restype = ctypes.c_int
+        if renameat2(-100, os.fsencode(staging), -100, os.fsencode(target), 1) != 0:
+            error = ctypes.get_errno()
+            raise OSError(error, os.strerror(error), str(target))
+    elif os.name == "nt":
+        staging.rename(target)
+    else:
+        raise GenerationError(
+            "Atomic no-overwrite publication is supported on Windows and Linux only"
+        )
 
 
 def _copy_template(src, dest: Path, replacements: dict[str, str]) -> None:
