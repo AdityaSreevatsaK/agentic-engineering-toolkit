@@ -1,5 +1,10 @@
 """Deep event sweep must be complete, safe, and leave only sanitised evidence."""
+import ast
 import json
+import os
+import tempfile
+from pathlib import Path
+from types import SimpleNamespace
 
 import pytest
 
@@ -95,3 +100,120 @@ def test_can_create_machine_readable_artifacts_without_running_cloud(monkeypatch
     assert paths[1].read_text().startswith("template,")
     assert paths[2].read_text() == ""
     assert json.loads(paths[3].read_text())["status"] == "pass"
+
+
+def _extract_child_atomic_update(*, os_module, pause):
+    """Exercise the actual stdlib writer embedded in the isolated child script."""
+    tree = ast.parse(audit._CHILD)
+    function = next(
+        node for node in tree.body
+        if isinstance(node, ast.FunctionDef) and node.name == "atomic_update"
+    )
+    namespace = {
+        "tempfile": tempfile, "Path": Path, "os": os_module, "sleep": pause,
+    }
+    exec(compile(ast.Module(body=[function], type_ignores=[]),
+                 "<synthetic-writer-test>", "exec"), namespace)
+    return namespace["atomic_update"]
+
+
+def test_windows_atomic_writer_retries_then_publishes_complete_content(tmp_path):
+    path = tmp_path / "knowledge.jsonl"
+    path.write_bytes(b"original\n")
+    attempted = []
+    sleeps = []
+
+    def replace(source, target):
+        attempted.append(1)
+        if len(attempted) <= 3:
+            raise PermissionError("synthetic-locked-file")
+        os.replace(source, target)
+
+    update = _extract_child_atomic_update(
+        os_module=SimpleNamespace(name="nt", replace=replace),
+        pause=sleeps.append,
+    )
+    update(path, b"updated\n")
+    assert path.read_bytes() == b"updated\n"
+    assert len(attempted) == 4
+    assert sleeps == [0.01] * 3
+    assert sorted(tmp_path.iterdir()) == [path]
+
+
+def test_windows_atomic_writer_fails_closed_after_bounded_denials(tmp_path):
+    path = tmp_path / "knowledge.jsonl"
+    path.write_bytes(b"original\n")
+    attempts = []
+    delays = []
+
+    def deny(source, target):
+        attempts.append(1)
+        raise PermissionError("synthetic-permanent-denial")
+
+    update = _extract_child_atomic_update(
+        os_module=SimpleNamespace(name="nt", replace=deny),
+        pause=delays.append,
+    )
+    with pytest.raises(PermissionError, match="synthetic-permanent-denial"):
+        update(path, b"never-published\n")
+    assert path.read_bytes() == b"original\n"
+    assert len(attempts) == 100
+    assert delays == [0.01] * 99
+    assert sorted(tmp_path.iterdir()) == [path]
+
+
+def test_non_windows_atomic_writer_does_not_retry_permissions(tmp_path):
+    path = tmp_path / "knowledge.jsonl"
+    path.write_bytes(b"original\n")
+    attempts = []
+    delays = []
+
+    def deny(source, target):
+        attempts.append(1)
+        raise PermissionError("synthetic-permission-denied")
+
+    update = _extract_child_atomic_update(
+        os_module=SimpleNamespace(name="posix", replace=deny),
+        pause=delays.append,
+    )
+    with pytest.raises(PermissionError):
+        update(path, b"new\n")
+    assert len(attempts) == 1
+    assert delays == []
+    assert path.read_bytes() == b"original\n"
+    assert sorted(tmp_path.iterdir()) == [path]
+
+
+def test_race_failures_report_only_allowlisted_categorical_diagnostics(monkeypatch):
+    monkeypatch.setattr(audit, "supported_pairs", lambda: [("langgraph-rag", "openai")])
+    monkeypatch.setattr(audit, "generate", lambda *args, **kwargs: Path("synthetic"))
+    monkeypatch.setattr(audit, "validate_project", lambda project: SimpleNamespace(ok=True))
+
+    def failed_pair(*args):
+        return {
+            "passed": False, "count": 1, "passed_count": 0,
+            "events": [{
+                "scenario": "concurrent_atomic_corpus_updates",
+                "status_code": 503, "passed": False,
+                "writer_completed": True, "atomic_replace_failed": True,
+                "non_200_response_count": 2,
+                "synthetic_raw_exception": "NEVER-EXPORT-SECRET",
+            }],
+        }
+
+    monkeypatch.setattr(audit, "run_pair", failed_pair)
+    report, rows, failures, security = audit.run_matrix()
+    assert report["status"] == "fail"
+    assert rows[0]["status_code"] == 503
+    assert failures == [{
+        "template": "langgraph-rag", "provider": "openai",
+        "scenario": "concurrent_atomic_corpus_updates",
+        "status_code": 503, "failure_stage": "event_assertion",
+        "race_diagnostics": {
+            "writer_completed": True,
+            "atomic_replace_failed": True,
+            "non_200_response_count": 2,
+        },
+    }]
+    assert "NEVER-EXPORT-SECRET" not in json.dumps(failures)
+    assert security["status"] == "fail"

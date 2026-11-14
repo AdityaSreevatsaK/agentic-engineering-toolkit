@@ -118,15 +118,16 @@ def atomic_update(path, content):
         temporary.write(content)
         candidate = Path(temporary.name)
     try:
-        # Windows can temporarily reject replacing an open destination while
-        # another reader is closing its file descriptor. Retry that narrow
-        # sharing violation only; never suppress an unrelated IO failure.
-        for attempt in range(30):
+        # A reader can retain a Windows sharing lock briefly after a request.
+        # Retry only Windows PermissionError, with a finite one-second budget;
+        # preserve failure when the lock does not clear. No partially written
+        # corpus is ever published because the candidate is fully staged.
+        for attempt in range(100):
             try:
                 os.replace(candidate, path)
                 break
             except PermissionError:
-                if attempt == 29:
+                if os.name != "nt" or attempt == 99:
                     raise
                 sleep(0.01)
     finally:
@@ -264,11 +265,19 @@ try:
                         range(12),
                     ))
                 worker.join(timeout=10)
+                # Emit only bounded, categorical diagnostics. Never store response
+                # bodies, exception strings, OS paths, prompts or credentials.
+                writer_completed = not worker.is_alive()
+                swap_failed = bool(failures)
+                non_200_count = sum(r.status_code != 200 for r in race_responses)
                 events.append({
                     "scenario": "concurrent_atomic_corpus_updates",
-                    "status_code": 200 if all(r.status_code == 200 for r in race_responses) else 503,
-                    "passed": not worker.is_alive() and not failures
-                              and all(r.status_code == 200 for r in race_responses),
+                    "status_code": 200 if non_200_count == 0 else 503,
+                    "passed": writer_completed and not swap_failed
+                              and non_200_count == 0,
+                    "writer_completed": writer_completed,
+                    "atomic_replace_failed": swap_failed,
+                    "non_200_response_count": non_200_count,
                     "latency_ms": round((perf_counter() - race_begin) * 1000, 3),
                     "cpu_ms": None,
                     "batch_requests": 12,
@@ -422,12 +431,23 @@ def run_matrix() -> tuple[dict, list[dict], list[dict], dict]:
                 }
                 metrics_rows.append(row)
                 if not event.get("passed"):
-                    failures.append({
+                    failure = {
                         "template": template, "provider": provider,
                         "scenario": row["scenario"],
                         "status_code": row["status_code"],
                         "failure_stage": "event_assertion",
-                    })
+                    }
+                    if row["scenario"] == "concurrent_atomic_corpus_updates":
+                        # Explicit types/keys prevent accidental raw exception,
+                        # payload or pathname leakage into public CI artifacts.
+                        failure["race_diagnostics"] = {
+                            "writer_completed": event.get("writer_completed") is True,
+                            "atomic_replace_failed": event.get("atomic_replace_failed") is True,
+                            "non_200_response_count": min(
+                                12, max(0, int(event.get("non_200_response_count", 0)))
+                            ),
+                        }
+                    failures.append(failure)
             if not entry["passed"] and not any(
                 item["template"] == template and item["provider"] == provider
                 for item in failures

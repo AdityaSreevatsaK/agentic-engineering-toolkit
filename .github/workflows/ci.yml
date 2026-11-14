@@ -275,6 +275,21 @@ jobs:
             deep-event-manifest.json
           if-no-files-found: error
           retention-days: 90
+      # Reproduce the previously intermittent Windows 3.12 RAG atomic-swap
+      # assertion. This runs even if the preceding event matrix fails, so its
+      # categorical output remains available for diagnosis.
+      - name: Repeat Windows RAG corpus race with mock inference
+        if: always() && matrix.os == 'windows-2025' && matrix.python-version == '3.12'
+        timeout-minutes: 6
+        run: python -m scripts.stress_corpus_race --trials 8 --json-out corpus-race-stress.json
+      - name: Retain sanitised Windows RAG concurrency evidence
+        if: always() && matrix.os == 'windows-2025' && matrix.python-version == '3.12'
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6
+        with:
+          name: corpus-race-stress-windows-2025-py3.12
+          path: corpus-race-stress.json
+          if-no-files-found: warn
+          retention-days: 90
       - name: Benchmark local project generation (not human time saved)
         run: python -m aet_scaffolder.benchmark_cli --runs 3 --warmups 1 --provider mock
       - name: Capture resolved dependency versions (evidence, not a lockfile)
