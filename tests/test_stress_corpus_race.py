@@ -55,9 +55,43 @@ def test_corpus_stress_rejects_unsafe_trial_bounds(trials):
 def test_corpus_stress_cli_does_not_overwrite_evidence(monkeypatch, tmp_path):
     path = tmp_path / "report.json"
     path.write_text("original", encoding="utf-8")
-    monkeypatch.setattr(stress, "run_trials", lambda n: {
+    monkeypatch.setattr(stress, "run_trials", lambda n, **kwargs: {
         "status": "pass", "trial_count": n, "passed_trials": n,
     })
     with pytest.raises(SystemExit):
         stress.main(["--trials", "2", "--json-out", str(path)])
     assert path.read_text(encoding="utf-8") == "original"
+
+
+def test_stress_can_cover_both_rag_templates_with_safe_statuses(monkeypatch, tmp_path):
+    created = []
+
+    def fake_generate(name, *, output_dir, template, provider):
+        created.append((name, template, provider))
+        return tmp_path / name
+
+    monkeypatch.setattr(stress, "generate", fake_generate)
+    monkeypatch.setattr(stress, "validate_project", lambda path: SimpleNamespace(ok=True))
+
+    def fake_run_pair(template, provider, project):
+        response = _synthetic_race()
+        response["events"][0]["non_200_http_statuses"] = [200, 503, 999, "raw"]
+        return response
+
+    monkeypatch.setattr(stress, "run_pair", fake_run_pair)
+    report = stress.run_trials(2, templates=("langgraph-rag", "llamaindex-rag"))
+    assert report["trial_count"] == 4
+    assert report["passed_trials"] == 4
+    assert report["templates"] == ["langgraph-rag", "llamaindex-rag"]
+    assert report["rounds_per_template"] == 2
+    assert len(set(name for name, _, _ in created)) == 4
+    assert {template for _, template, _ in created} == {
+        "langgraph-rag", "llamaindex-rag",
+    }
+    assert all(item["non_200_http_statuses"] == [503] for item in report["trials"])
+
+
+def test_reject_unknown_or_duplicate_rag_templates():
+    for templates in ((), ("invalid-rag",), ("langgraph-rag", "langgraph-rag")):
+        with pytest.raises(ValueError, match="template"):
+            stress.run_trials(1, templates=templates)
