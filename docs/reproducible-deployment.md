@@ -15,3 +15,5 @@ For API security, see [hardened profile](security/hardened-profile.md). The deve
 The generated production Dockerfile defaults to `AET_SECURITY_MODE=hardened` and therefore requires the tenant security implementation in PR #47 (or an equivalent reviewed security layer), plus injected tenant credentials. **Do not deploy this image with local mode to a public interface.**
 
 The compiler uses `--allow-unsafe` so build tools such as setuptools are included and hash-pinned when needed by the `--no-build-isolation` wheel build. Review all generated pins before deployment.
+
+The CI clean-build gate also checks the resulting image for fixable High/Critical OS and Python vulnerabilities using SHA-pinned Trivy. Debian 13 slim images had two fixable High zlib findings in the 15 November 2026 scan, so the generated final stage upgrades `zlib1g` from the Debian security repository. Because that repository evolves, the base digest plus Python lock alone do not make OS packages bit-for-bit reproducible. For reproducible regulated deployments, use an approved snapshot repository or build a prepatched internally pinned base image, then scan again.
