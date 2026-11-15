@@ -61,4 +61,4 @@ def test_real_demo_runner_preserves_isolation_and_strict_api_assertions():
     assert 'strands-agent' in RUNNER
     assert '$env:AET_PROVIDER = "mock"' in RUNNER
     assert '"cloud-config"' in RUNNER
-    assert "No live model was called" in RUNNER
+    assert "No model was contacted." in RUNNER
