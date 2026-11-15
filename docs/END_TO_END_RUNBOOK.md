@@ -312,6 +312,36 @@ Invoke-RestMethod -Method Post -Uri "http://127.0.0.1:18006/invoke" -ContentType
 
 Then press **Ctrl+C** in the server terminal. This model-based path is intentionally different from the mock server helper: Ollama/cloud configurations return **503 for /ready** until separately operationally verified.
 
+### Step 8D: optional *live* OpenAI HTTP request, only with prior authorisation
+
+This is the complete server/request procedure for the cloud starter generated in step 8A. **It is deliberately not executed by the no-key runbook or CI.** Before starting, your approved secret-management process must have injected **OPENAI_API_KEY** and you must supply the exact, permitted **AET_OPENAI_MODEL** for your account. A valid authorised model, credentials, network access and paid usage permission are mandatory. The generated application has no public authentication.
+
+In the **server PowerShell terminal**, with the cloud starter from step 8A:
+
+~~~powershell
+if (-not $env:OPENAI_API_KEY -or -not $env:AET_OPENAI_MODEL) {
+    throw "Approved OPENAI_API_KEY and AET_OPENAI_MODEL must already be configured."
+}
+$env:AET_PROVIDER = "openai"
+Push-Location (Join-Path $Repo "demo-cloud-config")
+& .\.venv\Scripts\python.exe -m uvicorn app.main:app --host 127.0.0.1 --port 18007
+~~~
+
+While that terminal is serving, in a **second terminal**, submit a **synthetic-only** question:
+
+~~~powershell
+Invoke-RestMethod -Method Post -Uri "http://127.0.0.1:18007/ask" -ContentType "application/json" -Body '{"question":"What is the sample return policy?"}'
+~~~
+
+A success is HTTP 200 with an answer and **source_ids**. A 503 means the selected provider or configuration was unavailable; do not infer the exact upstream failure from the sanitised API response. Press **Ctrl+C** in the server terminal and then run the following there to restore the safe default:
+
+~~~powershell
+Pop-Location
+$env:AET_PROVIDER = "mock"
+~~~
+
+For other supported cloud combinations, the equivalent verified **scaffolding** contract is shown in the section-8B registry table, and each generated README specifies its provider-specific settings. Live model-specific behaviour is **not** verified by mock CI; it requires separate authorised integration evidence.
+
 ## 9. Flow H: build and probe all four development Docker images (optional)
 
 Requires a running Docker daemon, but still no cloud credentials. Run sections 3–6 first so each project directory exists.
@@ -335,9 +365,14 @@ foreach ($Item in $DockerApps) {
     docker run -d --rm --name $Image -p $Binding $Image
     if ($LASTEXITCODE -ne 0) { throw "Container start failed: $Image" }
     try {
-        Start-Sleep -Seconds 5
-        $Health = Invoke-RestMethod -Method Get -Uri "http://127.0.0.1:$Port/health"
-        if ($Health.status -ne "ok") { throw "Container health failed: $Image" }
+        $ContainerHealthy = $false
+        for ($Attempt = 0; $Attempt -lt 30; $Attempt++) {
+            try {
+                $Health = Invoke-RestMethod -Method Get -TimeoutSec 2 -Uri "http://127.0.0.1:$Port/health"
+                if ($Health.status -eq "ok") { $ContainerHealthy = $true; break }
+            } catch { Start-Sleep -Seconds 1 }
+        }
+        if (-not $ContainerHealthy) { throw "Container health failed: $Image" }
         $Endpoint = $Item.Path
         if ($Endpoint -eq "ask") { $Payload = '{"question":"What is the sample return policy?"}' }
         else { $Payload = '{"question":"order status ORD-1001"}' }
