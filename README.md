@@ -39,3 +39,5 @@ Generated APIs have no production authentication or tenant isolation. Human time
 - [Independent usability trial protocol](docs/adoption/README.md).
 
 AET is distributed under the [Apache License 2.0](LICENSE). The separate Agent Engineering Accelerator (AEA) handles evaluation and regression testing; AET focuses on **project scaffolding**.
+
+For production-oriented reproducibility, see [hashed locks and digest-pinned deployment images](docs/reproducible-deployment.md). For manually authorised, paid provider contract tests, see `.github/workflows/live-provider-smoke.yml`. Neither is part of the default offline demonstration.
