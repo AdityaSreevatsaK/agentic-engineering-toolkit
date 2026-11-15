@@ -13,13 +13,14 @@ _NO_EVIDENCE = "No relevant passages were found in the local knowledge base."
 
 class RAGState(TypedDict, total=False):
     question: str
+    knowledge_path: str
     answer: str
     sources: list[dict[str, str]]
 
 
 def retrieve(state: RAGState) -> dict:
     settings = get_settings()
-    documents = load_documents(settings.knowledge_path)
+    documents = load_documents(state.get("knowledge_path", settings.knowledge_path))
     hits = search(state["question"], documents, top_k=settings.top_k)
     return {"sources": [{"id": hit.document.id, "text": hit.document.text} for hit in hits]}
 

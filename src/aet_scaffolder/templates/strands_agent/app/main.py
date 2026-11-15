@@ -1,6 +1,6 @@
 """HTTP interface for the local-first Strands example. Not public-facing."""
 from fastapi import FastAPI, HTTPException
-from .foundation import install_foundations
+from .foundation import install_foundations, check_security_ready
 from pydantic import BaseModel, Field
 
 from .agent import run_agent
@@ -28,14 +28,23 @@ def health() -> dict[str, str]:
 
 @app.get("/ready")
 def ready() -> dict[str, str]:
-    """Check offline configuration; hosted provider access is never probed."""
+    """Check local configuration; no billable or network provider probes."""
+    try:
+        get_settings()
+        check_security_ready()
+    except ValueError as exc:
+        raise HTTPException(status_code=503, detail="Invalid local configuration") from exc
+    return {"status": "ready"}
+
+
+@app.get("/provider-status")
+def provider_status() -> dict[str, str]:
+    """Provider connectivity is unverified; readiness never incurs inference cost."""
     try:
         settings = get_settings()
     except ValueError as exc:
         raise HTTPException(status_code=503, detail="Invalid local configuration") from exc
-    if settings.provider != "mock":
-        raise HTTPException(status_code=503, detail="Live model readiness has not been verified")
-    return {"status": "ready"}
+    return {"provider": settings.provider, "connectivity": "not_checked"}
 
 
 @app.post("/invoke", response_model=InvokeResponse)

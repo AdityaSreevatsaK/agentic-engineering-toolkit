@@ -1,9 +1,9 @@
 """Self-contained LlamaIndex RAG HTTP interface; never deploy unauthenticated."""
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Request
 from pydantic import BaseModel, Field
 
 from .config import get_settings
-from .foundation import install_foundations
+from .foundation import install_foundations, check_security_ready, tenant_knowledge_path
 from .knowledge import KnowledgeError, load_documents
 from .providers import ProviderError, synthesise
 from .retrieval import retrieve
@@ -31,25 +31,40 @@ def health() -> dict[str, str]:
 
 @app.get("/ready")
 def ready() -> dict[str, str]:
-    """Check safe offline configuration and corpus only, not live credentials."""
+    """Local readiness only: validate settings and tenant corpora, not cloud access."""
     try:
         settings = get_settings()
-        if settings.provider != "mock":
-            raise HTTPException(status_code=503, detail="Live model readiness has not been verified")
-        load_documents(settings.knowledge_path)
-    except HTTPException:
-        raise
+        tenants = check_security_ready()
+        if tenants:
+            for tenant in tenants:
+                load_documents(tenant_knowledge_path(settings.knowledge_path, tenant))
+        else:
+            load_documents(settings.knowledge_path)
     except (ValueError, OSError) as exc:
         raise HTTPException(status_code=503, detail="Local RAG readiness unavailable") from exc
     return {"status": "ready"}
 
 
+@app.get("/provider-status")
+def provider_status() -> dict[str, str]:
+    """Provider connectivity is unverified; readiness never incurs inference cost."""
+    try:
+        settings = get_settings()
+    except ValueError as exc:
+        raise HTTPException(status_code=503, detail="Invalid local configuration") from exc
+    return {"provider": settings.provider, "connectivity": "not_checked"}
+
+
 @app.post("/ask", response_model=AskResponse)
-def ask(request: AskRequest) -> AskResponse:
+def ask(request: AskRequest, http_request: Request) -> AskResponse:
     try:
         settings = get_settings()
         hits = retrieve(
-            request.question, load_documents(settings.knowledge_path), settings.top_k
+            request.question,
+            load_documents(tenant_knowledge_path(
+                settings.knowledge_path, getattr(http_request.state, "tenant_id", None)
+            )),
+            settings.top_k
         )
         sources = [{"id": hit.id, "text": hit.text} for hit in hits]
         if not sources:
