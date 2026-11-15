@@ -40,7 +40,9 @@ powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\demo_windows.ps1 -
 4. Starts each app on your computer, makes actual HTTP requests, checks the results and shuts it down.
 5. Changes sample RAG data and checks that both RAG workflows return the new answer. Also tests text-file ingestion.
 
-**What you should see:** several **PASS** messages and a final **SUCCESS: all completed** message. The folder containing the demo projects is printed at the end. No need to open a second terminal or edit files manually.
+**What you should see:** several **PASS** messages and a final **SUCCESS: all completed** message. No need to open a second terminal or edit files manually.
+
+After a successful run, the script **deletes the temporary demo projects** to save disk space. To inspect the generated projects yourself, add `-KeepOutput` to the end of any demo command. If a run fails, the script **keeps the projects and server logs** and prints their folder so you can investigate.
 
 ## Step 3. Try one flow instead
 
@@ -130,7 +132,7 @@ Expected: **four PASS docker smoke** messages. This is a local development test 
 - **py launcher / Python not found:** install Python 3.11 or 3.12 with the Windows launcher, reopen PowerShell and repeat.
 - **pip cannot download packages:** check your internet connection and whether your network permits Python package downloads.
 - **You already cloned AET:** open PowerShell, run cd to your existing AET folder, then use any Step 2, 3 or 4 command.
-- **A demo fails:** read the error shown in PowerShell. The output folder is printed near the start; generated server error logs are inside its project folders.
+- **A demo fails:** read the error shown in PowerShell. The output folder is printed near the start and kept after a failure; generated server error logs are inside its project folders.
 
 The PowerShell option **-ExecutionPolicy Bypass** applies only to that new PowerShell process. It does not permanently change your computer's PowerShell policy.
 
