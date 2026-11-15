@@ -44,6 +44,16 @@ jobs:
           python scripts/prepare_deployment.py production-smoke --python-image-digest "${{ steps.base.outputs.digest }}"
           grep -q -- '--hash=sha256:' production-smoke/requirements.lock
           docker build --file production-smoke/Dockerfile.production --tag aet-production-smoke:ci production-smoke
+      - name: Scan built container for fixable high and critical vulnerabilities
+        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
+        with:
+          image-ref: aet-production-smoke:ci
+          format: table
+          exit-code: '1'
+          ignore-unfixed: true
+          severity: 'HIGH,CRITICAL'
+          scanners: vuln
+          timeout: 10m0s
       - name: Verify live container health, denied anonymous calls and authorised mock call
         shell: bash
         run: |
