@@ -3,6 +3,8 @@
 **Status:** Working local-first engineering prototype; **not** a production-ready agent platform.
 **Access:** Public repository, licensed under [Apache License 2.0](LICENSE). Publication does not imply production readiness or permission to include client data, employer-owned code, credentials or secrets.
 
+**Want to run AET yourself, end to end?** Start with the [complete Windows PowerShell runbook](docs/END_TO_END_RUNBOOK.md). It provides copy-and-paste steps from a fresh clone through installation, Project Doctor, per-project pytest, real localhost API calls and cleanup for **all four templates**. It also covers RAG ingestion, Ollama/cloud options, Docker, CI artefacts and troubleshooting. The four standard mock flows require no WSL, Docker, model downloads, credentials or paid inference.
+
 AET is a **project scaffolder for Python agent applications**. It generates self-contained starter projects that engineers can run, test and adapt. Its job is to reduce repeated project setup work and establish consistent application foundations, not to evaluate model quality or operate production infrastructure.
 
 The separate **Agent Engineering Accelerator (AEA)** owns LLM/agent evaluation, regression analysis, statistical testing, LLM judging and quality gates. AET does not recreate those functions, and does not currently depend on AEA.

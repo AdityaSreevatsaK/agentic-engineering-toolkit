@@ -1,5 +1,7 @@
 # M19: Pilot-release readiness and adoption evidence
 
+**Complete hands-on instructions:** [End-to-end AET runbook](../END_TO_END_RUNBOOK.md). It includes executable Windows steps for every supported mock template, a four-project automated acceptance command, localhost HTTP and corpus-change demonstrations, and optional provider and Docker flows. The original M19 trial instructions below remain separate; following the runbook yourself is **author-operated**, not an independent adopter trial.
+
 **Latest decision-oriented assessment (15 November 2026):** [AET engineering leadership readiness](leadership-readiness-2026-11-15.md), with final post-merge CI, separate supply-chain checks, candid KRA gates and a solo-executable next-step plan. The M19 material below remains the original release-kit guidance.
 
 **Status:** The automated release-smoke is testable, but the toolkit remains a

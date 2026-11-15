@@ -81,6 +81,8 @@ Do **not** make the absence of reviewers block further internal code quality wor
 
 ## Demo script for a technical decision-maker
 
+For exact copy-and-paste PowerShell commands, see the [full AET end-to-end runbook](../END_TO_END_RUNBOOK.md). Its native Windows mock flows require no additional engineering work or independent reviewer and are explicitly labelled as author-operated acceptance, not adoption or measured time saved.
+
 **Problem:** Repeat setup work and inconsistent starter engineering foundations across agent frameworks.
 
 **Design:** A small Python CLI generates framework-native, independent projects with selectable provider configuration; no mandatory shared agent runtime.
