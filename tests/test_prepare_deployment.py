@@ -18,6 +18,7 @@ def test_prepare_generates_hashed_lock_and_digest_pinned_docker(tmp_path, monkey
         assert check and cwd == project
         assert "--generate-hashes" in command
         assert "--all-build-deps" in command
+        assert "--allow-unsafe" in command
         assert "--extra" in command
         lock = Path(command[command.index("--output-file") + 1])
         lock.write_text("fastapi==0.115.0 \\\n    --hash=sha256:" + "b" * 64 + "\n")

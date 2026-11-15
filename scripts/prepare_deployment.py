@@ -73,7 +73,7 @@ def prepare_deployment(
         lock = Path(temporary) / "requirements.lock"
         command = [
             sys.executable, "-m", "piptools", "compile",
-            "--generate-hashes", "--all-build-deps", "--strip-extras",
+            "--generate-hashes", "--all-build-deps", "--allow-unsafe", "--strip-extras",
             "--output-file", str(lock),
         ]
         for extra in extras:
