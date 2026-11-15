@@ -6,7 +6,8 @@ param(
     [ValidateSet("tool-agent", "langgraph-rag", "strands-agent", "llamaindex-rag")]
     [string]$Template = "langgraph-rag",
     [ValidateSet("mock", "ollama", "openai", "azure-openai", "anthropic", "bedrock")]
-    [string]$Provider = "openai"
+    [string]$Provider = "openai",
+    [switch]$KeepOutput
 )
 $ErrorActionPreference = "Stop"
 $Repo = (Resolve-Path (Join-Path $PSScriptRoot "..")).Path
@@ -14,6 +15,7 @@ $OldDirectory = (Get-Location).Path
 $OldProvider = $env:AET_PROVIDER
 $OldKnowledge = $env:AET_KNOWLEDGE_PATH
 $OutputRoot = Join-Path $env:TEMP ("aet-demo-" + [guid]::NewGuid().ToString("N").Substring(0, 12))
+$Completed = $false
 function Assert-Exit([string]$Task) {
     if ($LASTEXITCODE -ne 0) { throw "$Task failed (exit status $LASTEXITCODE)." }
 }
@@ -144,7 +146,10 @@ function Test-Project {
             Write-Host "PASS: real Strands SDK tool loop (scripted model)"
         }
     } finally {
-        if ($null -ne $Server) { Stop-Process -Id $Server.Process.Id -ErrorAction SilentlyContinue }
+        if ($null -ne $Server) {
+            Stop-Process -Id $Server.Process.Id -ErrorAction SilentlyContinue
+            Wait-Process -Id $Server.Process.Id -Timeout 10 -ErrorAction SilentlyContinue
+        }
         if ($Ingest) { $env:AET_KNOWLEDGE_PATH = "data/knowledge.jsonl" }
     }
 }
@@ -201,9 +206,22 @@ try {
             if ($Flow -eq "all" -and $T -eq "langgraph-rag") { Test-Project -Project $P -Ingest }
         }
     }
-    Write-Host "SUCCESS: $Flow completed. Inspect output in $OutputRoot"
+    $Completed = $true
+} catch {
+    Write-Host "FAILED: $Flow. Temporary projects and server logs were kept in $OutputRoot."
+    throw
 } finally {
     $env:AET_PROVIDER = $OldProvider
     $env:AET_KNOWLEDGE_PATH = $OldKnowledge
     Set-Location $OldDirectory
+    if ($Completed -and -not $KeepOutput) {
+        # Python handles long nested dependency paths reliably on Windows.
+        & $RootPython -c "import shutil, sys; shutil.rmtree(sys.argv[1])" $OutputRoot
+        Assert-Exit "Remove temporary demo projects"
+        if (Test-Path -LiteralPath $OutputRoot) { throw "Temporary demo folder still exists: $OutputRoot" }
+        Write-Host "PASS: temporary demo projects removed. Use -KeepOutput to retain them."
+    } elseif ($Completed) {
+        Write-Host "PASS: demo projects retained at $OutputRoot"
+    }
 }
+if ($Completed) { Write-Host "SUCCESS: $Flow completed." }
