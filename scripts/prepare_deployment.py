@@ -33,7 +33,7 @@ ENV PYTHONDONTWRITEBYTECODE=1 \\
     PYTHONUNBUFFERED=1 \\
     PIP_NO_CACHE_DIR=1 \\
     AET_PROVIDER=mock \\
-    AET_SECURITY_MODE=local
+    AET_SECURITY_MODE=hardened
 WORKDIR /srv/app
 COPY . .
 COPY --from=builder /wheels /wheels

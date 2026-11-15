@@ -11,3 +11,5 @@ The default Dockerfiles and dependency ranges remain simple for local developmen
 The script refuses to overwrite existing deployment files without `--overwrite`. It does not download a model, contact a cloud inference API, verify the supplied image digest, or certify a build. Locks are platform/Python-version specific. Use automated image-digest and dependency update reviews; recompile and retest for every approved change.
 
 For API security, see [hardened profile](security/hardened-profile.md). The development Dockerfile still binds to loopback in the documented host command and is **not** production-certified.
+
+The generated production Dockerfile defaults to `AET_SECURITY_MODE=hardened` and therefore requires the tenant security implementation in PR #47 (or an equivalent reviewed security layer), plus injected tenant credentials. **Do not deploy this image with local mode to a public interface.**
