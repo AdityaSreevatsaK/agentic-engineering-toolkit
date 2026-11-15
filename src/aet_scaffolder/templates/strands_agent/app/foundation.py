@@ -33,6 +33,8 @@ _TENANT_ID = re.compile(r"^[A-Za-z0-9][A-Za-z0-9_-]{0,63}$")
 _LOCK = Lock()
 _GLOBAL_REQUESTS: deque[float] = deque()
 _TENANT_REQUESTS: dict[str, deque[float]] = {}
+_GLOBAL_DAILY_REQUESTS: deque[float] = deque()
+_TENANT_DAILY_REQUESTS: dict[str, deque[float]] = {}
 _TENANT_IN_FLIGHT: dict[str, int] = {}
 _IN_FLIGHT = 0
 
@@ -77,6 +79,8 @@ def check_security_ready() -> dict[str, str]:
     _positive_limit("AET_GLOBAL_RATE_PER_MINUTE", 300)
     _positive_limit("AET_MAX_CONCURRENT", 20)
     _positive_limit("AET_MAX_TENANT_CONCURRENT", 5)
+    _positive_limit("AET_GLOBAL_DAILY_REQUEST_LIMIT", 1000)
+    _positive_limit("AET_TENANT_DAILY_REQUEST_LIMIT", 100)
     return keys
 
 
@@ -122,7 +126,12 @@ def _authenticate(request: Request, keys: dict[str, str]) -> str | None:
     return matched
 
 
-def _reserve(tenant: str) -> bool:
+def _reserve(tenant: str) -> int:
+    """Reserve one request; return retry delay in seconds (zero means accepted).
+
+    Daily counters impose a conservative process-local ceiling on calls that
+    may incur model charges. They are not token or currency budgets.
+    """
     global _IN_FLIGHT
     now = monotonic()
     with _LOCK:
@@ -131,6 +140,16 @@ def _reserve(tenant: str) -> bool:
         requests = _TENANT_REQUESTS.setdefault(tenant, deque())
         while requests and requests[0] <= now - 60:
             requests.popleft()
+        while _GLOBAL_DAILY_REQUESTS and _GLOBAL_DAILY_REQUESTS[0] <= now - 86_400:
+            _GLOBAL_DAILY_REQUESTS.popleft()
+        daily = _TENANT_DAILY_REQUESTS.setdefault(tenant, deque())
+        while daily and daily[0] <= now - 86_400:
+            daily.popleft()
+        if (
+            len(_GLOBAL_DAILY_REQUESTS) >= _positive_limit("AET_GLOBAL_DAILY_REQUEST_LIMIT", 1000)
+            or len(daily) >= _positive_limit("AET_TENANT_DAILY_REQUEST_LIMIT", 100)
+        ):
+            return 86_400
         if (
             len(_GLOBAL_REQUESTS) >= _positive_limit("AET_GLOBAL_RATE_PER_MINUTE", 300)
             or len(requests) >= _positive_limit("AET_TENANT_RATE_PER_MINUTE", 30)
@@ -138,12 +157,14 @@ def _reserve(tenant: str) -> bool:
             or _TENANT_IN_FLIGHT.get(tenant, 0)
             >= _positive_limit("AET_MAX_TENANT_CONCURRENT", 5)
         ):
-            return False
+            return 60
         _GLOBAL_REQUESTS.append(now)
         requests.append(now)
+        _GLOBAL_DAILY_REQUESTS.append(now)
+        daily.append(now)
         _IN_FLIGHT += 1
         _TENANT_IN_FLIGHT[tenant] = _TENANT_IN_FLIGHT.get(tenant, 0) + 1
-        return True
+        return 0
 
 
 def _release(tenant: str) -> None:
@@ -176,13 +197,15 @@ def install_foundations(app: FastAPI) -> None:
                     if tenant is None:
                         response = JSONResponse(status_code=401, content={"detail": "Authentication required"})
                         response.headers["WWW-Authenticate"] = "Bearer"
-                    elif not _reserve(tenant):
-                        response = JSONResponse(status_code=429, content={"detail": "Request limit exceeded"})
-                        response.headers["Retry-After"] = "60"
                     else:
-                        reserved_tenant = tenant
-                        request.state.tenant_id = tenant
-                        response = await call_next(request)
+                        retry_after = _reserve(tenant)
+                        if retry_after:
+                            response = JSONResponse(status_code=429, content={"detail": "Request limit exceeded"})
+                            response.headers["Retry-After"] = str(retry_after)
+                        else:
+                            reserved_tenant = tenant
+                            request.state.tenant_id = tenant
+                            response = await call_next(request)
                 else:
                     # Never permit remote clients to spend live-provider capacity
                     # with the unauthenticated reference profile.

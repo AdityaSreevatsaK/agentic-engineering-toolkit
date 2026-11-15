@@ -52,6 +52,8 @@ def test_hardened_rate_limit_is_per_tenant(monkeypatch, tmp_path):
         foundation._GLOBAL_REQUESTS.clear()
         foundation._TENANT_REQUESTS.clear()
         foundation._TENANT_IN_FLIGHT.clear()
+        foundation._GLOBAL_DAILY_REQUESTS.clear()
+        foundation._TENANT_DAILY_REQUESTS.clear()
     headers = {"Authorization": "Bearer " + KEY}
     first = client.post(ENDPOINT, json={"question": "returns"}, headers=headers)
     second = client.post(ENDPOINT, json={"question": "returns"}, headers=headers)
@@ -75,3 +77,31 @@ def test_unknown_security_profile_fails_closed(monkeypatch):
     monkeypatch.setenv("AET_SECURITY_MODE", "unrecognised")
     monkeypatch.setenv("AET_PROVIDER", "mock")
     assert client.post(ENDPOINT, json={"question": "hello"}).status_code == 503
+
+
+def test_daily_provider_request_ceiling_is_enforced(monkeypatch, tmp_path):
+    monkeypatch.setenv("AET_PROVIDER", "mock")
+    monkeypatch.setenv("AET_SECURITY_MODE", "hardened")
+    monkeypatch.setenv("AET_TENANT_KEYS_JSON", json.dumps({"daily_test": KEY}))
+    monkeypatch.setenv("AET_TENANT_DAILY_REQUEST_LIMIT", "1")
+    monkeypatch.setenv("AET_TENANT_RATE_PER_MINUTE", "100")
+    if ENDPOINT == "/ask":
+        tenant_dir = tmp_path / "tenants" / "daily_test"
+        tenant_dir.mkdir(parents=True)
+        (tenant_dir / "knowledge.jsonl").write_text(
+            json.dumps({"id": "daily", "text": "Returns are accepted within 30 days."}) + "\n",
+            encoding="utf-8",
+        )
+        monkeypatch.setenv("AET_KNOWLEDGE_PATH", str(tmp_path / "knowledge.jsonl"))
+    with foundation._LOCK:
+        foundation._GLOBAL_REQUESTS.clear()
+        foundation._TENANT_REQUESTS.clear()
+        foundation._TENANT_IN_FLIGHT.clear()
+        foundation._GLOBAL_DAILY_REQUESTS.clear()
+        foundation._TENANT_DAILY_REQUESTS.clear()
+    headers = {"Authorization": "Bearer " + KEY}
+    first = client.post(ENDPOINT, json={"question": "returns"}, headers=headers)
+    second = client.post(ENDPOINT, json={"question": "returns"}, headers=headers)
+    assert first.status_code == 200, first.text
+    assert second.status_code == 429
+    assert second.headers["Retry-After"] == "86400"
