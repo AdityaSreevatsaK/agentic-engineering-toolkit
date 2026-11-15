@@ -59,7 +59,7 @@ jobs:
           curl --fail --silent --max-time 4 http://127.0.0.1:18765/ready | python -c 'import json,sys; assert json.load(sys.stdin)["status"] == "ready"'
           STATUS="$(curl --silent --output /dev/null --write-out '%{http_code}' --max-time 4 \
             --request POST --header 'Content-Type: application/json' --data '{"question":"hello"}' http://127.0.0.1:18765/invoke)"
-          if grep -q 'install_foundations(app)' production-smoke/app/main.py; then
+          if grep -q '^def check_security_ready' production-smoke/app/foundation.py; then
             # Source PR #47 supplies hardening; combined validation must exercise it.
             test "$STATUS" = '401'
             curl --fail --silent --max-time 4 --request POST \
