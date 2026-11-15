@@ -35,11 +35,19 @@ def test_hardened_denies_missing_and_wrong_bearer(monkeypatch):
     assert KEY not in missing.text + wrong.text
 
 
-def test_hardened_rate_limit_is_per_tenant(monkeypatch):
+def test_hardened_rate_limit_is_per_tenant(monkeypatch, tmp_path):
     monkeypatch.setenv("AET_PROVIDER", "mock")
     monkeypatch.setenv("AET_SECURITY_MODE", "hardened")
     monkeypatch.setenv("AET_TENANT_KEYS_JSON", json.dumps({"rate_test": KEY}))
     monkeypatch.setenv("AET_TENANT_RATE_PER_MINUTE", "1")
+    if ENDPOINT == "/ask":
+        tenant_dir = tmp_path / "tenants" / "rate_test"
+        tenant_dir.mkdir(parents=True)
+        (tenant_dir / "knowledge.jsonl").write_text(
+            json.dumps({"id": "rate", "text": "Returns are accepted within 30 days."}) + "\n",
+            encoding="utf-8",
+        )
+        monkeypatch.setenv("AET_KNOWLEDGE_PATH", str(tmp_path / "knowledge.jsonl"))
     with foundation._LOCK:
         foundation._GLOBAL_REQUESTS.clear()
         foundation._TENANT_REQUESTS.clear()
@@ -47,7 +55,7 @@ def test_hardened_rate_limit_is_per_tenant(monkeypatch):
     headers = {"Authorization": "Bearer " + KEY}
     first = client.post(ENDPOINT, json={"question": "returns"}, headers=headers)
     second = client.post(ENDPOINT, json={"question": "returns"}, headers=headers)
-    assert first.status_code != 429
+    assert first.status_code == 200, first.text
     assert second.status_code == 429
     assert second.headers["Retry-After"] == "60"
 
