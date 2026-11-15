@@ -20,7 +20,7 @@ def test_adversarial_corpus_is_quoted_as_untrusted_data(monkeypatch, tmp_path, a
     corpus = tmp_path / "knowledge.jsonl"
     corpus.write_text(json.dumps({"id": "injected", "text": attack}) + "\n")
     monkeypatch.setenv("AET_KNOWLEDGE_PATH", str(corpus))
-    monkeypatch.setenv("AET_openai", "PROVIDER")
+    monkeypatch.setenv("AET_PROVIDER", "openai")
     seen = []
 
     class FakeModel:
