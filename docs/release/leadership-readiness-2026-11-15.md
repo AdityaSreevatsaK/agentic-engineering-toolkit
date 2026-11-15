@@ -1,5 +1,7 @@
 # AET engineering leadership-readiness assessment
 
+> **Historical snapshot:** This assessment is anchored to commit `78a6dd6`, before the integrated security and deployment changes merged in [PR #51](https://github.com/AdityaSreevatsaK/agentic-engineering-toolkit/pull/51). Present-day `master` includes optional tenant authentication, RAG data isolation and build safeguards. The production approval, real-provider and independent-adoption limitations still apply. See [Issue #50](https://github.com/AdityaSreevatsaK/agentic-engineering-toolkit/issues/50).
+
 **Evidence cutoff:** 15 November 2026 (Asia/Kolkata). **Source commit:** [`78a6dd6`](https://github.com/AdityaSreevatsaK/agentic-engineering-toolkit/commit/78a6dd601bb5dd948ec8086cab46b7e5dd676825). **Product:** AET Agent Project Scaffolder, v0.8.0. **Audience:** technical architecture reviewer / reusable-assets decision-maker. **Use:** personal, public, synthetic-only engineering evidence; no employer endorsement is implied.
 
 ## Executive decision

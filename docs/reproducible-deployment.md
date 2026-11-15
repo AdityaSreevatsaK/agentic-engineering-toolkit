@@ -12,7 +12,7 @@ The script refuses to overwrite existing deployment files without `--overwrite`.
 
 For API security, see [hardened profile](security/hardened-profile.md). The development Dockerfile still binds to loopback in the documented host command and is **not** production-certified.
 
-The generated production Dockerfile defaults to `AET_SECURITY_MODE=hardened` and therefore requires the tenant security implementation in PR #47 (or an equivalent reviewed security layer), plus injected tenant credentials. **Do not deploy this image with local mode to a public interface.**
+The generated production Dockerfile defaults to `AET_SECURITY_MODE=hardened`. Its tenant security implementation is already in `master` through [PR #51](https://github.com/AdityaSreevatsaK/agentic-engineering-toolkit/pull/51), but deployment still requires securely injected tenant credentials (`AET_TENANT_KEYS_JSON`) and the external controls in [Issue #50](https://github.com/AdityaSreevatsaK/agentic-engineering-toolkit/issues/50). **Do not deploy local mode on a public interface.**
 
 The compiler uses `--allow-unsafe` so build tools such as setuptools are included and hash-pinned when needed by the `--no-build-isolation` wheel build. Review all generated pins before deployment.
 
