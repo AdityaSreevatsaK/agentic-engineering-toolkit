@@ -29,6 +29,11 @@ RUN python -m pip install --require-hashes -r requirements.lock && \\
     python -m pip wheel --no-deps --no-build-isolation --wheel-dir /wheels .
 
 FROM {image}
+# Upgrade vulnerable zlib in Debian slim before installing the application.
+# The final image CVE gate must pass; prefer refreshed upstream digests on release.
+RUN apt-get update && \\
+    apt-get install --yes --no-install-recommends --only-upgrade zlib1g && \\
+    rm -rf /var/lib/apt/lists/*
 ENV PYTHONDONTWRITEBYTECODE=1 \\
     PYTHONUNBUFFERED=1 \\
     PIP_NO_CACHE_DIR=1 \\
