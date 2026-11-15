@@ -38,7 +38,7 @@ jobs:
           set -euo pipefail
           python -m aet_scaffolder new compatibility-app --template "${{ matrix.template }}" --provider mock
           uv pip compile compatibility-app/pyproject.toml --resolution "${{ matrix.resolution }}" --extra dev --output-file resolved.txt
-          uv venv compatibility-app/.venv --python 3.12
+          uv venv compatibility-app/.venv --python 3.12 --seed
           uv pip sync resolved.txt --python compatibility-app/.venv/bin/python
           uv pip install --python compatibility-app/.venv/bin/python --no-deps -e ./compatibility-app
           compatibility-app/.venv/bin/python -m pip check
