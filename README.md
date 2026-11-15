@@ -28,7 +28,7 @@ Every template runs with **mock inference** without an API key. Supported option
 - [Latest engineering evidence and readiness assessment](docs/release/leadership-readiness-2026-11-15.md).
 - [GitHub Actions results](https://github.com/AdityaSreevatsaK/agentic-engineering-toolkit/actions).
 
-Generated APIs have no production authentication or tenant isolation. Human time savings, independent adoption and multi-team reuse have **not** yet been verified.
+Generated APIs default to an unauthenticated local profile; an opt-in hardened profile adds tenant bearer keys, isolated RAG corpora and process-local request limits, but is not production-certified. Human time savings, independent adoption and multi-team reuse have **not** yet been verified.
 
 ## Documentation
 
@@ -39,3 +39,7 @@ Generated APIs have no production authentication or tenant isolation. Human time
 - [Independent usability trial protocol](docs/adoption/README.md).
 
 AET is distributed under the [Apache License 2.0](LICENSE). The separate Agent Engineering Accelerator (AEA) handles evaluation and regression testing; AET focuses on **project scaffolding**.
+
+See [hardened profile guidance](docs/security/hardened-profile.md) for deployment controls and limitations.
+
+For production-oriented reproducibility, see [hashed locks and digest-pinned deployment images](docs/reproducible-deployment.md). For manually authorised, paid provider contract tests, see `.github/workflows/live-provider-smoke.yml`. Neither is part of the default offline demonstration.

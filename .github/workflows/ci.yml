@@ -32,6 +32,13 @@ jobs:
         run: python -m ruff check --select E4,E7,E9,F src tests scripts packages
       - name: Focused static type check of scaffolder registry
         run: python -m mypy --follow-imports=skip --ignore-missing-imports src/aet_scaffolder/registry.py
+      - name: Compile all bundled generated Python templates
+        run: python -m compileall -q src/aet_scaffolder/templates
+      - name: Type-check deployment preparation utility
+        run: python -m mypy --follow-imports=skip --ignore-missing-imports scripts/prepare_deployment.py
+      - name: Type-check canonical generated security foundation
+        # All four generated foundations are byte-for-byte equal (parity-tested).
+        run: python -m mypy --follow-imports=skip --ignore-missing-imports --check-untyped-defs src/aet_scaffolder/templates/tool_agent/app/foundation.py
       - name: Bandit high-severity Python security check
         run: python -m bandit -q -r src/aet_scaffolder --severity-level high --confidence-level high -x '*/tests/*'
 

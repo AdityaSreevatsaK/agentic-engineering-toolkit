@@ -1,0 +1,34 @@
+version: 2
+updates:
+  - package-ecosystem: github-actions
+    directory: "/"
+    schedule:
+      interval: weekly
+  - package-ecosystem: pip
+    directory: "/"
+    schedule:
+      interval: weekly
+  - package-ecosystem: pip
+    directory: "/packages/agent-quality-kit"
+    schedule:
+      interval: weekly
+  - package-ecosystem: pip
+    directory: "/packages/agent-provider-contract"
+    schedule:
+      interval: weekly
+  - package-ecosystem: pip
+    directory: "/src/aet_scaffolder/templates/tool_agent"
+    schedule:
+      interval: weekly
+  - package-ecosystem: pip
+    directory: "/src/aet_scaffolder/templates/langgraph_rag"
+    schedule:
+      interval: weekly
+  - package-ecosystem: pip
+    directory: "/src/aet_scaffolder/templates/strands_agent"
+    schedule:
+      interval: weekly
+  - package-ecosystem: pip
+    directory: "/src/aet_scaffolder/templates/llamaindex_rag"
+    schedule:
+      interval: weekly

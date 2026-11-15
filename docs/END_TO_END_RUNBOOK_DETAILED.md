@@ -310,7 +310,7 @@ While that server runs, in a **second PowerShell terminal**, submit:
 Invoke-RestMethod -Method Post -Uri "http://127.0.0.1:18006/invoke" -ContentType "application/json" -Body '{"question":"hello"}'
 ~~~
 
-Then press **Ctrl+C** in the server terminal. This model-based path is intentionally different from the mock server helper: Ollama/cloud configurations return **503 for /ready** until separately operationally verified.
+Then press **Ctrl+C** in the server terminal. This model-based path is intentionally different from the mock server helper: Ollama/cloud configurations now return **200 for /ready** when local settings and corpora are valid. This does **not** verify provider connectivity; check `/provider-status` (which reports `not_checked`) and run an authorised live smoke test separately.
 
 ### Step 8D: optional *live* OpenAI HTTP request, only with prior authorisation
 
@@ -430,7 +430,7 @@ The [leadership-readiness report](release/leadership-readiness-2026-11-15.md) su
 | Output folder already exists | AET refuses overwrite; use a fresh timestamped workspace, do not delete any existing user project |
 | pip installation fails | Check your package index/network and retry inside the same project's own virtualenv; do not put credentials in logs |
 | Mock /health or /ready fails | Inspect the generated project's **server-stderr.log**, check local corpus, port, and **AET_PROVIDER=mock** |
-| Live provider /ready returns 503 | Expected; live connectivity is not checked by local mock readiness |
+| Live provider /ready returns 200 but inference fails | Expected if credentials or provider access are unavailable; readiness checks local state only |
 | App import points at the wrong project | Run commands with that generated app's own .venv Python and project working directory |
 | Corpus edits have no effect | Edit the **generated project's** data/knowledge.jsonl, not AET's source template; verify AET_KNOWLEDGE_PATH and the running project |
 | Port is occupied | Stop the earlier server/container, or change both the server's localhost port and request URLs |

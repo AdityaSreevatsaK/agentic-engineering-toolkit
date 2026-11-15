@@ -63,14 +63,16 @@ def test_unknown_path_is_not_logged_verbatim(monkeypatch):
     assert "secret-document-123" not in events[0]
 
 
-def test_live_provider_is_not_claimed_ready(monkeypatch):
+def test_live_provider_is_locally_ready_without_paid_probe(monkeypatch):
     from app.config import Settings
     values = Settings.model_fields["provider"].annotation.__args__
     live = "bedrock" if "bedrock" in values else "ollama"
     monkeypatch.setenv("AET_PROVIDER", live)
     response = client.get("/ready")
-    assert response.status_code == 503
-    assert "Live" in response.json()["detail"]
+    assert response.status_code == 200
+    assert response.json() == {"status": "ready"}
+    diagnostic = client.get("/provider-status")
+    assert diagnostic.json() == {"provider": live, "connectivity": "not_checked"}
 
 
 def test_unexpected_exception_is_sanitised(monkeypatch):

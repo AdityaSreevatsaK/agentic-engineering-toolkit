@@ -14,7 +14,7 @@ def test_dependency_parser_accepts_valid_pep508_forms(tmp_path, replacement):
     root = generate("pep508-valid", output_dir=tmp_path)
     metadata = root / "pyproject.toml"
     metadata.write_text(metadata.read_text(encoding="utf-8").replace(
-        "fastapi>=0.110,<1", replacement, 1
+        "fastapi>=0.115.6,<1", replacement, 1
     ), encoding="utf-8")
     assert validate_project(root).ok
 
@@ -30,9 +30,9 @@ def test_dependency_parser_rejects_invalid_or_inactive_requirement(
     metadata = root / "pyproject.toml"
     original = metadata.read_text(encoding="utf-8")
     if isinstance(replacement, str):
-        mutated = original.replace("fastapi>=0.110,<1", replacement, 1)
+        mutated = original.replace("fastapi>=0.115.6,<1", replacement, 1)
     else:
-        mutated = original.replace('"fastapi>=0.110,<1"', str(replacement), 1)
+        mutated = original.replace('"fastapi>=0.115.6,<1"', str(replacement), 1)
     metadata.write_text(mutated, encoding="utf-8")
     report = validate_project(root)
     assert not report.ok

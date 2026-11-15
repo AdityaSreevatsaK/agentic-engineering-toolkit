@@ -1,0 +1,84 @@
+name: production-lock-clean-build
+
+# Verify real hash checking and production-image construction; no provider credentials.
+on:
+  pull_request:
+    branches: [master]
+    paths:
+      - 'scripts/prepare_deployment.py'
+      - 'src/aet_scaffolder/templates/**/pyproject.toml'
+      - '.github/workflows/production-lock-build.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  hashed-deployment:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
+        with:
+          python-version: '3.12'
+      - name: Install generator and deployment resolver
+        run: python -m pip install -e . "pip-tools>=7.4,<8"
+      - name: Generate clean mock tool-agent app
+        run: python -m aet_scaffolder new production-smoke --template tool-agent --provider mock
+      - name: Resolve the actual base image digest
+        id: base
+        shell: bash
+        run: |
+          docker pull python:3.12-slim
+          IMAGE="$(docker image inspect python:3.12-slim --format '{{index .RepoDigests 0}}')"
+          DIGEST="${IMAGE##*@}"
+          test "${#DIGEST}" -eq 71
+          [[ "$DIGEST" == sha256:* ]]
+          echo "digest=$DIGEST" >> "$GITHUB_OUTPUT"
+      - name: Compile and exercise hashed requirements in a real Docker build
+        shell: bash
+        run: |
+          python scripts/prepare_deployment.py production-smoke --python-image-digest "${{ steps.base.outputs.digest }}"
+          grep -q -- '--hash=sha256:' production-smoke/requirements.lock
+          docker build --file production-smoke/Dockerfile.production --tag aet-production-smoke:ci production-smoke
+      - name: Scan built container for fixable high and critical vulnerabilities
+        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
+        with:
+          image-ref: aet-production-smoke:ci
+          format: table
+          exit-code: '1'
+          ignore-unfixed: true
+          severity: 'HIGH,CRITICAL'
+          scanners: vuln
+          timeout: 10m0s
+      - name: Verify live container health, denied anonymous calls and authorised mock call
+        shell: bash
+        run: |
+          set -euo pipefail
+          TOKEN='ci-only-not-production-credential-123456789abc'
+          docker run --rm --detach --name aet-production-smoke --publish 127.0.0.1:18765:8000 \
+            --env "AET_TENANT_KEYS_JSON={\"demo\":\"$TOKEN\"}" aet-production-smoke:ci
+          trap 'docker rm --force aet-production-smoke >/dev/null 2>&1 || true' EXIT
+          for attempt in $(seq 1 35); do
+            if curl --fail --silent --max-time 2 http://127.0.0.1:18765/ready >/dev/null; then break; fi
+            sleep 1
+          done
+          curl --fail --silent --max-time 4 http://127.0.0.1:18765/ready | python -c 'import json,sys; assert json.load(sys.stdin)["status"] == "ready"'
+          STATUS="$(curl --silent --output /dev/null --write-out '%{http_code}' --max-time 4 \
+            --request POST --header 'Content-Type: application/json' --data '{"question":"hello"}' http://127.0.0.1:18765/invoke)"
+          if grep -q '^def check_security_ready' production-smoke/app/foundation.py; then
+            # Source PR #47 supplies hardening; combined validation must exercise it.
+            test "$STATUS" = '401'
+            curl --fail --silent --max-time 4 --request POST \
+              --header 'Content-Type: application/json' \
+              --header "Authorization: Bearer $TOKEN" \
+              --data '{"question":"hello"}' http://127.0.0.1:18765/invoke \
+              | python -c 'import json,sys; assert "Mock response" in json.load(sys.stdin)["answer"]'
+          else
+            # Standalone deployment PR #48 has no security middleware; this
+            # checks only reproducible deployment, never auth protection.
+            test "$STATUS" = '200'
+          fi

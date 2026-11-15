@@ -51,8 +51,9 @@ def test_invalid_requests_are_rejected(body):
 
 
 @pytest.mark.parametrize("provider", ["openai", "azure-openai", "anthropic", "bedrock"])
-def test_readiness_message_is_cloud_provider_neutral(monkeypatch, provider):
+def test_readiness_is_local_and_provider_neutral(monkeypatch, provider):
     monkeypatch.setenv("AET_PROVIDER", provider)
     response = client.get("/ready")
-    assert response.status_code == 503
-    assert response.json()["detail"] == "Live model readiness has not been verified"
+    assert response.status_code == 200
+    assert response.json() == {"status": "ready"}
+    assert client.get("/provider-status").json()["connectivity"] == "not_checked"

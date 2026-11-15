@@ -15,7 +15,7 @@ on:
   push:
     tags: ['v*']
   schedule:
-    - cron: '20 5 1 * *'
+    - cron: '20 5 * * 1'
 
 permissions:
   contents: read
@@ -51,6 +51,9 @@ jobs:
         run: python -m pip freeze --all > resolved-versions.txt
       - name: Audit resolved packages against current advisories
         run: python -m pip_audit --format json --output dependency-audit.json
+      - name: Generate CycloneDX SBOM for resolved dependencies
+        if: always()
+        run: python -m pip_audit --format cyclonedx-json --output dependency-sbom.cdx.json
       - name: Retain audit evidence even when vulnerabilities are found
         if: always()
         uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6
@@ -59,5 +62,6 @@ jobs:
           path: |
             dependency-audit.json
             resolved-versions.txt
+            dependency-sbom.cdx.json
           if-no-files-found: warn
           retention-days: 30

@@ -57,7 +57,7 @@ Automated tests inject fake Ollama transport: CI downloads no model and makes no
 
 New projects include `app/foundation.py` with a server-issued `X-Request-ID` and one JSON request log per request. Logs include only request method, fixed route category, status code and duration. **Prompts, generated answers, auth headers, query strings, client addresses, exception strings and unknown URL paths are not logged.** Use `AET_LOG_LEVEL` in `.env` to select DEBUG, INFO, WARNING or ERROR (default INFO).
 
-`GET /health` verifies process liveness. `GET /ready` verifies the local mock mode and applicable local dependencies. It **returns 503 for live model providers** because a network call, credentials and account entitlements are not verified by this developer template. A 503 is not evidence that the live provider itself is down.
+`GET /health` verifies process liveness. `GET /ready` verifies local settings and applicable corpus files for every provider, without billable calls. `GET /provider-status` reports the selected provider and `connectivity: not_checked`; readiness does not certify credentials or cloud availability.
 
 A generated `.github/workflows/ci.yml` runs offline tests on Python 3.12. A non-root Docker reference is included, with `.dockerignore` excluding environment files and local build artifacts:
 
@@ -83,4 +83,10 @@ Install only the required provider integration before invoking its live model:
 
 For example, use `AET_PROVIDER=openai` and configure a model identifier in `AET_OPENAI_MODEL`. Use a secret manager or injected process environment for credential variables, not checked-in files. `AET_MODEL_TIMEOUT_SECONDS` and `AET_MODEL_MAX_RETRIES` are forwarded to all four cloud integrations, including Bedrock. LangChain-AWS applies the Bedrock settings to its Botocore client; these are per-attempt transport/retry policies, not a whole-agent deadline. All provider packages are optional so default installation remains local/offline; selecting an uninstalled provider gives a sanitised HTTP 503 until the corresponding extra is installed.
 
-**Limitations:** This is still a developer starter without authentication, tenant isolation, external egress policy, token budgets or rate limiting. Provider-side availability, permissions, model support, AWS region, billing, safety and credentials must be validated by the adopting team. Cloud tests use injected fakes, never paid inference. No cloud mode is considered ready by the `/ready` endpoint without an external operational check.
+**Limitations:** This is still a developer starter without authentication, tenant isolation, external egress policy, token budgets or rate limiting. Provider-side availability, permissions, model support, AWS region, billing, safety and credentials must be validated by the adopting team. Cloud tests use injected fakes, never paid inference. Local `/ready` may succeed for cloud mode without verifying the provider; separately validate connectivity and permissions.
+
+## Optional hardened security profile
+
+Default `AET_SECURITY_MODE=local` preserves the localhost demo. For a shared deployment, inject `AET_SECURITY_MODE=hardened` and `AET_TENANT_KEYS_JSON` via a secret manager in the **process environment** (not `.env` or source control). JSON keys are tenant IDs and values are unique random bearer tokens of at least 32 ASCII characters. `POST /invoke` or `POST /ask` requires `Authorization: Bearer <token>`. Hardened mode applies per-process per-tenant/global rate and concurrency limits. RAG templates load only `data/tenants/<tenant>/knowledge.jsonl`, never a shared fallback. Missing keys or corpus files fail closed.
+
+This is an extension point, **not** a public-deployment approval. Use TLS, a reviewed ingress and identity model, distributed quotas, provider budgets, egress policy and a secure secrets store. See the repository's `docs/security/hardened-profile.md`.

@@ -1,6 +1,6 @@
 """Local-only FastAPI entry point. This demo has no authentication."""
-from fastapi import FastAPI, HTTPException
-from .foundation import install_foundations
+from fastapi import FastAPI, HTTPException, Request
+from .foundation import install_foundations, check_security_ready, tenant_knowledge_path
 from pydantic import BaseModel, Field
 
 from .config import get_settings
@@ -28,23 +28,38 @@ def health() -> dict[str, str]:
 
 @app.get("/ready")
 def ready() -> dict[str, str]:
-    """Validate mock configuration and corpus; never probes an external model."""
+    """Local readiness only: validate settings and tenant corpora, not cloud access."""
     try:
         settings = get_settings()
-        if settings.provider != "mock":
-            raise HTTPException(status_code=503, detail="Live model readiness has not been verified")
-        load_documents(settings.knowledge_path)
-    except HTTPException:
-        raise
+        tenants = check_security_ready()
+        if tenants:
+            for tenant in tenants:
+                load_documents(tenant_knowledge_path(settings.knowledge_path, tenant))
+        else:
+            load_documents(settings.knowledge_path)
     except (ValueError, OSError) as exc:
         raise HTTPException(status_code=503, detail="Local RAG readiness unavailable") from exc
     return {"status": "ready"}
 
 
-@app.post("/ask", response_model=QueryResponse)
-def ask(request: QueryRequest) -> QueryResponse:
+@app.get("/provider-status")
+def provider_status() -> dict[str, str]:
+    """Provider connectivity is unverified; readiness never incurs inference cost."""
     try:
-        result = graph.invoke({"question": request.question})
+        settings = get_settings()
+    except ValueError as exc:
+        raise HTTPException(status_code=503, detail="Invalid local configuration") from exc
+    return {"provider": settings.provider, "connectivity": "not_checked"}
+
+
+@app.post("/ask", response_model=QueryResponse)
+def ask(request: QueryRequest, http_request: Request) -> QueryResponse:
+    try:
+        settings = get_settings()
+        knowledge_path = tenant_knowledge_path(
+            settings.knowledge_path, getattr(http_request.state, "tenant_id", None)
+        )
+        result = graph.invoke({"question": request.question, "knowledge_path": knowledge_path})
     except KnowledgeError as exc:
         raise HTTPException(status_code=503, detail="Local knowledge base unavailable") from exc
     except ProviderError as exc:
