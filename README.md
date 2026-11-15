@@ -41,3 +41,5 @@ Generated APIs default to an unauthenticated local profile; an opt-in hardened p
 AET is distributed under the [Apache License 2.0](LICENSE). The separate Agent Engineering Accelerator (AEA) handles evaluation and regression testing; AET focuses on **project scaffolding**.
 
 See [hardened profile guidance](docs/security/hardened-profile.md) for deployment controls and limitations.
+
+For production-oriented reproducibility, see [hashed locks and digest-pinned deployment images](docs/reproducible-deployment.md). For manually authorised, paid provider contract tests, see `.github/workflows/live-provider-smoke.yml`. Neither is part of the default offline demonstration.
