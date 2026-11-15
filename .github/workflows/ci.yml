@@ -55,6 +55,20 @@ jobs:
         run: python -m pip install -e . pytest
       - name: Test scaffolder and doctor
         run: python -m pytest tests -q
+      # Exercise the actual beginner-facing PowerShell guide on a real Windows
+      # runner. One job only; the four generated apps remain covered by the
+      # existing full matrix below.
+      - name: Verify one-command Windows PowerShell walkthrough
+        if: matrix.os == 'windows-2025' && matrix.python-version == '3.12'
+        shell: powershell
+        timeout-minutes: 15
+        run: |
+          $parseErrors = $null
+          $parseTokens = $null
+          [void][System.Management.Automation.Language.Parser]::ParseFile((Join-Path $PWD 'scripts\demo_windows.ps1'), [ref]$parseTokens, [ref]$parseErrors)
+          if ($parseErrors.Count -ne 0) { $parseErrors | Format-List; exit 1 }
+          & powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\demo_windows.ps1 -Flow all
+          if ($LASTEXITCODE -ne 0) { throw 'Beginner-facing AET end-to-end demo failed' }
       - name: Verify M15 automated structural adoption preflight (not a human trial)
         run: python scripts/adoption_preflight.py
       - name: Verify empty pilot template makes no productivity claims

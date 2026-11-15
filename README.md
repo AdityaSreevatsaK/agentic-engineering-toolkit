@@ -1,207 +1,41 @@
 # AET: Agent Project Scaffolder
 
-**Status:** Working local-first engineering prototype; **not** a production-ready agent platform.
-**Access:** Public repository, licensed under [Apache License 2.0](LICENSE). Publication does not imply production readiness or permission to include client data, employer-owned code, credentials or secrets.
+**Generate and test ready-to-run Python agent projects across several frameworks, without rebuilding the same starter code each time.**
 
-**Want to run AET yourself, end to end?** Start with the [complete Windows PowerShell runbook](docs/END_TO_END_RUNBOOK.md). It provides copy-and-paste steps from a fresh clone through installation, Project Doctor, per-project pytest, real localhost API calls and cleanup for **all four templates**. It also covers RAG ingestion, Ollama/cloud options, Docker, CI artefacts and troubleshooting. The four standard mock flows require no WSL, Docker, model downloads, credentials or paid inference.
+**[Get started: Simple step-by-step Windows guide](docs/END_TO_END_RUNBOOK.md)**
 
-AET is a **project scaffolder for Python agent applications**. It generates self-contained starter projects that engineers can run, test and adapt. Its job is to reduce repeated project setup work and establish consistent application foundations, not to evaluate model quality or operate production infrastructure.
+Open PowerShell, follow the short setup steps and choose a flow. The guide handles project generation, dependencies, tests and local API checks, with no cloud credentials or paid inference for the default demos.
 
-The separate **Agent Engineering Accelerator (AEA)** owns LLM/agent evaluation, regression analysis, statistical testing, LLM judging and quality gates. AET does not recreate those functions, and does not currently depend on AEA.
+## What can AET create?
 
-**Detailed project reference:** [PROJECT_DEEP_DIVE.md](PROJECT_DEEP_DIVE.md) explains the full architecture, templates, provider wiring, commands, CI, maintenance rules, evidence and limitations. Coding agents can start with the concise [AGENTS.md](AGENTS.md) guide, then open the relevant sections of the deep dive.
-
-Under Apache 2.0, others may reuse, modify and distribute this code, including commercially, provided they comply with the licence and attribution requirements. The licence does **not** guarantee production readiness or cover third-party dependencies under different licences. Each newly scaffolded project includes its own LICENSE and NOTICE.
-
-## Latest engineering evidence and leadership readiness
-
-The [15 November 2026 leadership-readiness assessment](docs/release/leadership-readiness-2026-11-15.md) is the current, source-linked technical review and reusable-assets decision pack. It separates verified engineering implementation and synthetic CI from **uncollected** stakeholder approval, independent usability, measured developer-time savings and multi-team adoption.
-
-At [master CI run #43630438965](https://github.com/AdityaSreevatsaK/agentic-engineering-toolkit/actions/runs/43630438965), all **five required checks** passed: Windows/Linux Python 3.11/3.12 plus static quality. Each OS/Python leg passed all **23 offline template/provider combinations** (92 environment-pair executions) and **716 bounded synthetic/adversarial scenarios** (2,864 environment-scenario executions). Windows Python 3.12 additionally passed **16/16** RAG corpus-replacement stress trials, and Ubuntu Python 3.11 exercised all **four** generated Docker images on loopback. The [dated dependency audit](docs/testing/dependency-security-audit-2026-11-14.md) separately checked resolved third-party packages against then-current advisories. None of this demonstrates live model performance, production deployment, human time saved or actual delivery-team adoption.
-
-For repository-owner branch protection and its five mandatory check names, see the [ruleset guide](docs/governance/master-branch-protection.md).
-## M19: Pilot adoption readiness (machine tests versus human evidence)
-
-The [M19 release kit](docs/release/README.md) includes an isolated-workspace
-four-template offline API acceptance script, a fresh-user walkthrough,
-private reviewer form, evidence gates and a concise architecture/leadership
-review. The script verifies generated-project HTTP behaviour and synthetic
-RAG corpus updates without paid inference, but is **not an independent engineer
-trial** or measured time-saving evidence. All generated APIs remain local-only
-reference implementations. No cross-team reuse, production readiness or
-human productivity gain has been demonstrated.
-
-## M15: Independent developer adoption validation
-
-AET v0.8.0 is a **pilot candidate**, not a proven productivity intervention. Follow the [M15 hand-off kit](docs/adoption/README.md) for an offline machine preflight and a preregistered, independent RAG developer trial. No independent human trial, cross-team adoption or human time-saving claim has yet been demonstrated.
-
-```powershell
-python -m pip install -e .
-python scripts/adoption_preflight.py
-```
-
-The preflight checks generated project structure, local configuration, Project Doctor, licences and per-project CI. It **does not** measure developer hours. For any actual independent reviewer, use the [trial instructions](docs/adoption/independent-trial.md) and private [blank observation form](docs/adoption/reviewer-notes-template.md). For promotion evidence, see the [evidence register](docs/adoption/evidence-register.md).
-
-## What AET generates today
-
-| Template | Status | Generated application | Providers |
-| --- | --- | --- | --- |
-| tool-agent | Working prototype | FastAPI + LangGraph with deterministic synthetic order-status routing | Mock, Ollama, OpenAI, Azure OpenAI, Anthropic, AWS Bedrock |
-| langgraph-rag | M16 provider-ready starter | LangGraph BM25 retrieval with evidence-constrained chat synthesis | Mock, Ollama, OpenAI, Azure OpenAI, Anthropic, AWS Bedrock |
-| strands-agent | M17 provider-ready starter | Real Strands Agent with synthetic tool, deterministic SDK offline model and native cloud integrations | Mock, AWS Bedrock, OpenAI, Azure OpenAI, Anthropic |
-| llamaindex-rag | M18 reference implementation | Native LlamaIndex keyword index, offline source retrieval, optional provider synthesis | Mock, Ollama, OpenAI, Azure OpenAI, Anthropic, Bedrock |
-
-The current tool-agent is **not** an autonomous tool-planning agent. Its order routing is deterministic. No cloud account, paid model, Docker or WSL is needed for the mock path. The generated API has no authentication and must not be exposed publicly.
-
-## Start here
-
-Python 3.11+ on Windows or Linux:
-
-~~~powershell
-python -m pip install -e .
-agentkit list
-agentkit new demo-agent --provider mock
-agentkit doctor demo-agent
-cd demo-agent
-python -m pip install -e ".[dev]"
-python -m pytest -q
-python -m uvicorn app.main:app --reload
-~~~
-
-Open http://127.0.0.1:8000/docs and send POST /invoke with the body:
-
-~~~json
-{"question": "order status ORD-1001"}
-~~~
-
-The tool path looks up only fabricated local order statuses. Other prompts use a deterministic mock response by default. To generate an optional local Ollama project:
-
-~~~powershell
-agentkit new local-agent --provider ollama --model llama3.2:1b
-~~~
-
-Real model responses require independently installing and running Ollama with the named model. Automated tests mock its HTTP interactions; no model download is required in CI.
-
-## Generate the LangGraph RAG application (M12)
-
-~~~powershell
-agentkit new knowledge-agent --template langgraph-rag --provider mock
-agentkit doctor knowledge-agent
-cd knowledge-agent
-python -m pip install -e ".[dev]"
-python -m pytest -q
-python -m uvicorn app.main:app --reload
-~~~
-
-Then submit `POST /ask` with `{"question":"What is the return policy?"}`. The bundled corpus uses invented policies and a real BM25 lexical retriever, followed by a **deterministic mock answer** quoting retrieved evidence. Optional `--provider ollama` or a supported cloud mode enables model synthesis over that evidence. It is **not** a semantic-vector search template, a claim of model correctness, or a production-secure service. The generated README documents bounded local file ingestion and its limits.
-
-## Generate a native LlamaIndex RAG starter (M18)
-
-~~~powershell
-agentkit new my-llamaindex --template llamaindex-rag --provider mock
-agentkit doctor my-llamaindex
-cd my-llamaindex
-python -m pip install -e ".[dev]"
-python -m pytest -q
-python -m uvicorn app.main:app --host 127.0.0.1
-~~~
-
-The generated application uses LlamaIndex `SimpleKeywordTableIndex` and native simple keyword retrieval against a bounded synthetic JSONL corpus. Offline mock mode quotes retrieved evidence; it is **not model reasoning, semantic retrieval, vector search, or a production-ready knowledge assistant**. OpenAI, Azure OpenAI, Anthropic, Bedrock and loopback Ollama are opt-in with separately installed native LlamaIndex integration packages. Generated source and provider SDKs remain isolated from AEA.
-
-## M16: Opt-in production-provider integrations
-
-Both LangGraph templates now support `--provider openai`, `azure-openai`, `anthropic` or `bedrock`, in addition to unchanged mock and Ollama modes. For example:
-
-~~~powershell
-agentkit new cloud-agent --template langgraph-rag --provider openai
-cd cloud-agent
-python -m pip install -e ".[dev,openai]"
-~~~
-
-Set `AET_OPENAI_MODEL` in the generated `.env` and securely inject `OPENAI_API_KEY` through the process environment. The generated `.env.example` documents analogous Azure, Anthropic and Bedrock configuration fields. Each cloud SDK is an **optional** package; the default project and all CI tests remain local and credential-free. Cloud inference is opt-in, billable and sends prompts to the selected provider. Selecting a cloud mode does **not** make this unauthenticated starter production-ready. See each generated README for required SDK extras, model and deployment fields, AWS SDK identity and operational limits.
-
-## Generate a Strands agent (M13/M17)
-
-~~~powershell
-agentkit new strata-demo --template strands-agent --provider mock
-agentkit doctor strata-demo
-cd strata-demo
-python -m pip install -e ".[dev]"
-python -m pytest -q
-python -m uvicorn app.main:app --host 127.0.0.1 --reload
-~~~
-
-Call POST `/invoke` with `{"question":"order status ORD-1001"}`. The scripted offline model instructs the **real Strands SDK agent loop** to invoke a read-only synthetic `@tool`; the resulting answer reports `tool_used`. The model is deterministic and is **not** an LLM or evidence of autonomous reasoning. For actual Amazon Bedrock inference, use `agentkit new strata-bedrock --template strands-agent --provider bedrock`, then configure approved AWS credentials, region and model access. CI uses injected model doubles, never live AWS calls. See the generated project's README.
-
-
-## M17: Strands-native OpenAI, Azure OpenAI and Anthropic
-
-The Strands template now supports native `strands.models.openai.OpenAIModel` and `strands.models.anthropic.AnthropicModel`, plus the official Azure `AsyncAzureOpenAI` client passed to the Strands OpenAI model. The original offline mock and AWS Bedrock paths remain available. To generate an OpenAI-configured Strands project:
-
-~~~powershell
-agentkit new strata-openai --template strands-agent --provider openai
-cd strata-openai
-python -m pip install -e ".[dev,openai]"
-~~~
-
-Configure `AET_OPENAI_MODEL` and supply `OPENAI_API_KEY` securely through the execution environment before live inference. For `azure-openai`, install `.[azure-openai]` and set `AET_AZURE_OPENAI_DEPLOYMENT`, `AET_AZURE_OPENAI_ENDPOINT` (HTTPS origin) and `AET_AZURE_OPENAI_API_VERSION`; use Azure SDK-supported authentication. For `anthropic`, install `.[anthropic]`, set `AET_ANTHROPIC_MODEL` and provide `ANTHROPIC_API_KEY` securely. No API keys or cloud requests are needed for generation, Project Doctor or offline CI. All cloud modes are optional, potentially billable and **not** production-security guarantees. See the generated Strands README for details.
-
-## Generated application foundations (M14)
-
-All four templates now produce a small, self-contained engineering foundation:
-
-| Foundation | Included behaviour |
+| Template | What it demonstrates |
 | --- | --- |
-| Validated settings | `AET_LOG_LEVEL` and existing provider-specific environment settings |
-| Structured logs | Server-issued request ID and JSON metadata only, without prompts/answers/secrets |
-| Health and readiness | `GET /health` (process liveness); `GET /ready` (offline/local checks only) |
-| Error handling | Stable sanitised HTTP failures; no raw exception details returned |
-| Generated CI | A per-project GitHub Actions workflow running offline tests |
-| Container reference | Non-root Python 3.12 image, localhost-only host port guidance, Docker healthcheck |
+| **Tool Agent** (LangGraph) | A working API with a synthetic order-status tool |
+| **LangGraph RAG** | Find answers in sample documents, with BM25 search |
+| **AWS Strands Agent** | A real Strands SDK tool loop using a scripted local model |
+| **LlamaIndex RAG** | Native keyword search over a sample knowledge base |
 
-The generated Dockerfile is a **development reference, not a production deployment**. The apps lack authentication, tenancy and cloud-specific hardening. For an offline local example, run `docker build -t aet-demo .` in the generated project, then `docker run --rm -p 127.0.0.1:8000:8000 aet-demo`. See the generated README and [ADR-0014](docs/decisions/0014-generated-app-foundations.md) for details.
+Each starter includes its own Python project, API, tests, configuration examples and local development Docker reference.
 
-## Commands and compatibility
+## Providers
 
-| Command | Purpose |
-| --- | --- |
-| agentkit list | Show registered templates and supported providers |
-| agentkit new NAME [--template tool-agent] [--provider PROVIDER] | Create a project without overwriting an existing path |
-| agentkit doctor PATH [--json] | Read-only structure, configuration and Python syntax checks |
-| agentkit-benchmark --runs 10 --warmups 2 | Measure local generation and validation timings |
+Every template runs with **mock inference** without an API key. Supported optional integrations include **Ollama, OpenAI, Azure OpenAI, Anthropic and AWS Bedrock**, depending on the template. The guide explains which combinations work. Live models require separate provider access and may incur charges.
 
-Generated projects include a small .aet-template.json manifest so Doctor selects the correct registered template profile. **Older projects without the manifest continue to use the original tool-agent validation profile.** The existing CLI entry points, defaults and package name (aet-scaffolder) are retained.
+## Engineering status
 
-Doctor does not install dependencies, run untrusted generated Python code, validate real model behaviour or certify security. The benchmark measures file generation and static validation, **not developer hours saved**.
+- Working **local-first engineering prototype**, not a production-ready agent platform.
+- Four template types, with Windows/Linux Python 3.11/3.12 automated tests.
+- [Latest engineering evidence and readiness assessment](docs/release/leadership-readiness-2026-11-15.md).
+- [GitHub Actions results](https://github.com/AdityaSreevatsaK/agentic-engineering-toolkit/actions).
 
-## Engineering foundations and planned scope
+Generated APIs have no production authentication or tenant isolation. Human time savings, independent adoption and multi-team reuse have **not** yet been verified.
 
-- **M11:** Align the active product around scaffolding; introduce a template registry, backwards-compatible validation and clear asset boundaries.
-- **M12:** Add a working LangGraph RAG starter with local BM25 retrieval, offline verification and optional loopback Ollama inference.
-- **M13:** Generate a Strands SDK Agent with one synthetic tool, actual offline SDK-loop tests and opt-in Bedrock model.
-- **M14:** Add generated configuration validation, privacy-conscious JSON request logs, readiness, CI and non-root local Docker foundations.
-- **M16:** Add opt-in OpenAI, Azure OpenAI, Anthropic and AWS Bedrock integrations to both LangGraph templates with offline provider tests.
-- **M17:** Add Strands-native OpenAI and Anthropic model integrations and Azure OpenAI via the official client, retaining offline mock and Bedrock.
-- **M18:** Add a fourth native LlamaIndex keyword-RAG scaffold with deterministic offline retrieval, optional native model providers, Doctor validation and four-platform CI.
-- **M19:** Add reproducible offline API/corpus-change acceptance, a clean-environment reviewer walkthrough and architect-ready evidence gates without fabricated adoption claims.
+## Documentation
 
-See [roadmap](docs/roadmap.md), [M11 decision record](docs/decisions/0011-scaffolder-focus.md) and [legacy assets](docs/legacy-assets.md).
+- **[Simple beginner's guide](docs/END_TO_END_RUNBOOK.md)**: open PowerShell, paste commands and follow the PASS messages.
+- [Detailed manual runbook](docs/END_TO_END_RUNBOOK_DETAILED.md): individual terminal steps, troubleshooting, optional providers and Docker.
+- [Architecture and complete project reference](PROJECT_DEEP_DIVE.md).
+- [Contributor and coding-agent guidance](AGENTS.md).
+- [Independent usability trial protocol](docs/adoption/README.md).
 
-## Verification
-
-GitHub Actions runs a four-job matrix: Windows/Linux, Python 3.11/3.12. It verifies the scaffolder, generated applications, distribution wheels, and historical independent packages and integrations to protect backwards compatibility.
-
-~~~powershell
-python -m pip install -e . pytest
-python -m pytest tests -q
-~~~
-
-Tests for a freshly generated application live inside that application. CI verifies mock/Ollama-generated projects, the native LlamaIndex keyword-retrieval scaffold and cloud-provider wiring through local SDK fakes, without cloud credentials or paid API calls.
-
-## Historical work (M1-M10)
-
-Earlier AET milestones also delivered an independently packaged Agent Quality Kit, Portable Provider Contract, integration demonstrations, pilot protocols and public-data evaluation. Those are **preserved for provenance and regression compatibility**, but are not active AET product lines. AEA, maintained separately, is the intended evaluation product.
-
-The official NYC 311 test verified deterministic generated-app routing against 100 selected public statuses on 25 October 2026, but did not assess semantic agent intelligence or developer productivity. The source and qualifications remain in [historical evaluation evidence](docs/evaluation/nyc311-verified-results-2026-10-25.md).
-
-**Business impact is not yet proven:** multi-team adoption, independently reproduced onboarding gains, measured time savings, employer approval and production usage require separate evidence. Do not claim these from passing CI or synthetic demos.
+AET is distributed under the [Apache License 2.0](LICENSE). The separate Agent Engineering Accelerator (AEA) handles evaluation and regression testing; AET focuses on **project scaffolding**.

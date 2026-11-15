@@ -1,46 +1,64 @@
-"""Prevent the public end-to-end runbook drifting from AET's template registry.
+"""Keep the public simple runbook, automation and registry in sync.
 
-This is a documentation contract check, not a substitute for the real
-four-platform generated-app and mock HTTP tests in GitHub Actions.
+Cross-platform CI additionally executes a real flow in Windows PowerShell.
+These assertions protect discoverability and safety; they are not a usability
+study or proof of live hosted-provider access.
 """
 from pathlib import Path
 
 from aet_scaffolder.registry import TEMPLATES
 
-
 ROOT = Path(__file__).resolve().parents[1]
-RUNBOOK = (ROOT / "docs" / "END_TO_END_RUNBOOK.md").read_text(encoding="utf-8")
+GUIDE = (ROOT / "docs/END_TO_END_RUNBOOK.md").read_text(encoding="utf-8")
+DETAIL = ROOT / "docs/END_TO_END_RUNBOOK_DETAILED.md"
+RUNNER = (ROOT / "scripts/demo_windows.ps1").read_text(encoding="utf-8")
+README = (ROOT / "README.md").read_text(encoding="utf-8")
 
 
-def test_every_registered_template_has_complete_generation_and_http_flow():
-    for template, spec in TEMPLATES.items():
-        assert f'-Template "{template}"' in RUNBOOK
-        assert f'"demo-{template}"' in RUNBOOK
-        path = ROOT / "src" / "aet_scaffolder" / "templates" / spec.directory / "app" / "main.py"
-        app_source = path.read_text(encoding="utf-8")
-        endpoint = "/ask" if template.endswith("-rag") else "/invoke"
-        assert f'@app.post("{endpoint}"' in app_source
-        assert endpoint in RUNBOOK
-    assert "New-VerifiedAetProject" in RUNBOOK
-    assert "Start-AetLocalServer" in RUNBOOK
-    assert "-m pip check" in RUNBOOK
-    assert "-m pytest -q" in RUNBOOK
-    assert "Stop-Process -Id $Server.Id" in RUNBOOK
-
-
-def test_rag_flows_demonstrate_real_corpus_mutation_and_retrieval():
-    assert RUNBOOK.count("Add-Content -LiteralPath $Corpus") >= 2
-    assert RUNBOOK.count('source_ids -notcontains "returns"') >= 2
-    assert RUNBOOK.count('source_ids -notcontains "violet-manual"') >= 2
-    assert "app.ingest --input synthetic-documents" in RUNBOOK
-    assert "AET_KNOWLEDGE_PATH" in RUNBOOK
-
-
-def test_readme_and_release_kit_link_the_executable_runbook():
-    assert "docs/END_TO_END_RUNBOOK.md" in (ROOT / "README.md").read_text(encoding="utf-8")
-    assert "../END_TO_END_RUNBOOK.md" in (
-        ROOT / "docs" / "release" / "README.md"
+def test_readme_is_brief_and_links_to_single_beginner_guide():
+    assert len(README.splitlines()) <= 65
+    assert "docs/END_TO_END_RUNBOOK.md" in README
+    assert "docs/END_TO_END_RUNBOOK_DETAILED.md" in README
+    assert "PROJECT_DEEP_DIVE.md" in README
+    assert "not" in README.lower() and "production" in README.lower()
+    assert "~~~powershell" not in README
+    assert "END_TO_END_RUNBOOK.md" in (
+        ROOT / "docs/release/README.md"
     ).read_text(encoding="utf-8")
-    assert "scripts.isolated_install_smoke" in RUNBOOK
-    assert "windows-2025, 3.12" in RUNBOOK
-    assert "no credentials" in RUNBOOK.lower()
+
+
+def test_simple_guide_has_prerequisites_and_copy_paste_flows():
+    assert GUIDE.index("Before you begin") < GUIDE.index("Step 1. Open PowerShell")
+    assert "Step 2. Try everything" in GUIDE
+    assert "-Flow all" in GUIDE
+    assert "git clone https://github.com/" in GUIDE
+    assert "cd agentic-engineering-toolkit" in GUIDE
+    assert "PowerShell" in GUIDE
+    assert "no credentials" in GUIDE.lower() or "no api key" in GUIDE.lower()
+    for template in TEMPLATES:
+        assert f"-Flow {template}" in GUIDE
+        assert f'\"{template}\"' in RUNNER
+    for flow in ("ingestion", "cloud-config", "ollama", "docker"):
+        assert f"-Flow {flow}" in GUIDE
+    assert DETAIL.is_file() and len(DETAIL.read_text(encoding="utf-8")) > len(GUIDE)
+    assert "END_TO_END_RUNBOOK_DETAILED.md" in GUIDE
+
+
+def test_real_demo_runner_preserves_isolation_and_strict_api_assertions():
+    assert "& $AgentKit new" in RUNNER
+    assert "& $AgentKit doctor" in RUNNER
+    assert "py $PythonVersion -m venv" in RUNNER
+    assert "-m pip check" in RUNNER
+    assert "-m pytest -q" in RUNNER
+    assert "127.0.0.1" in RUNNER
+    assert "Invoke-RestMethod" in RUNNER
+    assert "Stop-Process" in RUNNER
+    assert "source_ids -notcontains" in RUNNER
+    assert '"returns"' in RUNNER
+    assert '"violet-manual"' in RUNNER
+    assert "app.ingest" in RUNNER
+    assert "tool_used" in RUNNER
+    assert 'strands-agent' in RUNNER
+    assert '$env:AET_PROVIDER = "mock"' in RUNNER
+    assert '"cloud-config"' in RUNNER
+    assert "No model was contacted." in RUNNER
