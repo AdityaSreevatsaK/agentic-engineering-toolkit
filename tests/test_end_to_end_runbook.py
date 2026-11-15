@@ -62,3 +62,18 @@ def test_real_demo_runner_preserves_isolation_and_strict_api_assertions():
     assert '$env:AET_PROVIDER = "mock"' in RUNNER
     assert '"cloud-config"' in RUNNER
     assert "No model was contacted." in RUNNER
+
+
+def test_demo_removes_successful_temporary_projects_but_keeps_failures():
+    # The Windows 3.12 CI job also runs -Flow all against real local APIs.
+    assert "[switch]$KeepOutput" in RUNNER
+    assert '$Completed = $false' in RUNNER
+    assert '$Completed = $true' in RUNNER
+    assert 'if ($Completed -and -not $KeepOutput)' in RUNNER
+    assert 'shutil.rmtree(sys.argv[1])' in RUNNER
+    assert 'Test-Path -LiteralPath $OutputRoot' in RUNNER
+    assert 'Wait-Process -Id $Server.Process.Id' in RUNNER
+    assert 'server logs were kept' in RUNNER
+    assert 'if ($Completed) { Write-Host "SUCCESS:' in RUNNER
+    assert '-KeepOutput' in GUIDE
+    assert 'keeps the projects and server logs' in GUIDE
