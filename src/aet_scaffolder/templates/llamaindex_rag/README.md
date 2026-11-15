@@ -18,7 +18,7 @@ Open http://127.0.0.1:8000/docs. `POST /ask`:
 {"question":"What is the sample return policy?"}
 ~~~
 
-The result includes a sample retrieved policy and its `returns` source ID. `GET /health` reports process liveness; `GET /ready` validates offline mock configuration and the local corpus only. Readiness deliberately returns 503 for any live provider without an external connectivity check.
+The result includes a sample retrieved policy and its `returns` source ID. `GET /health` reports process liveness; `GET /ready` validates offline mock configuration and the local corpus only. Readiness never calls the live provider; `/provider-status` reports connectivity as `not_checked`.
 
 ## Retrieval and corpus
 
@@ -49,3 +49,9 @@ Cloud inference is **opt-in, potentially billable** and sends prompts and retrie
 This is not production ready: unauthenticated HTTP, no tenancy, ACLs, rate limits, prompt-injection guarantees, telemetry, egress policy, cost budgets or production vector database. Run the API on localhost only. Synthetic records demonstrate plumbing, not enterprise retrieval correctness.
 
 The generated `app/foundation.py` writes a server-issued request ID and sanitised JSON request logs without prompts, answers, secret headers, unknown routes or client addresses. Failure responses are sanitised, and `.env` is gitignored. A generated GitHub Actions workflow exercises offline tests on Python 3.12; a non-root Docker reference is included for local development. `.aet-template.json` allows Project Doctor to check project structure and syntax without importing the project.
+
+## Optional hardened security profile
+
+Default `AET_SECURITY_MODE=local` preserves the localhost demo. For a shared deployment, inject `AET_SECURITY_MODE=hardened` and `AET_TENANT_KEYS_JSON` via a secret manager in the **process environment** (not `.env` or source control). JSON keys are tenant IDs and values are unique random bearer tokens of at least 32 ASCII characters. `POST /invoke` or `POST /ask` requires `Authorization: Bearer <token>`. Hardened mode applies per-process per-tenant/global rate and concurrency limits. RAG templates load only `data/tenants/<tenant>/knowledge.jsonl`, never a shared fallback. Missing keys or corpus files fail closed.
+
+This is an extension point, **not** a public-deployment approval. Use TLS, a reviewed ingress and identity model, distributed quotas, provider budgets, egress policy and a secure secrets store. See the repository's `docs/security/hardened-profile.md`.

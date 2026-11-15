@@ -280,7 +280,7 @@ There are **four** templates, representing **three framework families**. Six pro
 | `strands-agent` | Actual Strands SDK agent loop and read-only synthetic order-status tool | mock, bedrock, openai, azure-openai, anthropic | `POST /invoke` | 1,000 characters |
 | `llamaindex-rag` | Native LlamaIndex keyword-table retrieval and optional synthesis | mock, ollama, openai, azure-openai, anthropic, bedrock | `POST /ask` | 2,000 characters |
 
-All apps have `GET /health` and `GET /ready`. In mock mode `/ready` checks safe local settings and, for RAG, availability of the local knowledge corpus. In non-mock modes `/ready` deliberately returns **503: live model readiness has not been verified**, even when a user might successfully invoke the provider. It is intentionally conservative, not a production readiness probe.
+All apps provide `/health`, `/ready` and `/provider-status`. `/ready` validates local settings and, for RAG, the applicable corpus even with a live provider; it never calls a model. `/provider-status` reports provider connectivity as `not_checked`. Hardened mode also validates tenant keys and tenant-specific corpora.
 
 ### 5.1 `tool-agent`: deterministic LangGraph order routing
 
@@ -576,8 +576,8 @@ Never add prompt/answer text, question bodies, arbitrary URL paths, query string
 ### 7.2 Endpoints are not deployment health guarantees
 
 - `GET /health`: process-level liveness indicator, usually `{"status":"ok"}`. It does not prove model access, external dependencies or security readiness.
-- `GET /ready` in mock mode: locally validate settings and, for RAG, that a well-formed corpus is available.
-- `GET /ready` outside mock mode: 503 with a generic message indicating live-provider readiness is not verified.
+- `GET /ready`: validates local configuration and, for RAG, the local or tenant-specific corpus without contacting the selected model.
+- `GET /provider-status`: reports selected provider and `connectivity: not_checked`; it is not an external model health probe.
 - `POST /invoke`: tool or Strands template. Performs locally bounded request-body validation and runs the selected workflow.
 - `POST /ask`: RAG templates. Returns answer plus explicit source IDs.
 
@@ -960,7 +960,7 @@ For actual inference, choose an approved model (`AET_OPENAI_MODEL`), then obtain
 | Doctor rejects required .env field | Incomplete generation or template editing | Compare registry `required_env_fields` with emitted `.env.example` |
 | `ModuleNotFoundError: app` | Wrong working directory or mixed editable projects | Run from generated project root, isolate virtual environments |
 | Optional integration missing | Provider extra not installed | Install selected `.[provider]` extra; never install everything speculatively in core |
-| `/ready` returns 503 in cloud mode | Intentional no-live-provider-readiness contract | Do not mark cloud as verified; check approved connectivity separately |
+| `/ready` is 200 but inference fails | Local readiness does not test external provider connectivity | Check approved provider access separately via `/provider-status` and authorised smoke tests |
 | `/ask` says no relevant passages | Lexical terms have no overlap or corpus absent | Inspect local synthetic JSONL and lexical tokenisation |
 | RAG 503 after editing corpus | Invalid or duplicate IDs / JSONL / file bounds | Validate individual record and file metadata; do not suppress errors |
 | Docker server is reachable externally | Host port incorrectly published | Bind `127.0.0.1` or stop the container; it has no authentication |
@@ -1108,12 +1108,12 @@ Do not change visibility without an explicit owner decision after reviewing thes
 
 ### 14.2 Specific debt and important boundaries
 
-- **No production identity model:** generated HTTP endpoints are unauthenticated. Keep them local; adding public ingress requires a reviewed application security architecture.
+- **No production-certified identity model:** the optional hardened profile provides tenant bearer keys and isolated RAG files, not enterprise SSO, distributed quotas or a certified authorisation layer.
 - **No blanket prompt-injection immunity:** instructions to treat passages as untrusted cannot guarantee compliance by a hosted LLM. Test real models and tool effects separately before higher-risk use.
 - **No live-provider verification by the required CI:** provider SDK integration fakes are meaningful wiring tests but not credential, network, quota or response verification.
 - **No general vector database:** both RAG templates currently implement lexical retrieval; semantic search requires an explicit new design.
 - **No multi-user conversation persistence:** the reference applications are stateless/synthetic starting points.
-- **No complete lifecycle/resource controls:** full app-level cancellation, global rate limiting, traffic quotas and distributed back-pressure are out of scope.
+- **No complete lifecycle/resource controls:** hardened mode has per-process request/concurrency limits; distributed quotas, billing caps, cancellation and back-pressure remain out of scope.
 - **No complete dependency lock:** dependency version intervals are intentionally broad; CI records resolutions but does not make every future installation identical.
 - **Development container only:** base-image and Python dependency integrity deserve independent deployment-specific pinning and scans.
 - **Atomic publication platform boundary:** generator deliberately fails closed outside verified Windows/Linux primitives or when Linux no-replace rename is unavailable; network/distributed filesystem guarantees are not established.
@@ -1245,3 +1245,7 @@ Update this root `PROJECT_DEEP_DIVE.md` when any of the following changes materi
 - release/governance status, or independently verified adoption/productivity claims.
 
 **Final principle:** The user should be able to rely on AET's demonstrated engineering behaviour without confusing a tested starter application, a configured commercial provider, a production deployment and a proven business outcome. Maintain that distinction in every change.
+
+### Post-audit hardened security option
+
+Generated apps now support `AET_SECURITY_MODE=hardened`, tenant bearer keys, per-process request/concurrency limits and isolated RAG corpora. The default local profile remains intentionally simple. See [hardened profile guidance](docs/security/hardened-profile.md). This does not establish production security or external-provider readiness.

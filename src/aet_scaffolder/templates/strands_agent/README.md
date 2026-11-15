@@ -77,7 +77,7 @@ Limitations: this is a single agent with one fabricated tool; its mock provider 
 
 New projects include `app/foundation.py` with a server-issued `X-Request-ID` and one JSON request log per request. Logs include only request method, fixed route category, status code and duration. **Prompts, generated answers, auth headers, query strings, client addresses, exception strings and unknown URL paths are not logged.** Use `AET_LOG_LEVEL` in `.env` to select DEBUG, INFO, WARNING or ERROR (default INFO).
 
-`GET /health` verifies process liveness. `GET /ready` verifies the local mock mode and applicable local dependencies. It **returns 503 for live model providers** because a network call, credentials and account entitlements are not verified by this developer template. A 503 is not evidence that the live provider itself is down.
+`GET /health` verifies process liveness. `GET /ready` verifies local settings and applicable corpus files for every provider, without billable calls. `GET /provider-status` reports the selected provider and `connectivity: not_checked`; readiness does not certify credentials or cloud availability.
 
 A generated `.github/workflows/ci.yml` runs offline tests on Python 3.12. A non-root Docker reference is included, with `.dockerignore` excluding environment files and local build artifacts:
 
@@ -87,3 +87,9 @@ docker run --rm -p 127.0.0.1:8000:8000 aet-demo-app
 ~~~
 
 The example container runs `AET_PROVIDER=mock` and must be **bound to localhost only**. Never deploy it publicly as supplied: these apps have no authentication, tenant isolation, ingress policy, network egress controls, secrets management or deployment-specific authorisation. For production adoption, teams must add and review these separately.
+
+## Optional hardened security profile
+
+Default `AET_SECURITY_MODE=local` preserves the localhost demo. For a shared deployment, inject `AET_SECURITY_MODE=hardened` and `AET_TENANT_KEYS_JSON` via a secret manager in the **process environment** (not `.env` or source control). JSON keys are tenant IDs and values are unique random bearer tokens of at least 32 ASCII characters. `POST /invoke` or `POST /ask` requires `Authorization: Bearer <token>`. Hardened mode applies per-process per-tenant/global rate and concurrency limits. RAG templates load only `data/tenants/<tenant>/knowledge.jsonl`, never a shared fallback. Missing keys or corpus files fail closed.
+
+This is an extension point, **not** a public-deployment approval. Use TLS, a reviewed ingress and identity model, distributed quotas, provider budgets, egress policy and a secure secrets store. See the repository's `docs/security/hardened-profile.md`.
