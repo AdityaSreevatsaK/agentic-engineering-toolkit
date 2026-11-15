@@ -174,10 +174,10 @@ def install_foundations(app: FastAPI) -> None:
                     keys = check_security_ready()
                     tenant = _authenticate(request, keys)
                     if tenant is None:
-                        response = JSONResponse(401, {"detail": "Authentication required"})
+                        response = JSONResponse(status_code=401, content={"detail": "Authentication required"})
                         response.headers["WWW-Authenticate"] = "Bearer"
                     elif not _reserve(tenant):
-                        response = JSONResponse(429, {"detail": "Request limit exceeded"})
+                        response = JSONResponse(status_code=429, content={"detail": "Request limit exceeded"})
                         response.headers["Retry-After"] = "60"
                     else:
                         reserved_tenant = tenant
@@ -188,8 +188,7 @@ def install_foundations(app: FastAPI) -> None:
                     # with the unauthenticated reference profile.
                     from .config import get_settings
                     if get_settings().provider != "mock" and not _is_loopback_client(request):
-                        response = JSONResponse(
-                            403, {"detail": "Hardened security mode required"}
+                        response = JSONResponse(status_code=403, content={"detail": "Hardened security mode required"}
                         )
                     else:
                         request.state.tenant_id = None
@@ -197,7 +196,7 @@ def install_foundations(app: FastAPI) -> None:
             else:
                 response = await call_next(request)
         except ValueError:
-            response = JSONResponse(503, {"detail": "Invalid service configuration"})
+            response = JSONResponse(status_code=503, content={"detail": "Invalid service configuration"})
         except Exception as exc:
             exception_type = type(exc).__name__
             if os.environ.get("AET_OPERATOR_STACK_FRAMES") == "1":
@@ -207,7 +206,7 @@ def install_foundations(app: FastAPI) -> None:
                      "line": frame.lineno}
                     for frame in traceback.extract_tb(exc.__traceback__)[-8:]
                 ]
-            response = JSONResponse(500, {"detail": "Internal server error"})
+            response = JSONResponse(status_code=500, content={"detail": "Internal server error"})
         finally:
             if reserved_tenant is not None:
                 _release(reserved_tenant)
