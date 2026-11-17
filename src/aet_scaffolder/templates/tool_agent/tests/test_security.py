@@ -35,6 +35,19 @@ def test_hardened_denies_missing_and_wrong_bearer(monkeypatch):
     assert KEY not in missing.text + wrong.text
 
 
+
+def test_hardened_rejects_duplicate_authorization_headers(monkeypatch):
+    monkeypatch.setenv("AET_PROVIDER", "mock")
+    monkeypatch.setenv("AET_SECURITY_MODE", "hardened")
+    monkeypatch.setenv("AET_TENANT_KEYS_JSON", json.dumps({"alpha": KEY}))
+    response = client.post(
+        ENDPOINT, json={"question": "hello"},
+        headers=[("Authorization", "Bearer " + KEY),
+                 ("Authorization", "Bearer " + KEY)],
+    )
+    assert response.status_code == 401
+    assert KEY not in response.text
+
 def test_hardened_rate_limit_is_per_tenant(monkeypatch, tmp_path):
     monkeypatch.setenv("AET_PROVIDER", "mock")
     monkeypatch.setenv("AET_SECURITY_MODE", "hardened")

@@ -47,3 +47,12 @@ def test_ollama_payload_is_non_streaming(monkeypatch):
     service = providers.get_provider(Settings(provider="ollama", ollama_model="model:1b"))
     assert service.generate("hello") == "fine"
     assert seen["data"]["stream"] is False
+
+
+@pytest.mark.parametrize("text", ["", "   ", "x" * 100_001])
+def test_ollama_empty_or_oversized_text_is_rejected(monkeypatch, text):
+    raw = json.dumps({"response": text}).encode("utf-8")
+    monkeypatch.setattr(providers.urllib_request, "urlopen", lambda *a, **k: io.BytesIO(raw))
+    service = providers.get_provider(Settings(provider="ollama"))
+    with pytest.raises(providers.ProviderError):
+        service.generate("hello")

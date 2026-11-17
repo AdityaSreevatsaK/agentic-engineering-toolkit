@@ -45,9 +45,10 @@ class OllamaProvider:
             raise ProviderError("Local Ollama is unavailable or returned an HTTP error") from exc
         except (ValueError, UnicodeError) as exc:
             raise ProviderError("Local Ollama returned an invalid JSON response") from exc
-        if not isinstance(result, dict) or not isinstance(result.get("response"), str):
-            raise ProviderError("Local Ollama response has no text field")
-        return result["response"]
+        answer = result.get("response") if isinstance(result, dict) else None
+        if not isinstance(answer, str) or not answer.strip() or len(answer) > 100_000:
+            raise ProviderError("Local Ollama returned invalid or oversized text")
+        return answer
 
 
 def get_provider(settings: Settings) -> TextProvider:
