@@ -1,7 +1,9 @@
 """Local-only FastAPI entry point. This demo has no authentication."""
+from unicodedata import normalize
+
 from fastapi import FastAPI, HTTPException, Request
 from .foundation import install_foundations, check_security_ready, tenant_knowledge_path
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 from .config import get_settings
 from .knowledge import KnowledgeError, load_documents
@@ -13,7 +15,24 @@ install_foundations(app)
 
 
 class QueryRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
     question: str = Field(min_length=1, max_length=2000)
+
+    @field_validator("question", mode="before")
+    @classmethod
+    def normalise_question(cls, value: object) -> object:
+        """Normalise Unicode, reject controls, and preserve query semantics."""
+        if not isinstance(value, str):
+            return value
+        # Leave oversized values to the existing Field length validator.
+        if len(value) > 2000:
+            return value
+        question = normalize("NFKC", value).strip()
+        if any(((ord(char) < 32 and ord(char) not in (9, 10, 13))
+                or ord(char) == 127) for char in question):
+            raise ValueError("Question contains invalid control characters")
+        return question
 
 
 class QueryResponse(BaseModel):

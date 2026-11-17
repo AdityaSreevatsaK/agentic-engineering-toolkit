@@ -1,7 +1,7 @@
 """HTTP interface for the local-first Strands example. Not public-facing."""
 from fastapi import FastAPI, HTTPException
 from .foundation import install_foundations, check_security_ready
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 
 from .agent import run_agent
 from .config import get_settings
@@ -11,6 +11,8 @@ install_foundations(app)
 
 
 class InvokeRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
     question: str = Field(min_length=1, max_length=1000)
 
 

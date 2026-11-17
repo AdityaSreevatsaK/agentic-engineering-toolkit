@@ -83,3 +83,7 @@ def test_ollama_connection_failure_is_sanitized(monkeypatch):
 def test_invalid_question_rejected(payload):
     response = client.post("/invoke", json=payload)
     assert response.status_code == 422
+
+
+def test_extra_request_fields_are_rejected():
+    assert client.post("/invoke", json={"question": "hello", "tenant_id": "other"}).status_code == 422

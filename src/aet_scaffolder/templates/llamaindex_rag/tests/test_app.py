@@ -78,3 +78,20 @@ def test_missing_or_symlink_corpus_is_rejected(monkeypatch, tmp_path):
 @pytest.mark.parametrize("payload", [{}, {"question": ""}, {"question": "x" * 2001}, {"question": 123}])
 def test_invalid_request_is_rejected(payload):
     assert client.post("/ask", json=payload).status_code == 422
+
+
+@pytest.mark.parametrize("question", ["   ", "\\x00returns", "\\x7freturns"])
+def test_blank_or_control_character_question_is_rejected(question):
+    assert client.post("/ask", json={"question": question}).status_code == 422
+
+
+def test_extra_request_fields_are_rejected():
+    response = client.post("/ask", json={"question": "returns", "tenant_id": "other"})
+    assert response.status_code == 422
+
+
+def test_question_unicode_normalisation(monkeypatch):
+    monkeypatch.setenv("AET_PROVIDER", "mock")
+    response = client.post("/ask", json={"question": "  ＲＥＴＵＲＮＳ　policy  "})
+    assert response.status_code == 200, response.text
+    assert "returns" in response.json()["source_ids"]
