@@ -80,7 +80,7 @@ def test_invalid_request_is_rejected(payload):
     assert client.post("/ask", json=payload).status_code == 422
 
 
-@pytest.mark.parametrize("question", ["   ", "\\x00returns", "\\x7freturns"])
+@pytest.mark.parametrize("question", ["   ", "\x00returns", "\x7freturns"])
 def test_blank_or_control_character_question_is_rejected(question):
     assert client.post("/ask", json={"question": question}).status_code == 422
 

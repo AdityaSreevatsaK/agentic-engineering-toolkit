@@ -104,7 +104,7 @@ def test_cloud_prompt_labels_retrieved_evidence_untrusted(monkeypatch):
     assert "30 days" in captured["prompt"]
 
 
-@pytest.mark.parametrize("question", ["   ", "\\x00returns", "\\x7freturns"])
+@pytest.mark.parametrize("question", ["   ", "\x00returns", "\x7freturns"])
 def test_blank_or_control_character_question_is_rejected(question):
     assert client.post("/ask", json={"question": question}).status_code == 422
 
