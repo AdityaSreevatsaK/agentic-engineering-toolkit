@@ -171,7 +171,8 @@ try:
                 headers={"Content-Type": "application/json"}, expected=(422,))
         request(client, "invalid_utf8", raw=b'{"question":"\xff"}',
                 headers={"Content-Type": "application/json"}, expected=(400, 422))
-        request(client, "unknown_field", {"question": VALID, "extra": "safe"})
+        request(client, "unknown_field", {"question": VALID, "extra": "safe"},
+                expected=(422,))
         for event_id, text in (
             ("unicode_question", "こんにちは café résumé"),
             ("nul_character", "hello\x00world"),

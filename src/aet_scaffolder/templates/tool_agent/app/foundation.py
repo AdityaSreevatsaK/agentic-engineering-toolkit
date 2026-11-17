@@ -115,7 +115,11 @@ def _is_loopback_client(request: Request) -> bool:
 
 
 def _authenticate(request: Request, keys: dict[str, str]) -> str | None:
-    header = request.headers.get("authorization", "")
+    headers = request.headers.getlist("authorization")
+    # Reject duplicate credentials: intermediaries may interpret them differently.
+    if len(headers) != 1:
+        return None
+    header = headers[0]
     if not header.startswith("Bearer ") or len(header) > 520:
         return None
     token = header[7:].encode("utf-8")

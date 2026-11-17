@@ -1,7 +1,7 @@
 """HTTP interface for the generated local-first agent app."""
 from fastapi import FastAPI, HTTPException
 from .foundation import install_foundations, check_security_ready
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 
 from .config import get_settings
 from .providers import ProviderError
@@ -12,6 +12,8 @@ install_foundations(app)
 
 
 class InvokeRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
     question: str = Field(min_length=1, max_length=4000)
 
 

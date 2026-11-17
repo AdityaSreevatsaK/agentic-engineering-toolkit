@@ -57,3 +57,7 @@ def test_readiness_is_local_and_provider_neutral(monkeypatch, provider):
     assert response.status_code == 200
     assert response.json() == {"status": "ready"}
     assert client.get("/provider-status").json()["connectivity"] == "not_checked"
+
+
+def test_extra_request_fields_are_rejected():
+    assert client.post("/invoke", json={"question": "hello", "tenant_id": "other"}).status_code == 422

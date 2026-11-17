@@ -21,3 +21,10 @@ Set `AET_SECURITY_MODE=hardened` and inject `AET_TENANT_KEYS_JSON` as a **proces
 These controls operate **per process**, not across workers or replicas. The deployment owner must still enforce TLS, trusted reverse-proxy configuration, distributed throttling, cloud-provider budgets, network policy, credential rotation, tenant authorisation and incident response. A loopback proxy may conceal the real client address, so never rely on the local-profile remote-client guard behind a proxy. For internet-facing traffic, use hardened mode plus a reviewed ingress and identity architecture.
 
 `/ready` checks local configuration and RAG files only. It does **not** verify cloud-provider credentials or reachability; `/provider-status` explicitly reports `not_checked`. Model-generated answers and RAG passages remain untrusted. For details see [hardened profile guidance](docs/security/hardened-profile.md).
+
+
+## Request validation and residual risks
+
+Hardened-mode authentication rejects duplicate `Authorization` headers, including repeated identical keys. Generated request models reject unexpected JSON fields. Both RAG starters normalise Unicode questions and reject control characters. **Normalisation is not a prompt-injection defence**: retrieved sources and model answers remain untrusted.
+
+Before internet-facing deployment, restrict `/ready` and `/provider-status` to trusted networks, and enforce ingress body-size limits, distributed request quotas, provider spend ceilings and operational monitoring. These external safeguards are not verified by a local or mock CI run.
