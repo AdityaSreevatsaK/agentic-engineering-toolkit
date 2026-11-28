@@ -44,6 +44,31 @@ jobs:
           python scripts/prepare_deployment.py production-smoke --python-image-digest "${{ steps.base.outputs.digest }}"
           grep -q -- '--hash=sha256:' production-smoke/requirements.lock
           docker build --file production-smoke/Dockerfile.production --tag aet-production-smoke:ci production-smoke
+      - name: Generate CycloneDX inventory from the built image
+        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
+        with:
+          image-ref: aet-production-smoke:ci
+          format: cyclonedx
+          output: reference-image.cdx.json
+          timeout: 10m0s
+      - name: Verify the inventory contains installed packages
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+
+          bom = json.loads(Path("reference-image.cdx.json").read_text())
+          if bom.get("bomFormat") != "CycloneDX" or not any(
+              component.get("purl") for component in bom.get("components", [])
+          ):
+              raise SystemExit("Expected a CycloneDX inventory with packages")
+          PY
+      - name: Retain reference image inventory
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: reference-image-sbom
+          path: reference-image.cdx.json
+          if-no-files-found: error
       - name: Scan built container for fixable high and critical vulnerabilities
         uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
         with:
@@ -69,16 +94,9 @@ jobs:
           curl --fail --silent --max-time 4 http://127.0.0.1:18765/ready | python -c 'import json,sys; assert json.load(sys.stdin)["status"] == "ready"'
           STATUS="$(curl --silent --output /dev/null --write-out '%{http_code}' --max-time 4 \
             --request POST --header 'Content-Type: application/json' --data '{"question":"hello"}' http://127.0.0.1:18765/invoke)"
-          if grep -q '^def check_security_ready' production-smoke/app/foundation.py; then
-            # Source PR #47 supplies hardening; combined validation must exercise it.
-            test "$STATUS" = '401'
-            curl --fail --silent --max-time 4 --request POST \
-              --header 'Content-Type: application/json' \
-              --header "Authorization: Bearer $TOKEN" \
-              --data '{"question":"hello"}' http://127.0.0.1:18765/invoke \
-              | python -c 'import json,sys; assert "Mock response" in json.load(sys.stdin)["answer"]'
-          else
-            # Standalone deployment PR #48 has no security middleware; this
-            # checks only reproducible deployment, never auth protection.
-            test "$STATUS" = '200'
-          fi
+          test "$STATUS" = '401'
+          curl --fail --silent --max-time 4 --request POST \
+            --header 'Content-Type: application/json' \
+            --header "Authorization: Bearer $TOKEN" \
+            --data '{"question":"hello"}' http://127.0.0.1:18765/invoke \
+            | python -c 'import json,sys; assert "Mock response" in json.load(sys.stdin)["answer"]'

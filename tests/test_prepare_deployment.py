@@ -32,7 +32,7 @@ def test_prepare_generates_hashed_lock_and_digest_pinned_docker(tmp_path, monkey
     assert "--require-hashes" in dockerfile.read_text()
     assert "AET_SECURITY_MODE=hardened" in dockerfile.read_text()
     assert "--no-build-isolation" in dockerfile.read_text()
-    assert "--only-upgrade zlib1g" in dockerfile.read_text()
+    assert "--only-upgrade zlib1g libzstd1" in dockerfile.read_text()
     assert (project / "Dockerfile").read_text() == original
     with pytest.raises(ValueError, match="already exist"):
         deploy.prepare_deployment(project, DIGEST)
